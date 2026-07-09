@@ -1,6 +1,7 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   Brain,
   LineChart,
@@ -25,12 +26,15 @@ import {
   Shield,
   Clock,
   Globe,
+  Menu,
+  X,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'
 import { useNavigation } from '@/store/navigation'
 
 // ─── Animation Variants ────────────────────────────────────────────────
@@ -336,11 +340,152 @@ function TestimonialCard({
 
 // ─── Main Component ────────────────────────────────────────────────────
 
+const navLinks = [
+  { label: 'Features', href: '#features' },
+  { label: 'How It Works', href: '#how-it-works' },
+  { label: 'Testimonials', href: '#testimonials' },
+  { label: 'Pricing', href: '#pricing' },
+  { label: 'Community', href: '#community' },
+]
+
 export default function LandingView() {
   const { openAuthDialog, setView } = useNavigation()
+  const [scrolled, setScrolled] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  const scrollToSection = (href: string) => {
+    if (href === '#pricing') {
+      setView('pricing')
+      return
+    }
+    const el = document.querySelector(href)
+    el?.scrollIntoView({ behavior: 'smooth' })
+    setMobileOpen(false)
+  }
 
   return (
     <div className="flex min-h-screen flex-col">
+      {/* ═══════════════════════════════════════════════════════════════
+          NAVBAR
+      ═══════════════════════════════════════════════════════════════ */}
+      <motion.nav
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.5, ease: [0.25, 0.4, 0.25, 1] }}
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          scrolled
+            ? 'border-b bg-background/80 shadow-sm backdrop-blur-xl'
+            : 'bg-transparent'
+        }`}
+      >
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
+          {/* Logo */}
+          <button
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            className="flex items-center gap-2.5 transition-opacity hover:opacity-80"
+          >
+            <div className="flex size-8 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-sm shadow-emerald-600/25">
+              <TrendingUp className="size-4" />
+            </div>
+            <span className="text-lg font-bold text-foreground">
+              TradeMind <span className="gradient-text">AI</span>
+            </span>
+          </button>
+
+          {/* Desktop links */}
+          <div className="hidden items-center gap-1 md:flex">
+            {navLinks.map((link) => (
+              <button
+                key={link.label}
+                onClick={() => scrollToSection(link.href)}
+                className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              >
+                {link.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Desktop actions */}
+          <div className="hidden items-center gap-3 md:flex">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => openAuthDialog('login')}
+            >
+              Log In
+            </Button>
+            <Button
+              size="sm"
+              className="bg-emerald-600 text-white shadow-sm shadow-emerald-600/25 hover:bg-emerald-700"
+              onClick={() => openAuthDialog('signup')}
+            >
+              Get Started
+            </Button>
+          </div>
+
+          {/* Mobile menu */}
+          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+            <SheetTrigger asChild>
+              <button
+                className="flex size-10 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-accent md:hidden"
+                aria-label="Open menu"
+              >
+                <Menu className="size-5" />
+              </button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-72">
+              <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+              <div className="flex flex-col gap-1 pt-8">
+                <div className="mb-4 flex items-center gap-2.5 px-2">
+                  <div className="flex size-8 items-center justify-center rounded-lg bg-emerald-600 text-white">
+                    <TrendingUp className="size-4" />
+                  </div>
+                  <span className="text-lg font-bold">
+                    TradeMind <span className="gradient-text">AI</span>
+                  </span>
+                </div>
+                <Separator className="mb-3" />
+                {navLinks.map((link, i) => (
+                  <motion.button
+                    key={link.label}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.05 * i }}
+                    onClick={() => scrollToSection(link.href)}
+                    className="rounded-lg px-3 py-2.5 text-left text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                  >
+                    {link.label}
+                  </motion.button>
+                ))}
+                <Separator className="my-3" />
+                <Button
+                  variant="ghost"
+                  className="justify-start"
+                  onClick={() => { openAuthDialog('login'); setMobileOpen(false) }}
+                >
+                  Log In
+                </Button>
+                <Button
+                  className="bg-emerald-600 text-white shadow-sm shadow-emerald-600/25 hover:bg-emerald-700"
+                  onClick={() => { openAuthDialog('signup'); setMobileOpen(false) }}
+                >
+                  Get Started
+                </Button>
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
+      </motion.nav>
+
+      {/* Spacer so hero isn't behind navbar */}
+      <div className="h-16" />
+
       <main className="flex-1">
         {/* ═══════════════════════════════════════════════════════════════
             HERO SECTION
@@ -470,7 +615,7 @@ export default function LandingView() {
         {/* ═══════════════════════════════════════════════════════════════
             FEATURES SECTION
         ═══════════════════════════════════════════════════════════════ */}
-        <section className="relative px-4 py-24 sm:px-6 lg:px-8">
+        <section id="features" className="relative px-4 py-24 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-6xl">
             {/* Section header */}
             <motion.div {...fadeInUp} className="mx-auto max-w-2xl text-center">
@@ -505,7 +650,7 @@ export default function LandingView() {
         {/* ═══════════════════════════════════════════════════════════════
             HOW IT WORKS SECTION
         ═══════════════════════════════════════════════════════════════ */}
-        <section className="relative bg-muted/30 px-4 py-24 sm:px-6 lg:px-8">
+        <section id="how-it-works" className="relative bg-muted/30 px-4 py-24 sm:px-6 lg:px-8">
           {/* Subtle top/bottom separators */}
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-300/40 to-transparent dark:via-emerald-700/30" />
           <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-emerald-300/40 to-transparent dark:via-emerald-700/30" />
@@ -566,7 +711,7 @@ export default function LandingView() {
         {/* ═══════════════════════════════════════════════════════════════
             TESTIMONIALS SECTION
         ═══════════════════════════════════════════════════════════════ */}
-        <section className="bg-muted/30 px-4 py-24 sm:px-6 lg:px-8">
+        <section id="testimonials" className="bg-muted/30 px-4 py-24 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-6xl">
             <motion.div {...fadeInUp} className="mx-auto max-w-2xl text-center">
               <Badge
@@ -598,7 +743,7 @@ export default function LandingView() {
         {/* ═══════════════════════════════════════════════════════════════
             CTA SECTION
         ═══════════════════════════════════════════════════════════════ */}
-        <section className="relative px-4 py-24 sm:px-6 lg:px-8">
+        <section id="community" className="relative px-4 py-24 sm:px-6 lg:px-8">
           <motion.div {...scaleIn} className="mx-auto max-w-4xl">
             <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-800 px-6 py-16 text-center shadow-2xl shadow-emerald-600/20 sm:px-12 sm:py-20 dark:from-emerald-700 dark:via-emerald-800 dark:to-emerald-950 dark:shadow-emerald-900/30">
               {/* Decorative circles */}
