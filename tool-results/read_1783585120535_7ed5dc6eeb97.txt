@@ -1,0 +1,973 @@
+     1→     1→'use client'
+     2→     2→
+     3→     3→import { useState } from 'react'
+     4→     4→import { motion } from 'framer-motion'
+     5→     5→import {
+     6→     6→  AreaChart,
+     7→     7→  Area,
+     8→     8→  XAxis,
+     9→     9→  YAxis,
+    10→    10→  CartesianGrid,
+    11→    11→  Tooltip,
+    12→    12→  ResponsiveContainer,
+    13→    13→} from 'recharts'
+    14→    14→import {
+    15→    15→  Users,
+    16→    16→  CreditCard,
+    17→    17→  DollarSign,
+    18→    18→  GraduationCap,
+    19→    19→  Plus,
+    20→    20→  Search,
+    21→    21→  MoreHorizontal,
+    22→    22→  Edit3,
+    23→    23→  Ban,
+    24→    24→  Trash2,
+    25→    25→  Pencil,
+    26→    26→  ArrowUpRight,
+    27→    27→  ArrowDownRight,
+    28→    28→  FileText,
+    29→    29→  Signal,
+    30→    30→  LayoutDashboard,
+    31→    31→  BookOpen,
+    32→    32→  BarChart3,
+    33→    33→} from 'lucide-react'
+    34→    34→import { Button } from '@/components/ui/button'
+    35→    35→import {
+    36→    36→  Card,
+    37→    37→  CardContent,
+    38→    38→  CardHeader,
+    39→    39→  CardTitle,
+    40→    40→  CardDescription,
+    41→    41→  CardFooter,
+    42→    42→} from '@/components/ui/card'
+    43→    43→import { Badge } from '@/components/ui/badge'
+    44→    44→import { Input } from '@/components/ui/input'
+    45→    45→import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+    46→    46→import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+    47→    47→import {
+    48→    48→  Select,
+    49→    49→  SelectContent,
+    50→    50→  SelectItem,
+    51→    51→  SelectTrigger,
+    52→    52→  SelectValue,
+    53→    53→} from '@/components/ui/select'
+    54→    54→import {
+    55→    55→  Table,
+    56→    56→  TableBody,
+    57→    57→  TableCell,
+    58→    58→  TableHead,
+    59→    59→  TableHeader,
+    60→    60→  TableRow,
+    61→    61→} from '@/components/ui/table'
+    62→    62→import {
+    63→    63→  DropdownMenu,
+    64→    64→  DropdownMenuContent,
+    65→    65→  DropdownMenuItem,
+    66→    66→  DropdownMenuSeparator,
+    67→    67→  DropdownMenuTrigger,
+    68→    68→} from '@/components/ui/dropdown-menu'
+    69→    69→import { Progress } from '@/components/ui/progress'
+    70→    70→import {
+    71→    71→  ChartContainer,
+    72→    72→  ChartTooltip,
+    73→    73→  ChartTooltipContent,
+    74→    74→  type ChartConfig,
+    75→    75→} from '@/components/ui/chart'
+    76→    76→
+    77→    77→// ── Mock Data ────────────────────────────────────────────────────────────────
+    78→    78→
+    79→    79→const userGrowthData = [
+    80→    80→  { month: 'Jul', users: 1820 },
+    81→    81→  { month: 'Aug', users: 2010 },
+    82→    82→  { month: 'Sep', users: 2230 },
+    83→    83→  { month: 'Oct', users: 2410 },
+    84→    84→  { month: 'Nov', users: 2630 },
+    85→    85→  { month: 'Dec', users: 2847 },
+    86→    86→]
+    87→    87→
+    88→    88→const chartConfig: ChartConfig = {
+    89→    89→  users: {
+    90→    90→    label: 'Users',
+    91→    91→    color: '#059669',
+    92→    92→  },
+    93→    93→}
+    94→    94→
+    95→    95→interface MockUser {
+    96→    96→  id: string
+    97→    97→  name: string
+    98→    98→  email: string
+    99→    99→  avatar: string
+   100→   100→  role: string
+   101→   101→  roleBadge: string
+   102→   102→  plan: string
+   103→   103→  joined: string
+   104→   104→  status: 'active' | 'suspended'
+   105→   105→}
+   106→   106→
+   107→   107→const mockUsers: MockUser[] = [
+   108→   108→  {
+   109→   109→    id: '1',
+   110→   110→    name: 'Sarah Mitchell',
+   111→   111→    email: 'sarah@example.com',
+   112→   112→    avatar: 'SM',
+   113→   113→    role: 'Instructor',
+   114→   114→    roleBadge:
+   115→   115→      'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400',
+   116→   116→    plan: 'Elite',
+   117→   117→    joined: '2024-01-15',
+   118→   118→    status: 'active',
+   119→   119→  },
+   120→   120→  {
+   121→   121→    id: '2',
+   122→   122→    name: 'Alex Chen',
+   123→   123→    email: 'alex@example.com',
+   124→   124→    avatar: 'AC',
+   125→   125→    role: 'Premium',
+   126→   126→    roleBadge:
+   127→   127→      'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400',
+   128→   128→    plan: 'Pro',
+   129→   129→    joined: '2024-02-20',
+   130→   130→    status: 'active',
+   131→   131→  },
+   132→   132→  {
+   133→   133→    id: '3',
+   134→   134→    name: 'James Wilson',
+   135→   135→    email: 'james@example.com',
+   136→   136→    avatar: 'JW',
+   137→   137→    role: 'Student',
+   138→   138→    roleBadge:
+   139→   139→      'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400',
+   140→   140→    plan: 'Free',
+   141→   141→    joined: '2024-03-10',
+   142→   142→    status: 'active',
+   143→   143→  },
+   144→   144→  {
+   145→   145→    id: '4',
+   146→   146→    name: 'Emma Davis',
+   147→   147→    email: 'emma@example.com',
+   148→   148→    avatar: 'ED',
+   149→   149→    role: 'Student',
+   150→   150→    roleBadge:
+   151→   151→      'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400',
+   152→   152→    plan: 'Pro',
+   153→   153→    joined: '2024-04-05',
+   154→   154→    status: 'active',
+   155→   155→  },
+   156→   156→  {
+   157→   157→    id: '5',
+   158→   158→    name: 'Marcus Lee',
+   159→   159→    email: 'marcus@example.com',
+   160→   160→    avatar: 'ML',
+   161→   161→    role: 'Trader',
+   162→   162→    roleBadge:
+   163→   163→      'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-400',
+   164→   164→    plan: 'Elite',
+   165→   165→    joined: '2024-05-12',
+   166→   166→    status: 'active',
+   167→   167→  },
+   168→   168→  {
+   169→   169→    id: '6',
+   170→   170→    name: 'Lisa Park',
+   171→   171→    email: 'lisa@example.com',
+   172→   172→    avatar: 'LP',
+   173→   173→    role: 'Student',
+   174→   174→    roleBadge:
+   175→   175→      'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400',
+   176→   176→    plan: 'Free',
+   177→   177→    joined: '2024-06-18',
+   178→   178→    status: 'suspended',
+   179→   179→  },
+   180→   180→  {
+   181→   181→    id: '7',
+   182→   182→    name: 'David Kim',
+   183→   183→    email: 'david@example.com',
+   184→   184→    avatar: 'DK',
+   185→   185→    role: 'Premium',
+   186→   186→    roleBadge:
+   187→   187→      'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400',
+   188→   188→    plan: 'Pro',
+   189→   189→    joined: '2024-07-22',
+   190→   190→    status: 'active',
+   191→   191→  },
+   192→   192→  {
+   193→   193→    id: '8',
+   194→   194→    name: 'Mike Ross',
+   195→   195→    email: 'mike@example.com',
+   196→   196→    avatar: 'MR',
+   197→   197→    role: 'Student',
+   198→   198→    roleBadge:
+   199→   199→      'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400',
+   200→   200→    plan: 'Free',
+   201→   201→    joined: '2024-08-01',
+   202→   202→    status: 'active',
+   203→   203→  },
+   204→   204→]
+   205→   205→
+   206→   206→interface Course {
+   207→   207→  id: string
+   208→   208→  title: string
+   209→   209→  students: number
+   210→   210→  rating: number
+   211→   211→  status: 'Published' | 'Draft'
+   212→   212→  category: string
+   213→   213→}
+   214→   214→
+   215→   215→const mockCourses: Course[] = [
+   216→   216→  {
+   217→   217→    id: '1',
+   218→   218→    title: 'Price Action Mastery',
+   219→   219→    students: 847,
+   220→   220→    rating: 4.9,
+   221→   221→    status: 'Published',
+   222→   222→    category: 'Technical Analysis',
+   223→   223→  },
+   224→   224→  {
+   225→   225→    id: '2',
+   226→   226→    title: 'Smart Money Concepts',
+   227→   227→    students: 623,
+   228→   228→    rating: 4.8,
+   229→   229→    status: 'Published',
+   230→   230→    category: 'Advanced',
+   231→   231→  },
+   232→   232→  {
+   233→   233→    id: '3',
+   234→   234→    title: 'Trading Psychology 101',
+   235→   235→    students: 1205,
+   236→   236→    rating: 4.7,
+   237→   237→    status: 'Published',
+   238→   238→    category: 'Psychology',
+   239→   239→  },
+   240→   240→  {
+   241→   241→    id: '4',
+   242→   242→    title: 'Advanced Risk Management',
+   243→   243→    students: 0,
+   244→   244→    rating: 0,
+   245→   245→    status: 'Draft',
+   246→   246→    category: 'Risk Management',
+   247→   247→  },
+   248→   248→]
+   249→   249→
+   250→   250→interface TradingSignal {
+   251→   251→  id: string
+   252→   252→  pair: string
+   253→   253→  direction: 'Long' | 'Short'
+   254→   254→  status: 'Active' | 'Expired' | 'Hit TP' | 'Hit SL'
+   255→   255→  created: string
+   256→   256→}
+   257→   257→
+   258→   258→const mockSignals: TradingSignal[] = [
+   259→   259→  { id: '1', pair: 'EUR/USD', direction: 'Long', status: 'Active', created: '2024-12-18' },
+   260→   260→  { id: '2', pair: 'GBP/JPY', direction: 'Short', status: 'Hit TP', created: '2024-12-17' },
+   261→   261→  { id: '3', pair: 'XAU/USD', direction: 'Long', status: 'Active', created: '2024-12-18' },
+   262→   262→  { id: '4', pair: 'USD/CAD', direction: 'Short', status: 'Hit SL', created: '2024-12-16' },
+   263→   263→  { id: '5', pair: 'AUD/USD', direction: 'Long', status: 'Expired', created: '2024-12-15' },
+   264→   264→  { id: '6', pair: 'EUR/GBP', direction: 'Short', status: 'Active', created: '2024-12-18' },
+   265→   265→]
+   266→   266→
+   267→   267→interface BlogPost {
+   268→   268→  id: string
+   269→   269→  title: string
+   270→   270→  status: 'Published' | 'Draft' | 'Scheduled'
+   271→   271→  date: string
+   272→   272→}
+   273→   273→
+   274→   274→const mockPosts: BlogPost[] = [
+   275→   275→  { id: '1', title: 'How to Build a Winning Trading Routine', status: 'Published', date: '2024-12-17' },
+   276→   276→  { id: '2', title: 'Understanding Market Structure Like a Pro', status: 'Published', date: '2024-12-15' },
+   277→   277→  { id: '3', title: 'Top 5 Mistakes New Traders Make', status: 'Scheduled', date: '2024-12-20' },
+   278→   278→  { id: '4', title: 'The Complete Guide to Order Blocks', status: 'Draft', date: '2024-12-18' },
+   279→   279→  { id: '5', title: 'NFP Trading Strategy Deep Dive', status: 'Published', date: '2024-12-12' },
+   280→   280→]
+   281→   281→
+   282→   282→// ── Helpers ──────────────────────────────────────────────────────────────────
+   283→   283→
+   284→   284→function getAvatarColor(name: string): string {
+   285→   285→  const colors = [
+   286→   286→    'bg-emerald-600',
+   287→   287→    'bg-teal-600',
+   288→   288→    'bg-green-600',
+   289→   289→    'bg-cyan-600',
+   290→   290→    'bg-emerald-700',
+   291→   291→    'bg-teal-700',
+   292→   292→  ]
+   293→   293→  let hash = 0
+   294→   294→  for (let i = 0; i < name.length; i++) {
+   295→   295→    hash = name.charCodeAt(i) + ((hash << 5) - hash)
+   296→   296→  }
+   297→   297→  return colors[Math.abs(hash) % colors.length]
+   298→   298→}
+   299→   299→
+   300→   300→function getSignalStatusBadge(status: TradingSignal['status']) {
+   301→   301→  const map: Record<
+   302→   302→    TradingSignal['status'],
+   303→   303→    { className: string; dotClass: string }
+   304→   304→  > = {
+   305→   305→    Active: {
+   306→   306→      className:
+   307→   307→        'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400',
+   308→   308→      dotClass: 'bg-emerald-500',
+   309→   309→    },
+   310→   310→    Expired: {
+   311→   311→      className: 'bg-muted text-muted-foreground',
+   312→   312→      dotClass: 'bg-muted-foreground',
+   313→   313→    },
+   314→   314→    'Hit TP': {
+   315→   315→      className:
+   316→   316→        'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400',
+   317→   317→      dotClass: 'bg-emerald-500',
+   318→   318→    },
+   319→   319→    'Hit SL': {
+   320→   320→      className: 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-400',
+   321→   321→      dotClass: 'bg-rose-500',
+   322→   322→    },
+   323→   323→  }
+   324→   324→  const { className, dotClass } = map[status]
+   325→   325→  return (
+   326→   326→    <Badge variant="secondary" className={`${className} gap-1.5`}>
+   327→   327→      <span className={`size-1.5 rounded-full ${dotClass}`} />
+   328→   328→      {status}
+   329→   329→    </Badge>
+   330→   330→  )
+   331→   331→}
+   332→   332→
+   333→   333→function getDirectionBadge(direction: 'Long' | 'Short') {
+   334→   334→  return (
+   335→   335→    <Badge
+   336→   336→      variant="outline"
+   337→   337→      className={
+   338→   338→        direction === 'Long'
+   339→   339→          ? 'text-emerald-600 border-emerald-200 dark:text-emerald-400 dark:border-emerald-800'
+   340→   340→          : 'text-rose-600 border-rose-200 dark:text-rose-400 dark:border-rose-800'
+   341→   341→      }
+   342→   342→    >
+   343→   343→      <ArrowUpRight
+   344→   344→        className={`size-3 ${direction === 'Short' ? 'rotate-90' : ''}`}
+   345→   345→      />
+   346→   346→      {direction}
+   347→   347→    </Badge>
+   348→   348→  )
+   349→   349→}
+   350→   350→
+   351→   351→function getPostStatusBadge(status: BlogPost['status']) {
+   352→   352→  const map: Record<
+   353→   353→    BlogPost['status'],
+   354→   354→    { className: string }
+   355→   355→  > = {
+   356→   356→    Published: {
+   357→   357→      className:
+   358→   358→        'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400',
+   359→   359→    },
+   360→   360→    Draft: {
+   361→   361→      className: 'bg-muted text-muted-foreground',
+   362→   362→    },
+   363→   363→    Scheduled: {
+   364→   364→      className:
+   365→   365→        'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400',
+   366→   366→    },
+   367→   367→  }
+   368→   368→  return (
+   369→   369→    <Badge variant="secondary" className={map[status].className}>
+   370→   370→      {status}
+   371→   371→    </Badge>
+   372→   372→  )
+   373→   373→}
+   374→   374→
+   375→   375→// ── Overview Tab ──────────────────────────────────────────────────────────────
+   376→   376→
+   377→   377→function OverviewTab() {
+   378→   378→  const stats = [
+   379→   379→    {
+   380→   380→      label: 'Total Users',
+   381→   381→      value: '2,847',
+   382→   382→      change: '+12.5%',
+   383→   383→      up: true,
+   384→   384→      icon: <Users className="size-4 text-muted-foreground" />,
+   385→   385→    },
+   386→   386→    {
+   387→   387→      label: 'Active Subscriptions',
+   388→   388→      value: '1,234',
+   389→   389→      change: '+8.2%',
+   390→   390→      up: true,
+   391→   391→      icon: <CreditCard className="size-4 text-muted-foreground" />,
+   392→   392→    },
+   393→   393→    {
+   394→   394→      label: 'Revenue',
+   395→   395→      value: '$45,678',
+   396→   396→      change: '+23.1%',
+   397→   397→      up: true,
+   398→   398→      icon: <DollarSign className="size-4 text-muted-foreground" />,
+   399→   399→    },
+   400→   400→    {
+   401→   401→      label: 'Course Completion Rate',
+   402→   402→      value: '72%',
+   403→   403→      change: '-2.4%',
+   404→   404→      up: false,
+   405→   405→      icon: <GraduationCap className="size-4 text-muted-foreground" />,
+   406→   406→    },
+   407→   407→  ]
+   408→   408→
+   409→   409→  return (
+   410→   410→    <div className="space-y-6">
+   411→   411→      {/* Stat Cards */}
+   412→   412→      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+   413→   413→        {stats.map((stat, index) => (
+   414→   414→          <motion.div
+   415→   415→            key={stat.label}
+   416→   416→            initial={{ opacity: 0, y: 20 }}
+   417→   417→            animate={{ opacity: 1, y: 0 }}
+   418→   418→            transition={{ duration: 0.4, delay: index * 0.08 }}
+   419→   419→          >
+   420→   420→            <Card>
+   421→   421→              <CardContent className="p-4">
+   422→   422→                <div className="flex items-center justify-between mb-3">
+   423→   423→                  <span className="text-sm text-muted-foreground">
+   424→   424→                    {stat.label}
+   425→   425→                  </span>
+   426→   426→                  <div className="size-8 rounded-lg bg-muted flex items-center justify-center">
+   427→   427→                    {stat.icon}
+   428→   428→                  </div>
+   429→   429→                </div>
+   430→   430→                <div className="flex items-baseline gap-2">
+   431→   431→                  <span className="text-2xl font-bold">{stat.value}</span>
+   432→   432→                  <span
+   433→   433→                    className={`text-xs font-medium flex items-center gap-0.5 ${
+   434→   434→                      stat.up
+   435→   435→                        ? 'text-emerald-600 dark:text-emerald-400'
+   436→   436→                        : 'text-rose-600 dark:text-rose-400'
+   437→   437→                    }`}
+   438→   438→                  >
+   439→   439→                    {stat.up ? (
+   440→   440→                      <ArrowUpRight className="size-3" />
+   441→   441→                    ) : (
+   442→   442→                      <ArrowDownRight className="size-3" />
+   443→   443→                    )}
+   444→   444→                    {stat.change}
+   445→   445→                  </span>
+   446→   446→                </div>
+   447→   447→              </CardContent>
+   448→   448→            </Card>
+   449→   449→          </motion.div>
+   450→   450→        ))}
+   451→   451→      </div>
+   452→   452→
+   453→   453→      {/* User Growth Chart */}
+   454→   454→      <motion.div
+   455→   455→        initial={{ opacity: 0, y: 20 }}
+   456→   456→        animate={{ opacity: 1, y: 0 }}
+   457→   457→        transition={{ duration: 0.5, delay: 0.35 }}
+   458→   458→      >
+   459→   459→        <Card>
+   460→   460→          <CardHeader>
+   461→   461→            <CardTitle className="text-base">User Growth</CardTitle>
+   462→   462→            <CardDescription>
+   463→   463→              Total registered users over the last 6 months
+   464→   464→            </CardDescription>
+   465→   465→          </CardHeader>
+   466→   466→          <CardContent>
+   467→   467→            <ChartContainer config={chartConfig} className="h-64 w-full">
+   468→   468→              <AreaChart
+   469→   469→                data={userGrowthData}
+   470→   470→                margin={{ top: 5, right: 10, left: 10, bottom: 0 }}
+   471→   471→              >
+   472→   472→                <defs>
+   473→   473→                  <linearGradient
+   474→   474→                    id="fillUsers"
+   475→   475→                    x1="0"
+   476→   476→                    y1="0"
+   477→   477→                    x2="0"
+   478→   478→                    y2="1"
+   479→   479→                  >
+   480→   480→                    <stop
+   481→   481→                      offset="5%"
+   482→   482→                      stopColor="var(--color-users)"
+   483→   483→                      stopOpacity={0.3}
+   484→   484→                    />
+   485→   485→                    <stop
+   486→   486→                      offset="95%"
+   487→   487→                      stopColor="var(--color-users)"
+   488→   488→                      stopOpacity={0.02}
+   489→   489→                    />
+   490→   490→                  </linearGradient>
+   491→   491→                </defs>
+   492→   492→                <CartesianGrid
+   493→   493→                  vertical={false}
+   494→   494→                  strokeDasharray="3 3"
+   495→   495→                  className="stroke-border"
+   496→   496→                />
+   497→   497→                <XAxis
+   498→   498→                  dataKey="month"
+   499→   499→                  tickLine={false}
+   500→   500→                  axisLine={false}
+   501→   501→                  className="text-xs"
+   502→   502→                />
+   503→   503→                <YAxis
+   504→   504→                  tickLine={false}
+   505→   505→                  axisLine={false}
+   506→   506→                  className="text-xs"
+   507→   507→                  tickFormatter={(v) => `${(v / 1000).toFixed(1)}k`}
+   508→   508→                />
+   509→   509→                <ChartTooltip
+   510→   510→                  content={<ChartTooltipContent indicator="dot" />}
+   511→   511→                />
+   512→   512→                <Area
+   513→   513→                  type="monotone"
+   514→   514→                  dataKey="users"
+   515→   515→                  stroke="var(--color-users)"
+   516→   516→                  fill="url(#fillUsers)"
+   517→   517→                  strokeWidth={2}
+   518→   518→                />
+   519→   519→              </AreaChart>
+   520→   520→            </ChartContainer>
+   521→   521→          </CardContent>
+   522→   522→        </Card>
+   523→   523→      </motion.div>
+   524→   524→    </div>
+   525→   525→  )
+   526→   526→}
+   527→   527→
+   528→   528→// ── Users Tab ────────────────────────────────────────────────────────────────
+   529→   529→
+   530→   530→function UsersTab() {
+   531→   531→  const [searchQuery, setSearchQuery] = useState('')
+   532→   532→  const [roleFilter, setRoleFilter] = useState('all')
+   533→   533→
+   534→   534→  const filteredUsers = mockUsers.filter((user) => {
+   535→   535→    const matchesSearch =
+   536→   536→      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+   537→   537→      user.email.toLowerCase().includes(searchQuery.toLowerCase())
+   538→   538→    const matchesRole =
+   539→   539→      roleFilter === 'all' || user.role.toLowerCase() === roleFilter
+   540→   540→    return matchesSearch && matchesRole
+   541→   541→  })
+   542→   542→
+   543→   543→  return (
+   544→   544→    <div className="space-y-4">
+   545→   545→      <div className="flex flex-col sm:flex-row gap-3">
+   546→   546→        <div className="relative flex-1">
+   547→   547→          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+   548→   548→          <Input
+   549→   549→            placeholder="Search users by name or email..."
+   550→   550→            className="pl-9"
+   551→   551→            value={searchQuery}
+   552→   552→            onChange={(e) => setSearchQuery(e.target.value)}
+   553→   553→          />
+   554→   554→        </div>
+   555→   555→        <Select value={roleFilter} onValueChange={setRoleFilter}>
+   556→   556→          <SelectTrigger className="w-full sm:w-44">
+   557→   557→            <SelectValue placeholder="Filter by role" />
+   558→   558→          </SelectTrigger>
+   559→   559→          <SelectContent>
+   560→   560→            <SelectItem value="all">All Roles</SelectItem>
+   561→   561→            <SelectItem value="student">Student</SelectItem>
+   562→   562→            <SelectItem value="trader">Trader</SelectItem>
+   563→   563→            <SelectItem value="premium">Premium</SelectItem>
+   564→   564→            <SelectItem value="instructor">Instructor</SelectItem>
+   565→   565→            <SelectItem value="admin">Admin</SelectItem>
+   566→   566→          </SelectContent>
+   567→   567→        </Select>
+   568→   568→      </div>
+   569→   569→
+   570→   570→      <Card>
+   571→   571→        <CardContent className="p-0">
+   572→   572→          <Table>
+   573→   573→            <TableHeader>
+   574→   574→              <TableRow>
+   575→   575→                <TableHead className="pl-4">User</TableHead>
+   576→   576→                <TableHead className="hidden md:table-cell">Email</TableHead>
+   577→   577→                <TableHead>Role</TableHead>
+   578→   578→                <TableHead className="hidden sm:table-cell">Plan</TableHead>
+   579→   579→                <TableHead className="hidden lg:table-cell">Joined</TableHead>
+   580→   580→                <TableHead>Status</TableHead>
+   581→   581→                <TableHead className="pr-4 w-10" />
+   582→   582→              </TableRow>
+   583→   583→            </TableHeader>
+   584→   584→            <TableBody>
+   585→   585→              {filteredUsers.map((user, index) => (
+   586→   586→                <motion.tr
+   587→   587→                  key={user.id}
+   588→   588→                  initial={{ opacity: 0, x: -10 }}
+   589→   589→                  animate={{ opacity: 1, x: 0 }}
+   590→   590→                  transition={{ duration: 0.3, delay: index * 0.04 }}
+   591→   591→                  className="hover:bg-muted/50 border-b transition-colors"
+   592→   592→                >
+   593→   593→                  <TableCell className="pl-4 py-3">
+   594→   594→                    <div className="flex items-center gap-3">
+   595→   595→                      <Avatar className="size-8">
+   596→   596→                        <AvatarFallback
+   597→   597→                          className={`${getAvatarColor(user.name)} text-white text-xs font-semibold`}
+   598→   598→                        >
+   599→   599→                          {user.avatar}
+   600→   600→                        </AvatarFallback>
+   601→   601→                      </Avatar>
+   602→   602→                      <span className="font-medium text-sm whitespace-nowrap">
+   603→   603→                        {user.name}
+   604→   604→                      </span>
+   605→   605→                    </div>
+   606→   606→                  </TableCell>
+   607→   607→                  <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
+   608→   608→                    {user.email}
+   609→   609→                  </TableCell>
+   610→   610→                  <TableCell>
+   611→   611→                    <Badge
+   612→   612→                      variant="secondary"
+   613→   613→                      className={`text-[10px] ${user.roleBadge}`}
+   614→   614→                    >
+   615→   615→                      {user.role}
+   616→   616→                    </Badge>
+   617→   617→                  </TableCell>
+   618→   618→                  <TableCell className="hidden sm:table-cell text-sm">
+   619→   619→                    {user.plan}
+   620→   620→                  </TableCell>
+   621→   621→                  <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
+   622→   622→                    {user.joined}
+   623→   623→                  </TableCell>
+   624→   624→                  <TableCell>
+   625→   625→                    <Badge
+   626→   626→                      variant="secondary"
+   627→   627→                      className={
+   628→   628→                        user.status === 'active'
+   629→   629→                          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
+   630→   630→                          : 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-400'
+   631→   631→                      }
+   632→   632→                    >
+   633→   633→                      {user.status}
+   634→   634→                    </Badge>
+   635→   635→                  </TableCell>
+   636→   636→                  <TableCell className="pr-4">
+   637→   637→                    <DropdownMenu>
+   638→   638→                      <DropdownMenuTrigger asChild>
+   639→   639→                        <Button variant="ghost" size="icon" className="size-8">
+   640→   640→                          <MoreHorizontal className="size-4" />
+   641→   641→                        </Button>
+   642→   642→                      </DropdownMenuTrigger>
+   643→   643→                      <DropdownMenuContent align="end">
+   644→   644→                        <DropdownMenuItem>
+   645→   645→                          <Edit3 className="size-4 mr-2" />
+   646→   646→                          Edit
+   647→   647→                        </DropdownMenuItem>
+   648→   648→                        <DropdownMenuItem>
+   649→   649→                          <Ban className="size-4 mr-2" />
+   650→   650→                          Suspend
+   651→   651→                        </DropdownMenuItem>
+   652→   652→                        <DropdownMenuSeparator />
+   653→   653→                        <DropdownMenuItem variant="destructive">
+   654→   654→                          <Trash2 className="size-4 mr-2" />
+   655→   655→                          Delete
+   656→   656→                        </DropdownMenuItem>
+   657→   657→                      </DropdownMenuContent>
+   658→   658→                    </DropdownMenu>
+   659→   659→                  </TableCell>
+   660→   660→                </motion.tr>
+   661→   661→              ))}
+   662→   662→            </TableBody>
+   663→   663→          </Table>
+   664→   664→        </CardContent>
+   665→   665→      </Card>
+   666→   666→    </div>
+   667→   667→  )
+   668→   668→}
+   669→   669→
+   670→   670→// ── Courses Tab ──────────────────────────────────────────────────────────────
+   671→   671→
+   672→   672→function CoursesTab() {
+   673→   673→  return (
+   674→   674→    <div className="space-y-4">
+   675→   675→      <div className="flex justify-between items-center">
+   676→   676→        <h3 className="text-sm font-medium text-muted-foreground">
+   677→   677→          {mockCourses.length} courses
+   678→   678→        </h3>
+   679→   679→        <Button
+   680→   680→          size="sm"
+   681→   681→          className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5"
+   682→   682→        >
+   683→   683→          <Plus className="size-4" />
+   684→   684→          Create New Course
+   685→   685→        </Button>
+   686→   686→      </div>
+   687→   687→
+   688→   688→      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+   689→   689→        {mockCourses.map((course, index) => (
+   690→   690→          <motion.div
+   691→   691→            key={course.id}
+   692→   692→            initial={{ opacity: 0, y: 20 }}
+   693→   693→            animate={{ opacity: 1, y: 0 }}
+   694→   694→            transition={{ duration: 0.4, delay: index * 0.08 }}
+   695→   695→          >
+   696→   696→            <Card className="h-full">
+   697→   697→              <CardHeader className="pb-3">
+   698→   698→                <div className="flex items-start justify-between gap-2">
+   699→   699→                  <div className="min-w-0">
+   700→   700→                    <CardTitle className="text-sm leading-snug">
+   701→   701→                      {course.title}
+   702→   702→                    </CardTitle>
+   703→   703→                    <CardDescription className="mt-1">
+   704→   704→                      {course.category}
+   705→   705→                    </CardDescription>
+   706→   706→                  </div>
+   707→   707→                  <Badge
+   708→   708→                    variant="secondary"
+   709→   709→                    className={`shrink-0 ${
+   710→   710→                      course.status === 'Published'
+   711→   711→                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
+   712→   712→                        : 'bg-muted text-muted-foreground'
+   713→   713→                    }`}
+   714→   714→                  >
+   715→   715→                    {course.status}
+   716→   716→                  </Badge>
+   717→   717→                </div>
+   718→   718→              </CardHeader>
+   719→   719→              <CardContent>
+   720→   720→                <div className="flex items-center justify-between text-sm text-muted-foreground">
+   721→   721→                  <div className="flex items-center gap-1.5">
+   722→   722→                    <Users className="size-3.5" />
+   723→   723→                    <span>{course.students.toLocaleString()} students</span>
+   724→   724→                  </div>
+   725→   725→                  {course.rating > 0 && (
+   726→   726→                    <div className="flex items-center gap-1">
+   727→   727→                      <span className="text-amber-500">&#9733;</span>
+   728→   728→                      <span>{course.rating}</span>
+   729→   729→                    </div>
+   730→   730→                  )}
+   731→   731→                </div>
+   732→   732→              </CardContent>
+   733→   733→              <CardFooter className="pt-0">
+   734→   734→                <Button variant="outline" size="sm" className="w-full gap-1.5">
+   735→   735→                  <Pencil className="size-3.5" />
+   736→   736→                  Edit Course
+   737→   737→                </Button>
+   738→   738→              </CardFooter>
+   739→   739→            </Card>
+   740→   740→          </motion.div>
+   741→   741→        ))}
+   742→   742→      </div>
+   743→   743→    </div>
+   744→   744→  )
+   745→   745→}
+   746→   746→
+   747→   747→// ── Signals Tab ──────────────────────────────────────────────────────────────
+   748→   748→
+   749→   749→function SignalsTab() {
+   750→   750→  return (
+   751→   751→    <div className="space-y-4">
+   752→   752→      <div className="flex justify-between items-center">
+   753→   753→        <h3 className="text-sm font-medium text-muted-foreground">
+   754→   754→          Recent trading signals
+   755→   755→        </h3>
+   756→   756→        <Button
+   757→   757→          size="sm"
+   758→   758→          className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5"
+   759→   759→        >
+   760→   760→          <Plus className="size-4" />
+   761→   761→          Create Signal
+   762→   762→        </Button>
+   763→   763→      </div>
+   764→   764→
+   765→   765→      <Card>
+   766→   766→        <CardContent className="p-0">
+   767→   767→          <Table>
+   768→   768→            <TableHeader>
+   769→   769→              <TableRow>
+   770→   770→                <TableHead className="pl-4">Pair</TableHead>
+   771→   771→                <TableHead>Direction</TableHead>
+   772→   772→                <TableHead>Status</TableHead>
+   773→   773→                <TableHead className="hidden sm:table-cell">Created</TableHead>
+   774→   774→                <TableHead className="pr-4 w-10" />
+   775→   775→              </TableRow>
+   776→   776→            </TableHeader>
+   777→   777→            <TableBody>
+   778→   778→              {mockSignals.map((signal, index) => (
+   779→   779→                <motion.tr
+   780→   780→                  key={signal.id}
+   781→   781→                  initial={{ opacity: 0, x: -10 }}
+   782→   782→                  animate={{ opacity: 1, x: 0 }}
+   783→   783→                  transition={{ duration: 0.3, delay: index * 0.04 }}
+   784→   784→                  className="hover:bg-muted/50 border-b transition-colors"
+   785→   785→                >
+   786→   786→                  <TableCell className="pl-4 py-3 font-medium text-sm">
+   787→   787→                    {signal.pair}
+   788→   788→                  </TableCell>
+   789→   789→                  <TableCell>{getDirectionBadge(signal.direction)}</TableCell>
+   790→   790→                  <TableCell>{getSignalStatusBadge(signal.status)}</TableCell>
+   791→   791→                  <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">
+   792→   792→                    {signal.created}
+   793→   793→                  </TableCell>
+   794→   794→                  <TableCell className="pr-4">
+   795→   795→                    <DropdownMenu>
+   796→   796→                      <DropdownMenuTrigger asChild>
+   797→   797→                        <Button variant="ghost" size="icon" className="size-8">
+   798→   798→                          <MoreHorizontal className="size-4" />
+   799→   799→                        </Button>
+   800→   800→                      </DropdownMenuTrigger>
+   801→   801→                      <DropdownMenuContent align="end">
+   802→   802→                        <DropdownMenuItem>
+   803→   803→                          <Edit3 className="size-4 mr-2" />
+   804→   804→                          Edit
+   805→   805→                        </DropdownMenuItem>
+   806→   806→                        <DropdownMenuItem variant="destructive">
+   807→   807→                          <Trash2 className="size-4 mr-2" />
+   808→   808→                          Delete
+   809→   809→                        </DropdownMenuItem>
+   810→   810→                      </DropdownMenuContent>
+   811→   811→                    </DropdownMenu>
+   812→   812→                  </TableCell>
+   813→   813→                </motion.tr>
+   814→   814→              ))}
+   815→   815→            </TableBody>
+   816→   816→          </Table>
+   817→   817→        </CardContent>
+   818→   818→      </Card>
+   819→   819→    </div>
+   820→   820→  )
+   821→   821→}
+   822→   822→
+   823→   823→// ── Content Tab ──────────────────────────────────────────────────────────────
+   824→   824→
+   825→   825→function ContentTab() {
+   826→   826→  return (
+   827→   827→    <div className="space-y-4">
+   828→   828→      <div className="flex justify-between items-center">
+   829→   829→        <h3 className="text-sm font-medium text-muted-foreground">
+   830→   830→          Blog posts & content
+   831→   831→        </h3>
+   832→   832→        <Button
+   833→   833→          size="sm"
+   834→   834→          className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5"
+   835→   835→        >
+   836→   836→          <Plus className="size-4" />
+   837→   837→          Create Post
+   838→   838→        </Button>
+   839→   839→      </div>
+   840→   840→
+   841→   841→      <Card>
+   842→   842→        <CardContent className="p-0">
+   843→   843→          <Table>
+   844→   844→            <TableHeader>
+   845→   845→              <TableRow>
+   846→   846→                <TableHead className="pl-4">Title</TableHead>
+   847→   847→                <TableHead>Status</TableHead>
+   848→   848→                <TableHead className="hidden sm:table-cell">Date</TableHead>
+   849→   849→                <TableHead className="pr-4 w-10" />
+   850→   850→              </TableRow>
+   851→   851→            </TableHeader>
+   852→   852→            <TableBody>
+   853→   853→              {mockPosts.map((post, index) => (
+   854→   854→                <motion.tr
+   855→   855→                  key={post.id}
+   856→   856→                  initial={{ opacity: 0, x: -10 }}
+   857→   857→                  animate={{ opacity: 1, x: 0 }}
+   858→   858→                  transition={{ duration: 0.3, delay: index * 0.04 }}
+   859→   859→                  className="hover:bg-muted/50 border-b transition-colors"
+   860→   860→                >
+   861→   861→                  <TableCell className="pl-4 py-3">
+   862→   862→                    <div className="flex items-center gap-2">
+   863→   863→                      <FileText className="size-4 text-muted-foreground shrink-0" />
+   864→   864→                      <span className="font-medium text-sm">
+   865→   865→                        {post.title}
+   866→   866→                      </span>
+   867→   867→                    </div>
+   868→   868→                  </TableCell>
+   869→   869→                  <TableCell>{getPostStatusBadge(post.status)}</TableCell>
+   870→   870→                  <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">
+   871→   871→                    {post.date}
+   872→   872→                  </TableCell>
+   873→   873→                  <TableCell className="pr-4">
+   874→   874→                    <DropdownMenu>
+   875→   875→                      <DropdownMenuTrigger asChild>
+   876→   876→                        <Button variant="ghost" size="icon" className="size-8">
+   877→   877→                          <MoreHorizontal className="size-4" />
+   878→   878→                        </Button>
+   879→   879→                      </DropdownMenuTrigger>
+   880→   880→                      <DropdownMenuContent align="end">
+   881→   881→                        <DropdownMenuItem>
+   882→   882→                          <Edit3 className="size-4 mr-2" />
+   883→   883→                          Edit
+   884→   884→                        </DropdownMenuItem>
+   885→   885→                        <DropdownMenuItem variant="destructive">
+   886→   886→                          <Trash2 className="size-4 mr-2" />
+   887→   887→                          Delete
+   888→   888→                        </DropdownMenuItem>
+   889→   889→                      </DropdownMenuContent>
+   890→   890→                    </DropdownMenu>
+   891→   891→                  </TableCell>
+   892→   892→                </motion.tr>
+   893→   893→              ))}
+   894→   894→            </TableBody>
+   895→   895→          </Table>
+   896→   896→        </CardContent>
+   897→   897→      </Card>
+   898→   898→    </div>
+   899→   899→  )
+   900→   900→}
+   901→   901→
+   902→   902→// ── Main Component ───────────────────────────────────────────────────────────
+   903→   903→
+   904→   904→export default function AdminView() {
+   905→   905→  const [activeTab, setActiveTab] = useState('overview')
+   906→   906→
+   907→   907→  return (
+   908→   908→    <div className="min-h-screen bg-background">
+   909→   909→      <div className="max-w-6xl mx-auto px-4 py-6 sm:py-8">
+   910→   910→        {/* Header */}
+   911→   911→        <motion.div
+   912→   912→          initial={{ opacity: 0, y: -20 }}
+   913→   913→          animate={{ opacity: 1, y: 0 }}
+   914→   914→          transition={{ duration: 0.4 }}
+   915→   915→          className="mb-6"
+   916→   916→        >
+   917→   917→          <h1 className="text-2xl font-bold tracking-tight">Admin Panel</h1>
+   918→   918→          <p className="text-sm text-muted-foreground mt-1">
+   919→   919→            Manage your platform, users, courses, and content.
+   920→   920→          </p>
+   921→   921→        </motion.div>
+   922→   922→
+   923→   923→        {/* Tab Navigation */}
+   924→   924→        <motion.div
+   925→   925→          initial={{ opacity: 0, y: -10 }}
+   926→   926→          animate={{ opacity: 1, y: 0 }}
+   927→   927→          transition={{ duration: 0.4, delay: 0.1 }}
+   928→   928→        >
+   929→   929→          <Tabs value={activeTab} onValueChange={setActiveTab}>
+   930→   930→            <TabsList className="mb-6">
+   931→   931→              <TabsTrigger value="overview" className="gap-1.5 text-xs sm:text-sm">
+   932→   932→                <LayoutDashboard className="size-3.5" />
+   933→   933→                <span className="hidden sm:inline">Overview</span>
+   934→   934→              </TabsTrigger>
+   935→   935→              <TabsTrigger value="users" className="gap-1.5 text-xs sm:text-sm">
+   936→   936→                <Users className="size-3.5" />
+   937→   937→                <span className="hidden sm:inline">Users</span>
+   938→   938→              </TabsTrigger>
+   939→   939→              <TabsTrigger value="courses" className="gap-1.5 text-xs sm:text-sm">
+   940→   940→                <BookOpen className="size-3.5" />
+   941→   941→                <span className="hidden sm:inline">Courses</span>
+   942→   942→              </TabsTrigger>
+   943→   943→              <TabsTrigger value="signals" className="gap-1.5 text-xs sm:text-sm">
+   944→   944→                <Signal className="size-3.5" />
+   945→   945→                <span className="hidden sm:inline">Signals</span>
+   946→   946→              </TabsTrigger>
+   947→   947→              <TabsTrigger value="content" className="gap-1.5 text-xs sm:text-sm">
+   948→   948→                <FileText className="size-3.5" />
+   949→   949→                <span className="hidden sm:inline">Content</span>
+   950→   950→              </TabsTrigger>
+   951→   951→            </TabsList>
+   952→   952→
+   953→   953→            <TabsContent value="overview">
+   954→   954→              <OverviewTab />
+   955→   955→            </TabsContent>
+   956→   956→            <TabsContent value="users">
+   957→   957→              <UsersTab />
+   958→   958→            </TabsContent>
+   959→   959→            <TabsContent value="courses">
+   960→   960→              <CoursesTab />
+   961→   961→            </TabsContent>
+   962→   962→            <TabsContent value="signals">
+   963→   963→              <SignalsTab />
+   964→   964→            </TabsContent>
+   965→   965→            <TabsContent value="content">
+   966→   966→              <ContentTab />
+   967→   967→            </TabsContent>
+   968→   968→          </Tabs>
+   969→   969→        </motion.div>
+   970→   970→      </div>
+   971→   971→    </div>
+   972→   972→  )
+   973→   973→}

@@ -1,0 +1,694 @@
+     1→     1→'use client'
+     2→     2→
+     3→     3→import { useState } from 'react'
+     4→     4→import { motion } from 'framer-motion'
+     5→     5→import {
+     6→     6→  BarChart3,
+     7→     7→  TrendingUp,
+     8→     8→  Plus,
+     9→     9→  Bot,
+    10→    10→  BookOpen,
+    11→    11→  Target,
+    12→    12→  Flame,
+    13→    13→  ArrowUpRight,
+    14→    14→  ArrowDownRight,
+    15→    15→  CalendarDays,
+    16→    16→  Save,
+    17→    17→  TrendingDown,
+    18→    18→  Activity,
+    19→    19→  Clock,
+    20→    20→  LineChart,
+    21→    21→} from 'lucide-react'
+    22→    22→import {
+    23→    23→  AreaChart,
+    24→    24→  Area,
+    25→    25→  XAxis,
+    26→    26→  YAxis,
+    27→    27→  CartesianGrid,
+    28→    28→  Tooltip,
+    29→    29→  ResponsiveContainer,
+    30→    30→  LineChart as RechartsLineChart,
+    31→    31→  Line,
+    32→    32→} from 'recharts'
+    33→    33→
+    34→    34→import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+    35→    35→import { Button } from '@/components/ui/button'
+    36→    36→import { Badge } from '@/components/ui/badge'
+    37→    37→import { Progress } from '@/components/ui/progress'
+    38→    38→import { Textarea } from '@/components/ui/textarea'
+    39→    39→import { ScrollArea } from '@/components/ui/scroll-area'
+    40→    40→import { Separator } from '@/components/ui/separator'
+    41→    41→import { useNavigation } from '@/store/navigation'
+    42→    42→
+    43→    43→// ─── Mock Data ────────────────────────────────────────────────────────────────
+    44→    44→
+    45→    45→const winRateSparkline = [
+    46→    46→  { v: 62 },
+    47→    47→  { v: 58 },
+    48→    48→  { v: 65 },
+    49→    49→  { v: 63 },
+    50→    50→  { v: 60 },
+    51→    51→  { v: 66 },
+    52→    52→  { v: 64 },
+    53→    53→  { v: 67 },
+    54→    54→  { v: 65 },
+    55→    55→  { v: 67.5 },
+    56→    56→]
+    57→    57→
+    58→    58→const courses = [
+    59→    59→  { name: 'Technical Analysis Masterclass', progress: 75, icon: '📊' },
+    60→    60→  { name: 'Risk Management Fundamentals', progress: 45, icon: '🛡️' },
+    61→    61→  { name: 'Price Action Trading', progress: 90, icon: '🕯️' },
+    62→    62→]
+    63→    63→
+    64→    64→const signals = [
+    65→    65→  { pair: 'EUR/USD', direction: 'Buy' as const, entry: '1.0845', sl: '1.0810', tp: '1.0920', timeframe: 'H4', status: 'Active' as const },
+    66→    66→  { pair: 'GBP/JPY', direction: 'Sell' as const, entry: '191.35', sl: '191.80', tp: '190.50', timeframe: 'H1', status: 'Hit TP' as const },
+    67→    67→  { pair: 'BTC/USD', direction: 'Buy' as const, entry: '67,250', sl: '66,800', tp: '69,000', timeframe: 'D1', status: 'Active' as const },
+    68→    68→  { pair: 'XAU/USD', direction: 'Sell' as const, entry: '2,415.50', sl: '2,425.00', tp: '2,390.00', timeframe: 'H4', status: 'Hit SL' as const },
+    69→    69→  { pair: 'USD/JPY', direction: 'Buy' as const, entry: '157.80', sl: '157.40', tp: '158.50', timeframe: 'M15', status: 'Expired' as const },
+    70→    70→]
+    71→    71→
+    72→    72→const watchlist = [
+    73→    73→  { pair: 'EUR/USD', price: '1.0867', change: +0.32 },
+    74→    74→  { pair: 'GBP/JPY', price: '191.24', change: -0.15 },
+    75→    75→  { pair: 'BTC/USD', price: '68,420', change: +2.45 },
+    76→    76→  { pair: 'XAU/USD', price: '2,418.30', change: +0.89 },
+    77→    77→  { pair: 'USD/JPY', price: '157.92', change: -0.08 },
+    78→    78→  { pair: 'AAPL', price: '198.54', change: +1.23 },
+    79→    79→]
+    80→    80→
+    81→    81→const events = [
+    82→    82→  { name: 'NFP Report', time: 'Friday 8:30 AM' },
+    83→    83→  { name: 'FOMC Meeting', time: 'Wednesday 2:00 PM' },
+    84→    84→  { name: 'Live Session: Scalping', time: 'Thursday 7:00 PM' },
+    85→    85→  { name: 'Quiz: Risk Management', time: 'Monday 9:00 AM' },
+    86→    86→]
+    87→    87→
+    88→    88→const pnlData = Array.from({ length: 30 }, (_, i) => {
+    89→    89→  const day = i + 1
+    90→    90→  const base = 200 + i * 18
+    91→    91→  const noise = Math.sin(i * 1.7) * 120 + Math.cos(i * 0.8) * 60
+    92→    92→  const value = Math.round((base + noise) * 100) / 100
+    93→    93→  return { day: `Day ${day}`, pnl: value }
+    94→    94→})
+    95→    95→
+    96→    96→// ─── Animation Variants ──────────────────────────────────────────────────────
+    97→    97→
+    98→    98→const containerVariants = {
+    99→    99→  hidden: { opacity: 0 },
+   100→   100→  visible: {
+   101→   101→    opacity: 1,
+   102→   102→    transition: { staggerChildren: 0.08, delayChildren: 0.1 },
+   103→   103→  },
+   104→   104→}
+   105→   105→
+   106→   106→const itemVariants = {
+   107→   107→  hidden: { opacity: 0, y: 20 },
+   108→   108→  visible: {
+   109→   109→    opacity: 1,
+   110→   110→    y: 0,
+   111→   111→    transition: { type: 'spring', stiffness: 300, damping: 24 },
+   112→   112→  },
+   113→   113→}
+   114→   114→
+   115→   115→const cardHoverProps = {
+   116→   116→  whileHover: { y: -2, boxShadow: '0 8px 30px rgba(16, 185, 129, 0.08)' },
+   117→   117→  transition: { type: 'spring', stiffness: 400, damping: 25 },
+   118→   118→}
+   119→   119→
+   120→   120→// ─── Sub-components ──────────────────────────────────────────────────────────
+   121→   121→
+   122→   122→function DirectionBadge({ direction }: { direction: 'Buy' | 'Sell' }) {
+   123→   123→  const isBuy = direction === 'Buy'
+   124→   124→  return (
+   125→   125→    <Badge
+   126→   126→      className={
+   127→   127→        isBuy
+   128→   128→          ? 'bg-emerald-500/15 text-emerald-600 border-emerald-500/25 hover:bg-emerald-500/25 dark:text-emerald-400 dark:border-emerald-500/30'
+   129→   129→          : 'bg-rose-500/15 text-rose-600 border-rose-500/25 hover:bg-rose-500/25 dark:text-rose-400 dark:border-rose-500/30'
+   130→   130→      }
+   131→   131→    >
+   132→   132→      {isBuy ? <ArrowUpRight className="size-3" /> : <ArrowDownRight className="size-3" />}
+   133→   133→      {direction}
+   134→   134→    </Badge>
+   135→   135→  )
+   136→   136→}
+   137→   137→
+   138→   138→function StatusBadge({ status }: { status: 'Active' | 'Hit TP' | 'Hit SL' | 'Expired' }) {
+   139→   139→  const styles: Record<string, string> = {
+   140→   140→    Active: 'bg-emerald-500/15 text-emerald-600 border-emerald-500/25 dark:text-emerald-400',
+   141→   141→    'Hit TP': 'bg-emerald-500/15 text-emerald-600 border-emerald-500/25 dark:text-emerald-400',
+   142→   142→    'Hit SL': 'bg-rose-500/15 text-rose-600 border-rose-500/25 dark:text-rose-400',
+   143→   143→    Expired: 'bg-muted text-muted-foreground border-muted-foreground/25',
+   144→   144→  }
+   145→   145→  return (
+   146→   146→    <Badge variant="outline" className={styles[status]}>
+   147→   147→      {status === 'Active' && <span className="mr-1 size-1.5 rounded-full bg-emerald-500 animate-pulse" />}
+   148→   148→      {status}
+   149→   149→    </Badge>
+   150→   150→  )
+   151→   151→}
+   152→   152→
+   153→   153→// ─── Main Component ──────────────────────────────────────────────────────────
+   154→   154→
+   155→   155→export default function DashboardView() {
+   156→   156→  const { setView } = useNavigation()
+   157→   157→  const [journalText, setJournalText] = useState('')
+   158→   158→  const [mood, setMood] = useState<'bullish' | 'bearish' | null>(null)
+   159→   159→  const [journalSaved, setJournalSaved] = useState(false)
+   160→   160→
+   161→   161→  const today = new Date().toLocaleDateString('en-US', {
+   162→   162→    weekday: 'long',
+   163→   163→    year: 'numeric',
+   164→   164→    month: 'long',
+   165→   165→    day: 'numeric',
+   166→   166→  })
+   167→   167→
+   168→   168→  const handleSaveJournal = () => {
+   169→   169→    if (journalText.trim()) {
+   170→   170→      setJournalSaved(true)
+   171→   171→      setTimeout(() => setJournalSaved(false), 2000)
+   172→   172→    }
+   173→   173→  }
+   174→   174→
+   175→   175→  return (
+   176→   176→    <motion.div
+   177→   177→      className="min-h-screen w-full"
+   178→   178→      variants={containerVariants}
+   179→   179→      initial="hidden"
+   180→   180→      animate="visible"
+   181→   181→    >
+   182→   182→      <div className="mx-auto max-w-7xl space-y-6 p-4 sm:p-6 lg:p-8">
+   183→   183→        {/* ── Welcome Banner ──────────────────────────────────────────────── */}
+   184→   184→        <motion.div variants={itemVariants}>
+   185→   185→          <Card className="relative overflow-hidden border-emerald-500/20 bg-gradient-to-br from-emerald-950/40 via-emerald-900/20 to-background dark:from-emerald-950/60 dark:via-emerald-900/30">
+   186→   186→            <CardContent className="py-6 sm:py-8">
+   187→   187→              <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+   188→   188→                <div className="space-y-1.5">
+   189→   189→                  <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+   190→   190→                    Welcome back,{' '}
+   191→   191→                    <span className="bg-gradient-to-r from-emerald-400 to-emerald-600 bg-clip-text text-transparent">
+   192→   192→                      Alex
+   193→   193→                    </span>
+   194→   194→                  </h1>
+   195→   195→                  <p className="text-sm text-muted-foreground sm:text-base">{today}</p>
+   196→   196→                  <p className="text-xs text-muted-foreground/70">
+   197→   197→                    Your portfolio is up <span className="text-emerald-500 font-semibold">+4.2%</span> this month. Keep it up!
+   198→   198→                  </p>
+   199→   199→                </div>
+   200→   200→                <div className="flex flex-wrap gap-2 sm:gap-3">
+   201→   201→                  <Button
+   202→   202→                    onClick={() => setView('chart-analyzer')}
+   203→   203→                    className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/20"
+   204→   204→                  >
+   205→   205→                    <BarChart3 className="size-4" />
+   206→   206→                    <span className="hidden sm:inline">Analyze Chart</span>
+   207→   207→                    <span className="sm:hidden">Analyze</span>
+   208→   208→                  </Button>
+   209→   209→                  <Button
+   210→   210→                    onClick={() => setView('academy')}
+   211→   211→                    variant="outline"
+   212→   212→                    className="border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10 hover:text-emerald-500 dark:text-emerald-400"
+   213→   213→                  >
+   214→   214→                    <Plus className="size-4" />
+   215→   215→                    New Trade
+   216→   216→                  </Button>
+   217→   217→                  <Button
+   218→   218→                    onClick={() => setView('ai-mentor')}
+   219→   219→                    variant="outline"
+   220→   220→                    className="border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10 hover:text-emerald-500 dark:text-emerald-400"
+   221→   221→                  >
+   222→   222→                    <Bot className="size-4" />
+   223→   223→                    <span className="hidden sm:inline">AI Mentor</span>
+   224→   224→                    <span className="sm:hidden">Mentor</span>
+   225→   225→                  </Button>
+   226→   226→                </div>
+   227→   227→              </div>
+   228→   228→            </CardContent>
+   229→   229→          </Card>
+   230→   230→        </motion.div>
+   231→   231→
+   232→   232→        {/* ── Stats Row ──────────────────────────────────────────────────── */}
+   233→   233→        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+   234→   234→          {[
+   235→   235→            {
+   236→   236→              label: 'Total Courses',
+   237→   237→              value: '12',
+   238→   238→              icon: BookOpen,
+   239→   239→              sub: '8 completed',
+   240→   240→              subIcon: '📚',
+   241→   241→              color: 'text-emerald-500',
+   242→   242→              bg: 'bg-emerald-500/10',
+   243→   243→            },
+   244→   244→            {
+   245→   245→              label: 'Win Rate',
+   246→   246→              value: '67.5%',
+   247→   247→              icon: Target,
+   248→   248→              sub: 'winning trades',
+   249→   249→              sparkline: true,
+   250→   250→              color: 'text-emerald-500',
+   251→   251→              bg: 'bg-emerald-500/10',
+   252→   252→            },
+   253→   253→            {
+   254→   254→              label: 'Total Trades',
+   255→   255→              value: '156',
+   256→   256→              icon: Activity,
+   257→   257→              sub: '+12 this week',
+   258→   258→              badge: '+12 this week',
+   259→   259→              color: 'text-blue-500',
+   260→   260→              bg: 'bg-blue-500/10',
+   261→   261→            },
+   262→   262→            {
+   263→   263→              label: 'Streak',
+   264→   264→              value: '7 Days',
+   265→   265→              icon: Flame,
+   266→   266→              sub: 'Keep going!',
+   267→   267→              color: 'text-orange-500',
+   268→   268→              bg: 'bg-orange-500/10',
+   269→   269→            },
+   270→   270→          ].map((stat, i) => (
+   271→   271→            <motion.div key={stat.label} variants={itemVariants}>
+   272→   272→              <motion.div
+   273→   273→                {...cardHoverProps}
+   274→   274→                className="rounded-xl border bg-card p-4 sm:p-5 transition-colors"
+   275→   275→              >
+   276→   276→                <div className="flex items-start justify-between">
+   277→   277→                  <div className={`rounded-lg p-2 ${stat.bg}`}>
+   278→   278→                    <stat.icon className={`size-4 sm:size-5 ${stat.color}`} />
+   279→   279→                  </div>
+   280→   280→                  {stat.badge && (
+   281→   281→                    <Badge className="bg-emerald-500/15 text-emerald-600 border-emerald-500/25 text-[10px] dark:text-emerald-400">
+   282→   282→                      {stat.badge}
+   283→   283→                    </Badge>
+   284→   284→                  )}
+   285→   285→                </div>
+   286→   286→                <div className="mt-3 space-y-0.5">
+   287→   287→                  <p className="text-xs text-muted-foreground sm:text-sm">{stat.label}</p>
+   288→   288→                  <div className="flex items-baseline gap-2">
+   289→   289→                    <p className="text-xl font-bold tracking-tight sm:text-2xl">{stat.value}</p>
+   290→   290→                    {stat.sparkline && (
+   291→   291→                      <div className="h-6 w-16 sm:w-20">
+   292→   292→                        <ResponsiveContainer width="100%" height="100%">
+   293→   293→                          <RechartsLineChart data={winRateSparkline}>
+   294→   294→                            <Line
+   295→   295→                              type="monotone"
+   296→   296→                              dataKey="v"
+   297→   297→                              stroke="#10b981"
+   298→   298→                              strokeWidth={2}
+   299→   299→                              dot={false}
+   300→   300→                            />
+   301→   301→                          </RechartsLineChart>
+   302→   302→                        </ResponsiveContainer>
+   303→   303→                      </div>
+   304→   304→                    )}
+   305→   305→                  </div>
+   306→   306→                  <p className="text-xs text-muted-foreground">{stat.sub}</p>
+   307→   307→                </div>
+   308→   308→              </motion.div>
+   309→   309→            </motion.div>
+   310→   310→          ))}
+   311→   311→        </div>
+   312→   312→
+   313→   313→        {/* ── Two-Column Layout ──────────────────────────────────────────── */}
+   314→   314→        <div className="grid gap-6 lg:grid-cols-3">
+   315→   315→          {/* Left Column (2/3) */}
+   316→   316→          <div className="space-y-6 lg:col-span-2">
+   317→   317→            {/* Learning Progress */}
+   318→   318→            <motion.div variants={itemVariants}>
+   319→   319→              <Card className="hover:border-emerald-500/20 transition-colors">
+   320→   320→                <CardHeader>
+   321→   321→                  <CardTitle className="flex items-center gap-2 text-lg">
+   322→   322→                    <LineChart className="size-5 text-emerald-500" />
+   323→   323→                    Learning Progress
+   324→   324→                  </CardTitle>
+   325→   325→                  <CardDescription>Continue where you left off</CardDescription>
+   326→   326→                </CardHeader>
+   327→   327→                <CardContent className="space-y-4">
+   328→   328→                  {courses.map((course) => (
+   329→   329→                    <motion.div
+   330→   330→                      key={course.name}
+   331→   331→                      className="group rounded-lg border p-4 transition-all hover:border-emerald-500/25 hover:bg-emerald-500/[0.02]"
+   332→   332→                      whileHover={{ scale: 1.005 }}
+   333→   333→                      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+   334→   334→                    >
+   335→   335→                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+   336→   336→                        <div className="flex items-center gap-3 min-w-0">
+   337→   337→                          <span className="text-xl shrink-0">{course.icon}</span>
+   338→   338→                          <div className="min-w-0">
+   339→   339→                            <p className="text-sm font-medium truncate">{course.name}</p>
+   340→   340→                            <p className="text-xs text-muted-foreground">
+   341→   341→                              {course.progress}% complete
+   342→   342→                            </p>
+   343→   343→                          </div>
+   344→   344→                        </div>
+   345→   345→                        <div className="flex items-center gap-3 sm:w-48">
+   346→   346→                          <div className="flex-1">
+   347→   347→                            <Progress
+   348→   348→                              value={course.progress}
+   349→   349→                              className="h-2 bg-emerald-500/10 [&>[data-slot=progress-indicator]]:bg-emerald-500"
+   350→   350→                            />
+   351→   351→                          </div>
+   352→   352→                          <Button
+   353→   353→                            size="sm"
+   354→   354→                            variant="outline"
+   355→   355→                            className="shrink-0 border-emerald-500/25 text-emerald-600 hover:bg-emerald-500/10 hover:text-emerald-500 dark:text-emerald-400"
+   356→   356→                            onClick={() => setView('academy')}
+   357→   357→                          >
+   358→   358→                            Continue
+   359→   359→                          </Button>
+   360→   360→                        </div>
+   361→   361→                      </div>
+   362→   362→                    </motion.div>
+   363→   363→                  ))}
+   364→   364→                </CardContent>
+   365→   365→              </Card>
+   366→   366→            </motion.div>
+   367→   367→
+   368→   368→            {/* Recent Signals */}
+   369→   369→            <motion.div variants={itemVariants}>
+   370→   370→              <Card className="hover:border-emerald-500/20 transition-colors">
+   371→   371→                <CardHeader>
+   372→   372→                  <CardTitle className="flex items-center gap-2 text-lg">
+   373→   373→                    <Activity className="size-5 text-emerald-500" />
+   374→   374→                    Recent Signals
+   375→   375→                  </CardTitle>
+   376→   376→                  <CardDescription>Latest AI-generated trading signals</CardDescription>
+   377→   377→                </CardHeader>
+   378→   378→                <CardContent className="px-0 pb-0">
+   379→   379→                  <ScrollArea className="max-h-96">
+   380→   380→                    {/* Desktop Table */}
+   381→   381→                    <div className="hidden md:block">
+   382→   382→                      <div className="grid grid-cols-[1fr_0.7fr_0.7fr_0.7fr_0.7fr_0.5fr_0.8fr] gap-2 px-6 py-2.5 text-xs font-medium text-muted-foreground border-b">
+   383→   383→                        <span>Pair</span>
+   384→   384→                        <span>Direction</span>
+   385→   385→                        <span>Entry</span>
+   386→   386→                        <span>SL</span>
+   387→   387→                        <span>TP</span>
+   388→   388→                        <span>TF</span>
+   389→   389→                        <span>Status</span>
+   390→   390→                      </div>
+   391→   391→                      {signals.map((signal, idx) => (
+   392→   392→                        <motion.div
+   393→   393→                          key={signal.pair + idx}
+   394→   394→                          className="grid grid-cols-[1fr_0.7fr_0.7fr_0.7fr_0.7fr_0.5fr_0.8fr] gap-2 items-center px-6 py-3 text-sm border-b last:border-b-0 hover:bg-emerald-500/[0.02] transition-colors"
+   395→   395→                          initial={{ opacity: 0, x: -10 }}
+   396→   396→                          animate={{ opacity: 1, x: 0 }}
+   397→   397→                          transition={{ delay: idx * 0.05 }}
+   398→   398→                        >
+   399→   399→                          <span className="font-semibold">{signal.pair}</span>
+   400→   400→                          <DirectionBadge direction={signal.direction} />
+   401→   401→                          <span className="font-mono text-xs">{signal.entry}</span>
+   402→   402→                          <span className="font-mono text-xs text-rose-500">{signal.sl}</span>
+   403→   403→                          <span className="font-mono text-xs text-emerald-500">{signal.tp}</span>
+   404→   404→                          <Badge variant="secondary" className="text-[10px] justify-center">
+   405→   405→                            {signal.timeframe}
+   406→   406→                          </Badge>
+   407→   407→                          <StatusBadge status={signal.status} />
+   408→   408→                        </motion.div>
+   409→   409→                      ))}
+   410→   410→                    </div>
+   411→   411→
+   412→   412→                    {/* Mobile Cards */}
+   413→   413→                    <div className="flex flex-col gap-2 p-4 md:hidden">
+   414→   414→                      {signals.map((signal, idx) => (
+   415→   415→                        <motion.div
+   416→   416→                          key={signal.pair + idx}
+   417→   417→                          className="rounded-lg border p-3 space-y-2"
+   418→   418→                          initial={{ opacity: 0, y: 10 }}
+   419→   419→                          animate={{ opacity: 1, y: 0 }}
+   420→   420→                          transition={{ delay: idx * 0.05 }}
+   421→   421→                        >
+   422→   422→                          <div className="flex items-center justify-between">
+   423→   423→                            <span className="font-semibold">{signal.pair}</span>
+   424→   424→                            <StatusBadge status={signal.status} />
+   425→   425→                          </div>
+   426→   426→                          <div className="flex items-center gap-2">
+   427→   427→                            <DirectionBadge direction={signal.direction} />
+   428→   428→                            <Badge variant="secondary" className="text-[10px]">
+   429→   429→                              {signal.timeframe}
+   430→   430→                            </Badge>
+   431→   431→                          </div>
+   432→   432→                          <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground">
+   433→   433→                            <div>
+   434→   434→                              <span className="block text-[10px] uppercase tracking-wider">Entry</span>
+   435→   435→                              <span className="font-mono text-foreground">{signal.entry}</span>
+   436→   436→                            </div>
+   437→   437→                            <div>
+   438→   438→                              <span className="block text-[10px] uppercase tracking-wider text-rose-500">SL</span>
+   439→   439→                              <span className="font-mono text-foreground">{signal.sl}</span>
+   440→   440→                            </div>
+   441→   441→                            <div>
+   442→   442→                              <span className="block text-[10px] uppercase tracking-wider text-emerald-500">TP</span>
+   443→   443→                              <span className="font-mono text-foreground">{signal.tp}</span>
+   444→   444→                            </div>
+   445→   445→                          </div>
+   446→   446→                        </motion.div>
+   447→   447→                      ))}
+   448→   448→                    </div>
+   449→   449→                  </ScrollArea>
+   450→   450→                </CardContent>
+   451→   451→              </Card>
+   452→   452→            </motion.div>
+   453→   453→          </div>
+   454→   454→
+   455→   455→          {/* Right Column (1/3) */}
+   456→   456→          <div className="space-y-6">
+   457→   457→            {/* Watchlist */}
+   458→   458→            <motion.div variants={itemVariants}>
+   459→   459→              <Card className="hover:border-emerald-500/20 transition-colors">
+   460→   460→                <CardHeader>
+   461→   461→                  <CardTitle className="flex items-center gap-2 text-lg">
+   462→   462→                    <TrendingUp className="size-5 text-emerald-500" />
+   463→   463→                    Watchlist
+   464→   464→                  </CardTitle>
+   465→   465→                </CardHeader>
+   466→   466→                <CardContent className="px-0 pb-0">
+   467→   467→                  <ScrollArea className="max-h-80">
+   468→   468→                    <div className="flex flex-col">
+   469→   469→                      {watchlist.map((item, idx) => {
+   470→   470→                        const isPositive = item.change >= 0
+   471→   471→                        return (
+   472→   472→                          <motion.div
+   473→   473→                            key={item.pair}
+   474→   474→                            className="flex items-center justify-between px-6 py-2.5 border-b last:border-b-0 hover:bg-emerald-500/[0.02] transition-colors cursor-pointer"
+   475→   475→                            whileHover={{ x: 2 }}
+   476→   476→                            transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+   477→   477→                          >
+   478→   478→                            <div>
+   479→   479→                              <p className="text-sm font-semibold">{item.pair}</p>
+   480→   480→                              <p className="text-xs font-mono text-muted-foreground">{item.price}</p>
+   481→   481→                            </div>
+   482→   482→                            <div className="flex items-center gap-1">
+   483→   483→                              {isPositive ? (
+   484→   484→                                <TrendingUp className="size-3.5 text-emerald-500" />
+   485→   485→                              ) : (
+   486→   486→                                <TrendingDown className="size-3.5 text-rose-500" />
+   487→   487→                              )}
+   488→   488→                              <span
+   489→   489→                                className={`text-sm font-semibold ${
+   490→   490→                                  isPositive ? 'text-emerald-500' : 'text-rose-500'
+   491→   491→                                }`}
+   492→   492→                              >
+   493→   493→                                {isPositive ? '+' : ''}
+   494→   494→                                {item.change}%
+   495→   495→                              </span>
+   496→   496→                            </div>
+   497→   497→                          </motion.div>
+   498→   498→                        )
+   499→   499→                      })}
+   500→   500→                    </div>
+   501→   501→                  </ScrollArea>
+   502→   502→                </CardContent>
+   503→   503→              </Card>
+   504→   504→            </motion.div>
+   505→   505→
+   506→   506→            {/* Upcoming Events */}
+   507→   507→            <motion.div variants={itemVariants}>
+   508→   508→              <Card className="hover:border-emerald-500/20 transition-colors">
+   509→   509→                <CardHeader>
+   510→   510→                  <CardTitle className="flex items-center gap-2 text-lg">
+   511→   511→                    <CalendarDays className="size-5 text-emerald-500" />
+   512→   512→                    Upcoming Events
+   513→   513→                  </CardTitle>
+   514→   514→                </CardHeader>
+   515→   515→                <CardContent className="space-y-0 px-0">
+   516→   516→                  {events.map((event, idx) => (
+   517→   517→                    <motion.div
+   518→   518→                      key={event.name}
+   519→   519→                      className="flex items-start gap-3 px-6 py-3 border-b last:border-b-0 hover:bg-emerald-500/[0.02] transition-colors"
+   520→   520→                      whileHover={{ x: 2 }}
+   521→   521→                      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+   522→   522→                    >
+   523→   523→                      <div className="mt-0.5 rounded-md bg-emerald-500/10 p-1.5">
+   524→   524→                        <CalendarDays className="size-3.5 text-emerald-500" />
+   525→   525→                      </div>
+   526→   526→                      <div className="min-w-0">
+   527→   527→                        <p className="text-sm font-medium truncate">{event.name}</p>
+   528→   528→                        <p className="flex items-center gap-1 text-xs text-muted-foreground">
+   529→   529→                          <Clock className="size-3" />
+   530→   530→                          {event.time}
+   531→   531→                        </p>
+   532→   532→                      </div>
+   533→   533→                    </motion.div>
+   534→   534→                  ))}
+   535→   535→                </CardContent>
+   536→   536→              </Card>
+   537→   537→            </motion.div>
+   538→   538→
+   539→   539→            {/* Quick Journal Entry */}
+   540→   540→            <motion.div variants={itemVariants}>
+   541→   541→              <Card className="hover:border-emerald-500/20 transition-colors">
+   542→   542→                <CardHeader>
+   543→   543→                  <CardTitle className="text-lg">Quick Journal</CardTitle>
+   544→   544→                  <CardDescription>How are you feeling about the market?</CardDescription>
+   545→   545→                </CardHeader>
+   546→   546→                <CardContent className="space-y-3">
+   547→   547→                  <Textarea
+   548→   548→                    placeholder="How are you feeling about today's market?"
+   549→   549→                    className="min-h-20 resize-none bg-muted/30 border-muted-foreground/10 focus-visible:border-emerald-500/50 focus-visible:ring-emerald-500/20"
+   550→   550→                    value={journalText}
+   551→   551→                    onChange={(e) => setJournalText(e.target.value)}
+   552→   552→                  />
+   553→   553→                  <div className="flex items-center justify-between gap-2">
+   554→   554→                    <div className="flex gap-2">
+   555→   555→                      <Button
+   556→   556→                        size="sm"
+   557→   557→                        variant={mood === 'bullish' ? 'default' : 'outline'}
+   558→   558→                        className={
+   559→   559→                          mood === 'bullish'
+   560→   560→                            ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600'
+   561→   561→                            : 'border-emerald-500/25 text-emerald-600 hover:bg-emerald-500/10 hover:text-emerald-500 dark:text-emerald-400'
+   562→   562→                        }
+   563→   563→                        onClick={() => setMood(mood === 'bullish' ? null : 'bullish')}
+   564→   564→                      >
+   565→   565→                        <TrendingUp className="size-3.5" />
+   566→   566→                        Bullish
+   567→   567→                      </Button>
+   568→   568→                      <Button
+   569→   569→                        size="sm"
+   570→   570→                        variant={mood === 'bearish' ? 'default' : 'outline'}
+   571→   571→                        className={
+   572→   572→                          mood === 'bearish'
+   573→   573→                            ? 'bg-rose-600 hover:bg-rose-700 text-white border-rose-600'
+   574→   574→                            : 'border-rose-500/25 text-rose-600 hover:bg-rose-500/10 hover:text-rose-500 dark:text-rose-400'
+   575→   575→                        }
+   576→   576→                        onClick={() => setMood(mood === 'bearish' ? null : 'bearish')}
+   577→   577→                      >
+   578→   578→                        <TrendingDown className="size-3.5" />
+   579→   579→                        Bearish
+   580→   580→                      </Button>
+   581→   581→                    </div>
+   582→   582→                    <Button
+   583→   583→                      size="sm"
+   584→   584→                      className="bg-emerald-600 hover:bg-emerald-700 text-white"
+   585→   585→                      onClick={handleSaveJournal}
+   586→   586→                    >
+   587→   587→                      {journalSaved ? (
+   588→   588→                        <>
+   589→   589→                          <span className="size-2 rounded-full bg-white" />
+   590→   590→                          Saved
+   591→   591→                        </>
+   592→   592→                      ) : (
+   593→   593→                        <>
+   594→   594→                          <Save className="size-3.5" />
+   595→   595→                          Save
+   596→   596→                        </>
+   597→   597→                      )}
+   598→   598→                    </Button>
+   599→   599→                  </div>
+   600→   600→                </CardContent>
+   601→   601→              </Card>
+   602→   602→            </motion.div>
+   603→   603→          </div>
+   604→   604→        </div>
+   605→   605→
+   606→   606→        {/* ── Performance Chart (Full Width) ─────────────────────────────── */}
+   607→   607→        <motion.div variants={itemVariants}>
+   608→   608→          <Card className="hover:border-emerald-500/20 transition-colors">
+   609→   609→            <CardHeader>
+   610→   610→              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+   611→   611→                <div>
+   612→   612→                  <CardTitle className="flex items-center gap-2 text-lg">
+   613→   613→                    <BarChart3 className="size-5 text-emerald-500" />
+   614→   614→                    Performance — P&L
+   615→   615→                  </CardTitle>
+   616→   616→                  <CardDescription>Profit & loss over the last 30 days</CardDescription>
+   617→   617→                </div>
+   618→   618→                <div className="flex items-center gap-3 text-sm">
+   619→   619→                  <div className="flex items-center gap-1.5">
+   620→   620→                    <span className="size-2.5 rounded-full bg-emerald-500" />
+   621→   621→                    <span className="text-muted-foreground">P&L</span>
+   622→   622→                  </div>
+   623→   623→                  <Badge className="bg-emerald-500/15 text-emerald-600 border-emerald-500/25 dark:text-emerald-400">
+   624→   624→                    <ArrowUpRight className="size-3" />
+   625→   625→                    +$2,340
+   626→   626→                  </Badge>
+   627→   627→                </div>
+   628→   628→              </div>
+   629→   629→            </CardHeader>
+   630→   630→            <CardContent>
+   631→   631→              <div className="h-[300px] w-full">
+   632→   632→                <ResponsiveContainer width="100%" height="100%">
+   633→   633→                  <AreaChart data={pnlData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+   634→   634→                    <defs>
+   635→   635→                      <linearGradient id="pnlGradient" x1="0" y1="0" x2="0" y2="1">
+   636→   636→                        <stop offset="0%" stopColor="#10b981" stopOpacity={0.3} />
+   637→   637→                        <stop offset="50%" stopColor="#10b981" stopOpacity={0.1} />
+   638→   638→                        <stop offset="100%" stopColor="#10b981" stopOpacity={0} />
+   639→   639→                      </linearGradient>
+   640→   640→                    </defs>
+   641→   641→                    <CartesianGrid
+   642→   642→                      strokeDasharray="3 3"
+   643→   643→                      stroke="hsl(var(--border))"
+   644→   644→                      vertical={false}
+   645→   645→                    />
+   646→   646→                    <XAxis
+   647→   647→                      dataKey="day"
+   648→   648→                      tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+   649→   649→                      tickLine={false}
+   650→   650→                      axisLine={false}
+   651→   651→                      interval={4}
+   652→   652→                    />
+   653→   653→                    <YAxis
+   654→   654→                      tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+   655→   655→                      tickLine={false}
+   656→   656→                      axisLine={false}
+   657→   657→                      tickFormatter={(v: number) => `$${v}`}
+   658→   658→                      width={60}
+   659→   659→                    />
+   660→   660→                    <Tooltip
+   661→   661→                      contentStyle={{
+   662→   662→                        backgroundColor: 'hsl(var(--card))',
+   663→   663→                        border: '1px solid hsl(var(--border))',
+   664→   664→                        borderRadius: '8px',
+   665→   665→                        fontSize: '12px',
+   666→   666→                        boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+   667→   667→                      }}
+   668→   668→                      labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 600 }}
+   669→   669→                      formatter={(value: number) => [`$${value.toFixed(2)}`, 'P&L']}
+   670→   670→                    />
+   671→   671→                    <Area
+   672→   672→                      type="monotone"
+   673→   673→                      dataKey="pnl"
+   674→   674→                      stroke="#10b981"
+   675→   675→                      strokeWidth={2.5}
+   676→   676→                      fill="url(#pnlGradient)"
+   677→   677→                      dot={false}
+   678→   678→                      activeDot={{
+   679→   679→                        r: 5,
+   680→   680→                        fill: '#10b981',
+   681→   681→                        stroke: 'hsl(var(--background))',
+   682→   682→                        strokeWidth: 2,
+   683→   683→                      }}
+   684→   684→                    />
+   685→   685→                  </AreaChart>
+   686→   686→                </ResponsiveContainer>
+   687→   687→              </div>
+   688→   688→            </CardContent>
+   689→   689→          </Card>
+   690→   690→        </motion.div>
+   691→   691→      </div>
+   692→   692→    </motion.div>
+   693→   693→  )
+   694→   694→}

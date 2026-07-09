@@ -1,0 +1,781 @@
+     1→'use client'
+     2→
+     3→import { useState, useMemo } from 'react'
+     4→import { motion, AnimatePresence } from 'framer-motion'
+     5→import {
+     6→  Heart,
+     7→  MessageCircle,
+     8→  Share2,
+     9→  Search,
+    10→  Plus,
+    11→  Radio,
+    12→  TrendingUp,
+    13→  Clock,
+    14→  Users,
+    15→  Send,
+    16→  X,
+    17→} from 'lucide-react'
+    18→import { toast } from 'sonner'
+    19→import {
+    20→  Dialog,
+    21→  DialogContent,
+    22→  DialogHeader,
+    23→  DialogTitle,
+    24→  DialogDescription,
+    25→  DialogFooter,
+    26→} from '@/components/ui/dialog'
+    27→import { Label } from '@/components/ui/label'
+    28→import { Textarea } from '@/components/ui/textarea'
+    29→import { Button } from '@/components/ui/button'
+    30→import { Card, CardContent } from '@/components/ui/card'
+    31→import { Badge } from '@/components/ui/badge'
+    32→import { Input } from '@/components/ui/input'
+    33→import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+    34→import { Separator } from '@/components/ui/separator'
+    35→import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+    36→
+    37→// ── Mock Data ────────────────────────────────────────────────────────────────
+    38→
+    39→interface Comment {
+    40→  id: string
+    41→  author: string
+    42→  avatar: string
+    43→  role: string
+    44→  text: string
+    45→  timestamp: string
+    46→}
+    47→
+    48→interface Post {
+    49→  id: string
+    50→  author: string
+    51→  avatar: string
+    52→  role: string
+    53→  roleColor: string
+    54→  timestamp: string
+    55→  content: string
+    56→  tags: string[]
+    57→  likes: number
+    58→  comments: number
+    59→  shares: number
+    60→  hasImage: boolean
+    61→  imageGradient?: string
+    62→  commentList: Comment[]
+    63→  totalComments: number
+    64→}
+    65→
+    66→const mockPosts: Post[] = [
+    67→  {
+    68→    id: '1',
+    69→    author: 'Alex Chen',
+    70→    avatar: 'AC',
+    71→    role: 'Pro Trader',
+    72→    roleColor: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400',
+    73→    timestamp: '2h ago',
+    74→    content:
+    75→      'Just hit my first 1:10 R/R trade on GBP/JPY! The key was waiting for the breakout confirmation above the 4H supply zone and entering on the retracement to the FVG. Patience truly pays off in this game. Here\'s my analysis breakdown for anyone interested.',
+    76→    tags: ['#technical-analysis', '#forex', '#price-action'],
+    77→    likes: 142,
+    78→    comments: 38,
+    79→    shares: 24,
+    80→    hasImage: true,
+    81→    imageGradient: 'from-emerald-400 via-teal-500 to-cyan-600',
+    82→    commentList: [
+    83→      {
+    84→        id: 'c1',
+    85→        author: 'Sarah M.',
+    86→        avatar: 'SM',
+    87→        role: 'Instructor',
+    88→        text: 'Beautiful execution! That FVG entry was textbook. Congrats on the discipline.',
+    89→        timestamp: '1h ago',
+    90→      },
+    91→      {
+    92→        id: 'c2',
+    93→        author: 'Mike R.',
+    94→        avatar: 'MR',
+    95→        role: 'Student',
+    96→        text: 'This is inspiring. I keep jumping in too early. Need to work on my patience.',
+    97→        timestamp: '45m ago',
+    98→      },
+    99→    ],
+   100→    totalComments: 38,
+   101→  },
+   102→  {
+   103→    id: '2',
+   104→    author: 'Sarah Mitchell',
+   105→    avatar: 'SM',
+   106→    role: 'Instructor',
+   107→    roleColor: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400',
+   108→    timestamp: '4h ago',
+   109→    content:
+   110→      'Weekly market recap: Key levels to watch next week. EUR/USD has formed a clean bullish order block at 1.0820. Gold is showing divergence on the daily RSI. NFP data could shake things up, so manage your risk accordingly. Full analysis in the course section.',
+   111→    tags: ['#market-recap', '#weekly-analysis', '#eurusd'],
+   112→    likes: 287,
+   113→    comments: 56,
+   114→    shares: 89,
+   115→    hasImage: false,
+   116→    commentList: [
+   117→      {
+   118→        id: 'c3',
+   119→        author: 'David K.',
+   120→        avatar: 'DK',
+   121→        role: 'Pro Trader',
+   122→        text: 'Great call on the EUR/USD OB. I\'ve been watching that same level all week.',
+   123→        timestamp: '3h ago',
+   124→      },
+   125→      {
+   126→        id: 'c4',
+   127→        author: 'Lisa P.',
+   128→        avatar: 'LP',
+   129→        role: 'Student',
+   130→        text: 'Thank you for the gold divergence tip! I wouldn\'t have caught that.',
+   131→        timestamp: '2h ago',
+   132→      },
+   133→    ],
+   134→    totalComments: 56,
+   135→  },
+   136→  {
+   137→    id: '3',
+   138→    author: 'James Wilson',
+   139→    avatar: 'JW',
+   140→    role: 'Student',
+   141→    roleColor: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400',
+   142→    timestamp: '6h ago',
+   143→    content:
+   144→      'The psychology of revenge trading - my journey overcoming it. After blowing two accounts in 2023, I finally understand that the market doesn\'t owe me anything. Journaling every trade and working with the AI mentor helped me identify my emotional triggers. Down 3 trades? Walk away. It\'s that simple.',
+   145→    tags: ['#psychology', '#trading-journal', '#discipline'],
+   146→    likes: 423,
+   147→    comments: 94,
+   148→    shares: 156,
+   149→    hasImage: false,
+   150→    commentList: [
+   151→      {
+   152→        id: 'c5',
+   153→        author: 'Sarah M.',
+   154→        avatar: 'SM',
+   155→        role: 'Instructor',
+   156→        text: 'This is incredibly brave to share. Your story will help so many traders who are going through the same thing.',
+   157→        timestamp: '5h ago',
+   158→      },
+   159→      {
+   160→        id: 'c6',
+   161→        author: 'Tom B.',
+   162→        avatar: 'TB',
+   163→        role: 'Student',
+   164→        text: 'I\'m currently in the same boat. This post just gave me the push to start journaling properly.',
+   165→        timestamp: '4h ago',
+   166→      },
+   167→    ],
+   168→    totalComments: 94,
+   169→  },
+   170→  {
+   171→    id: '4',
+   172→    author: 'Emma Davis',
+   173→    avatar: 'ED',
+   174→    role: 'Student',
+   175→    roleColor: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400',
+   176→    timestamp: '8h ago',
+   177→    content:
+   178→      'Question: How do you handle consecutive losses? I\'ve had 5 losing trades in a row this week and I\'m starting to doubt my strategy. My win rate is usually around 55-60% but this drawdown is testing my patience. Would love to hear how experienced traders manage these periods.',
+   179→    tags: ['#psychology', '#risk-management', '#ask-community'],
+   180→    likes: 89,
+   181→    comments: 67,
+   182→    shares: 12,
+   183→    hasImage: false,
+   184→    commentList: [
+   185→      {
+   186→        id: 'c7',
+   187→        author: 'Alex C.',
+   188→        avatar: 'AC',
+   189→        role: 'Pro Trader',
+   190→        text: '5 losses in a row is completely normal with a 55% win rate. Check if your losses are within your expected R:R. If yes, keep executing. If no, re-evaluate.',
+   191→        timestamp: '7h ago',
+   192→      },
+   193→      {
+   194→        id: 'c8',
+   195→        author: 'Sarah M.',
+   196→        avatar: 'SM',
+   197→        role: 'Instructor',
+   198→        text: 'Review our course on "Drawdown Management". The key metric is your max drawdown, not individual losses. Scale down size during losing streaks.',
+   199→        timestamp: '6h ago',
+   200→      },
+   201→    ],
+   202→    totalComments: 67,
+   203→  },
+   204→  {
+   205→    id: '5',
+   206→    author: 'Marcus Lee',
+   207→    avatar: 'ML',
+   208→    role: 'Pro Trader',
+   209→    roleColor: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400',
+   210→    timestamp: '12h ago',
+   211→    content:
+   212→      'Free resource: My custom Price Action checklist that I use before every single trade. It covers market structure, key levels, confluence factors, and entry/exit criteria. I\'ve refined this over 3 years and it\'s been a game-changer for my consistency. Download link in the comments.',
+   213→    tags: ['#price-action', '#free-resource', '#checklist'],
+   214→    likes: 531,
+   215→    comments: 128,
+   216→    shares: 203,
+   217→    hasImage: true,
+   218→    imageGradient: 'from-emerald-500 via-green-500 to-lime-400',
+   219→    commentList: [
+   220→      {
+   221→        id: 'c9',
+   222→        author: 'Lisa P.',
+   223→        avatar: 'LP',
+   224→        role: 'Student',
+   225→        text: 'This is gold! Just downloaded it. The confluence section is exactly what I needed.',
+   226→        timestamp: '11h ago',
+   227→      },
+   228→      {
+   229→        id: 'c10',
+   230→        author: 'James W.',
+   231→        avatar: 'JW',
+   232→        role: 'Student',
+   233→        text: 'Incredible generosity. Adding this to my pre-trading routine starting today.',
+   234→        timestamp: '10h ago',
+   235→      },
+   236→    ],
+   237→    totalComments: 128,
+   238→  },
+   239→  {
+   240→    id: '6',
+   241→    author: 'Sarah Mitchell',
+   242→    avatar: 'SM',
+   243→    role: 'Instructor',
+   244→    roleColor: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400',
+   245→    timestamp: '1d ago',
+   246→    content:
+   247→      'Live session recording: Smart Money Concepts deep dive. We covered institutional order flow, liquidity sweeps, and how to identify where smart money is likely positioned. The replay is now available for Pro and Elite members. Key takeaway: always trade in the direction of the higher timeframe bias.',
+   248→    tags: ['#smart-money', '#live-session', '#institutional-trading'],
+   249→    likes: 346,
+   250→    comments: 45,
+   251→    shares: 67,
+   252→    hasImage: true,
+   253→    imageGradient: 'from-teal-400 via-emerald-500 to-green-600',
+   254→    commentList: [
+   255→      {
+   256→        id: 'c11',
+   257→        author: 'Mike R.',
+   258→        avatar: 'MR',
+   259→        role: 'Student',
+   260→        text: 'The liquidity sweep section blew my mind. I\'ve been getting stopped out right before reversals.',
+   261→        timestamp: '20h ago',
+   262→      },
+   263→      {
+   264→        id: 'c12',
+   265→        author: 'David K.',
+   266→        avatar: 'DK',
+   267→        role: 'Pro Trader',
+   268→        text: 'Even as an experienced trader, I picked up new insights from the institutional flow section. Well done!',
+   269→        timestamp: '18h ago',
+   270→      },
+   271→    ],
+   272→    totalComments: 45,
+   273→  },
+   274→]
+   275→
+   276→// ── Sub-components ───────────────────────────────────────────────────────────
+   277→
+   278→function getAvatarColor(name: string): string {
+   279→  const colors = [
+   280→    'bg-emerald-600',
+   281→    'bg-teal-600',
+   282→    'bg-green-600',
+   283→    'bg-cyan-600',
+   284→    'bg-emerald-700',
+   285→    'bg-teal-700',
+   286→  ]
+   287→  let hash = 0
+   288→  for (let i = 0; i < name.length; i++) {
+   289→    hash = name.charCodeAt(i) + ((hash << 5) - hash)
+   290→  }
+   291→  return colors[Math.abs(hash) % colors.length]
+   292→}
+   293→
+   294→function PostCard({ post, index, onComment, onShare }: { post: Post; index: number; onComment: (postId: string, text: string) => void; onShare: (postId: string) => void }) {
+   295→  const [liked, setLiked] = useState(false)
+   296→  const [likeCount, setLikeCount] = useState(post.likes)
+   297→  const [showAllComments, setShowAllComments] = useState(false)
+   298→  const [showCommentInput, setShowCommentInput] = useState(false)
+   299→  const [localCommentText, setLocalCommentText] = useState('')
+   300→
+   301→  const handleLike = () => {
+   302→    setLiked(!liked)
+   303→    setLikeCount((prev) => (liked ? prev - 1 : prev + 1))
+   304→  }
+   305→
+   306→  return (
+   307→    <motion.div
+   308→      initial={{ opacity: 0, y: 20 }}
+   309→      animate={{ opacity: 1, y: 0 }}
+   310→      transition={{ duration: 0.4, delay: index * 0.08, ease: 'easeOut' }}
+   311→    >
+   312→      <Card className="overflow-hidden">
+   313→        <CardContent className="p-0">
+   314→          {/* Post Header */}
+   315→          <div className="flex items-start gap-3 p-4 pb-2">
+   316→            <Avatar className="size-10">
+   317→              <AvatarFallback
+   318→                className={`${getAvatarColor(post.author)} text-white text-sm font-semibold`}
+   319→              >
+   320→                {post.avatar}
+   321→              </AvatarFallback>
+   322→            </Avatar>
+   323→            <div className="flex-1 min-w-0">
+   324→              <div className="flex items-center gap-2 flex-wrap">
+   325→                <span className="font-semibold text-sm">{post.author}</span>
+   326→                <Badge
+   327→                  variant="secondary"
+   328→                  className={`text-[10px] px-1.5 py-0 ${post.roleColor}`}
+   329→                >
+   330→                  {post.role}
+   331→                </Badge>
+   332→                <span className="text-muted-foreground text-xs">
+   333→                  {post.timestamp}
+   334→                </span>
+   335→              </div>
+   336→            </div>
+   337→          </div>
+   338→
+   339→          {/* Post Content */}
+   340→          <div className="px-4 pb-3">
+   341→            <p className="text-sm leading-relaxed text-foreground/90">
+   342→              {post.content}
+   343→            </p>
+   344→          </div>
+   345→
+   346→          {/* Image Placeholder */}
+   347→          {post.hasImage && (
+   348→            <div className="mx-4 mb-3 rounded-lg overflow-hidden">
+   349→              <div
+   350→                className={`h-48 bg-gradient-to-br ${post.imageGradient} flex items-center justify-center`}
+   351→              >
+   352→                <div className="text-white/80 text-center">
+   353→                  <TrendingUp className="size-10 mx-auto mb-2 opacity-60" />
+   354→                  <span className="text-sm font-medium">Chart Analysis</span>
+   355→                </div>
+   356→              </div>
+   357→            </div>
+   358→          )}
+   359→
+   360→          {/* Tags */}
+   361→          <div className="px-4 pb-3 flex flex-wrap gap-1.5">
+   362→            {post.tags.map((tag) => (
+   363→              <Badge
+   364→                key={tag}
+   365→                variant="outline"
+   366→                className="text-[10px] px-1.5 py-0 text-emerald-600 border-emerald-200 dark:text-emerald-400 dark:border-emerald-800 cursor-pointer hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
+   367→              >
+   368→                {tag}
+   369→              </Badge>
+   370→            ))}
+   371→          </div>
+   372→
+   373→          <Separator className="mx-4" />
+   374→
+   375→          {/* Engagement Stats */}
+   376→          <div className="px-4 py-2 flex items-center gap-4 text-xs text-muted-foreground">
+   377→            <span>{likeCount} likes</span>
+   378→            <span>{post.totalComments} comments</span>
+   379→            <span>{post.shares} shares</span>
+   380→          </div>
+   381→
+   382→          <Separator className="mx-4" />
+   383→
+   384→          {/* Action Buttons */}
+   385→          <div className="px-4 py-2 flex items-center gap-1">
+   386→            <Button
+   387→              variant="ghost"
+   388→              size="sm"
+   389→              className={`gap-1.5 h-8 px-3 ${
+   390→                liked
+   391→                  ? 'text-rose-500 hover:text-rose-600'
+   392→                  : 'text-muted-foreground hover:text-rose-500'
+   393→              }`}
+   394→              onClick={handleLike}
+   395→            >
+   396→              <motion.div
+   397→                whileTap={{ scale: 1.4 }}
+   398→                transition={{ type: 'spring', stiffness: 400, damping: 10 }}
+   399→              >
+   400→                <Heart
+   401→                  className="size-4"
+   402→                  fill={liked ? 'currentColor' : 'none'}
+   403→                />
+   404→              </motion.div>
+   405→              <span className="text-xs">Like</span>
+   406→            </Button>
+   407→            <Button
+   408→              variant="ghost"
+   409→              size="sm"
+   410→              className="gap-1.5 h-8 px-3 text-muted-foreground hover:text-emerald-600"
+   411→              onClick={() => setShowCommentInput(!showCommentInput)}
+   412→            >
+   413→              <MessageCircle className="size-4" />
+   414→              <span className="text-xs">Comment</span>
+   415→            </Button>
+   416→            <Button
+   417→              variant="ghost"
+   418→              size="sm"
+   419→              className="gap-1.5 h-8 px-3 text-muted-foreground hover:text-emerald-600"
+   420→              onClick={() => onShare(post.id)}
+   421→            >
+   422→              <Share2 className="size-4" />
+   423→              <span className="text-xs">Share</span>
+   424→            </Button>
+   425→          </div>
+   426→
+   427→          {/* Comments Preview */}
+   428→          {post.commentList.length > 0 && (
+   429→            <div className="mx-4 mb-4">
+   430→              <Separator className="mb-3" />
+   431→              {showAllComments
+   432→                ? post.commentList.map((comment) => (
+   433→                    <CommentBubble key={comment.id} comment={comment} />
+   434→                  ))
+   435→                : post.commentList.slice(0, 2).map((comment) => (
+   436→                    <CommentBubble key={comment.id} comment={comment} />
+   437→                  ))}
+   438→              {post.totalComments > 2 && (
+   439→                <button
+   440→                  onClick={() => setShowAllComments(!showAllComments)}
+   441→                  className="text-xs text-emerald-600 dark:text-emerald-400 hover:underline mt-1 cursor-pointer"
+   442→                >
+   443→                  {showAllComments
+   444→                    ? 'Show less'
+   445→                    : `View all ${post.totalComments} comments`}
+   446→                </button>
+   447→              )}
+   448→            </div>
+   449→          )}
+   450→
+   451→          {/* Inline Comment Input */}
+   452→          {showCommentInput && (
+   453→            <motion.div
+   454→              initial={{ opacity: 0, height: 0 }}
+   455→              animate={{ opacity: 1, height: 'auto' }}
+   456→              className="mx-4 mb-4"
+   457→            >
+   458→              <Separator className="mb-3" />
+   459→              <div className="flex gap-2">
+   460→                <Input
+   461→                  placeholder="Write a comment..."
+   462→                  value={localCommentText}
+   463→                  onChange={(e) => setLocalCommentText(e.target.value)}
+   464→                  onKeyDown={(e) => {
+   465→                    if (e.key === 'Enter' && localCommentText.trim()) {
+   466→                      onComment(post.id, localCommentText.trim())
+   467→                      setLocalCommentText('')
+   468→                      setShowCommentInput(false)
+   469→                    }
+   470→                  }}
+   471→                  className="flex-1"
+   472→                />
+   473→                <Button
+   474→                  size="sm"
+   475→                  className="bg-emerald-600 hover:bg-emerald-700 text-white shrink-0"
+   476→                  disabled={!localCommentText.trim()}
+   477→                  onClick={() => {
+   478→                    onComment(post.id, localCommentText.trim())
+   479→                    setLocalCommentText('')
+   480→                    setShowCommentInput(false)
+   481→                  }}
+   482→                >
+   483→                  <Send className="size-4" />
+   484→                </Button>
+   485→              </div>
+   486→            </motion.div>
+   487→          )}
+   488→        </CardContent>
+   489→      </Card>
+   490→    </motion.div>
+   491→  )
+   492→}
+   493→
+   494→function CommentBubble({ comment }: { comment: Comment }) {
+   495→  const roleColors: Record<string, string> = {
+   496→    Instructor:
+   497→      'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400',
+   498→    'Pro Trader':
+   499→      'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400',
+   500→    Student:
+   501→      'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400',
+   502→  }
+   503→
+   504→  return (
+   505→    <div className="flex gap-2 py-1.5">
+   506→      <Avatar className="size-6 mt-0.5">
+   507→        <AvatarFallback
+   508→          className={`${getAvatarColor(comment.author)} text-white text-[10px] font-semibold`}
+   509→        >
+   510→          {comment.avatar}
+   511→        </AvatarFallback>
+   512→      </Avatar>
+   513→      <div className="flex-1 min-w-0">
+   514→        <div className="flex items-center gap-1.5">
+   515→          <span className="text-xs font-semibold">{comment.author}</span>
+   516→          {comment.role && (
+   517→            <Badge
+   518→              variant="secondary"
+   519→              className={`text-[9px] px-1 py-0 h-4 ${
+   520→                roleColors[comment.role] || ''
+   521→              }`}
+   522→            >
+   523→              {comment.role}
+   524→            </Badge>
+   525→          )}
+   526→        </div>
+   527→        <p className="text-xs text-foreground/80 leading-relaxed mt-0.5">
+   528→          {comment.text}
+   529→        </p>
+   530→        <span className="text-[10px] text-muted-foreground">
+   531→          {comment.timestamp}
+   532→        </span>
+   533→      </div>
+   534→    </div>
+   535→  )
+   536→}
+   537→
+   538→// ── Main Component ───────────────────────────────────────────────────────────
+   539→
+   540→export default function CommunityView() {
+   541→  const [searchQuery, setSearchQuery] = useState('')
+   542→  const [activeTab, setActiveTab] = useState('trending')
+   543→  const [posts, setPosts] = useState(mockPosts)
+   544→  const [newPostOpen, setNewPostOpen] = useState(false)
+   545→  const [newPostContent, setNewPostContent] = useState('')
+   546→  const [newPostTags, setNewPostTags] = useState('')
+   547→  const [loadedMore, setLoadedMore] = useState(false)
+   548→
+   549→  const filteredPosts = useMemo(() => {
+   550→    let result = [...posts]
+   551→    if (searchQuery) {
+   552→      const q = searchQuery.toLowerCase()
+   553→      result = result.filter(p =>
+   554→        p.content.toLowerCase().includes(q) ||
+   555→        p.author.toLowerCase().includes(q) ||
+   556→        p.tags.some(t => t.toLowerCase().includes(q))
+   557→      )
+   558→    }
+   559→    if (activeTab === 'latest') {
+   560→      result.reverse()
+   561→    }
+   562→    // 'trending' and 'following' keep original order for now
+   563→    return result
+   564→  }, [posts, searchQuery, activeTab])
+   565→
+   566→  return (
+   567→    <div className="min-h-screen bg-background">
+   568→      <div className="max-w-2xl mx-auto px-4 py-6">
+   569→        {/* Header */}
+   570→        <div className="flex items-center justify-between mb-6">
+   571→          <h1 className="text-2xl font-bold tracking-tight">Community</h1>
+   572→          <Button
+   573→            size="sm"
+   574→            className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5"
+   575→            onClick={() => setNewPostOpen(true)}
+   576→          >
+   577→            <Plus className="size-4" />
+   578→            <span className="hidden sm:inline">New Post</span>
+   579→          </Button>
+   580→        </div>
+   581→
+   582→        {/* Search + Filters */}
+   583→        <div className="flex flex-col sm:flex-row gap-3 mb-6">
+   584→          <div className="relative flex-1">
+   585→            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+   586→            <Input
+   587→              placeholder="Search posts, tags, users..."
+   588→              className="pl-9"
+   589→              value={searchQuery}
+   590→              onChange={(e) => setSearchQuery(e.target.value)}
+   591→            />
+   592→          </div>
+   593→          <Tabs
+   594→            value={activeTab}
+   595→            onValueChange={setActiveTab}
+   596→            className="w-auto"
+   597→          >
+   598→            <TabsList className="h-9">
+   599→              <TabsTrigger value="trending" className="gap-1.5 text-xs px-3">
+   600→                <TrendingUp className="size-3.5" />
+   601→                Trending
+   602→              </TabsTrigger>
+   603→              <TabsTrigger value="latest" className="gap-1.5 text-xs px-3">
+   604→                <Clock className="size-3.5" />
+   605→                Latest
+   606→              </TabsTrigger>
+   607→              <TabsTrigger value="following" className="gap-1.5 text-xs px-3">
+   608→                <Users className="size-3.5" />
+   609→                Following
+   610→              </TabsTrigger>
+   611→            </TabsList>
+   612→          </Tabs>
+   613→        </div>
+   614→
+   615→        {/* Live Session Banner */}
+   616→        <motion.div
+   617→          initial={{ opacity: 0, y: -10 }}
+   618→          animate={{ opacity: 1, y: 0 }}
+   619→          transition={{ duration: 0.4 }}
+   620→        >
+   621→          <Card className="mb-6 border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/30 overflow-hidden">
+   622→            <CardContent className="p-0">
+   623→              <div className="flex items-center justify-between p-4 gap-4">
+   624→                <div className="flex items-center gap-3 min-w-0">
+   625→                  <div className="relative shrink-0">
+   626→                    <div className="size-10 rounded-full bg-emerald-600 flex items-center justify-center">
+   627→                      <Radio className="size-5 text-white" />
+   628→                    </div>
+   629→                    <span className="absolute -top-0.5 -right-0.5 flex h-3 w-3">
+   630→                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+   631→                      <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500" />
+   632→                    </span>
+   633→                  </div>
+   634→                  <div className="min-w-0">
+   635→                    <div className="flex items-center gap-2">
+   636→                      <span className="text-xs font-bold text-rose-500 uppercase tracking-wider">
+   637→                        Live
+   638→                      </span>
+   639→                    </div>
+   640→                    <p className="text-sm font-medium mt-0.5 truncate">
+   641→                      Scalping Masterclass with Sarah &mdash; 7:00 PM GMT
+   642→                    </p>
+   643→                    <p className="text-xs text-muted-foreground mt-0.5">
+   644→                      Tonight &bull; Free for all members
+   645→                    </p>
+   646→                  </div>
+   647→                </div>
+   648→                <Button
+   649→                  size="sm"
+   650→                  className="bg-emerald-600 hover:bg-emerald-700 text-white shrink-0"
+   651→                  onClick={() => toast.success('Joining session...', { description: 'Connecting to the live scalping masterclass.' })}
+   652→                >
+   653→                  Join
+   654→                </Button>
+   655→              </div>
+   656→            </CardContent>
+   657→          </Card>
+   658→        </motion.div>
+   659→
+   660→        {/* Posts Feed */}
+   661→        <div className="space-y-4">
+   662→          <AnimatePresence mode="wait">
+   663→            {filteredPosts.map((post, index) => (
+   664→              <PostCard
+   665→                key={post.id}
+   666→                post={post}
+   667→                index={index}
+   668→                onComment={(postId, text) => {
+   669→                  setPosts(prev => prev.map(p => {
+   670→                    if (p.id !== postId) return p
+   671→                    const newComment: Comment = {
+   672→                      id: `c-${Date.now()}`,
+   673→                      author: 'Alex Chen',
+   674→                      avatar: 'AC',
+   675→                      role: 'Pro Trader',
+   676→                      text,
+   677→                      timestamp: 'Just now',
+   678→                    }
+   679→                    return {
+   680→                      ...p,
+   681→                      commentList: [newComment, ...p.commentList],
+   682→                      totalComments: p.totalComments + 1,
+   683→                      comments: p.comments + 1,
+   684→                    }
+   685→                  }))
+   686→                  toast.success('Comment posted!')
+   687→                }}
+   688→                onShare={(postId) => {
+   689→                  toast.success('Link copied!', { description: 'Post link has been copied to clipboard.' })
+   690→                }}
+   691→              />
+   692→            ))}
+   693→          </AnimatePresence>
+   694→        </div>
+   695→
+   696→        {/* Load More */}
+   697→        <div className="flex justify-center mt-8">
+   698→          <Button
+   699→            variant="outline"
+   700→            className="text-emerald-600 border-emerald-200 hover:bg-emerald-50 dark:text-emerald-400 dark:border-emerald-800 dark:hover:bg-emerald-950/50"
+   701→            onClick={() => {
+   702→              if (!loadedMore) {
+   703→                setLoadedMore(true)
+   704→                toast.info('Loading more posts...', { description: 'Fetching older community posts.' })
+   705→              } else {
+   706→                toast.info('No more posts', { description: "You've reached the end of the feed." })
+   707→              }
+   708→            }}
+   709→          >
+   710→            {loadedMore ? 'No More Posts' : 'Load More Posts'}
+   711→          </Button>
+   712→        </div>
+   713→
+   714→        {/* New Post Dialog */}
+   715→        <Dialog open={newPostOpen} onOpenChange={setNewPostOpen}>
+   716→          <DialogContent className="sm:max-w-lg">
+   717→            <DialogHeader>
+   718→              <DialogTitle>Create New Post</DialogTitle>
+   719→              <DialogDescription>Share your trading insights with the community.</DialogDescription>
+   720→            </DialogHeader>
+   721→            <div className="space-y-4 mt-4">
+   722→              <div className="space-y-2">
+   723→                <Label>Content</Label>
+   724→                <Textarea
+   725→                  placeholder="Share your analysis, trade idea, or question..."
+   726→                  value={newPostContent}
+   727→                  onChange={(e) => setNewPostContent(e.target.value)}
+   728→                  rows={4}
+   729→                />
+   730→              </div>
+   731→              <div className="space-y-2">
+   732→                <Label>Tags (comma separated)</Label>
+   733→                <Input
+   734→                  placeholder="#technical-analysis, #forex"
+   735→                  value={newPostTags}
+   736→                  onChange={(e) => setNewPostTags(e.target.value)}
+   737→                />
+   738→              </div>
+   739→            </div>
+   740→            <DialogFooter className="gap-2">
+   741→              <Button variant="outline" onClick={() => { setNewPostOpen(false); setNewPostContent(''); setNewPostTags('') }}>
+   742→                Cancel
+   743→              </Button>
+   744→              <Button
+   745→                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+   746→                disabled={!newPostContent.trim()}
+   747→                onClick={() => {
+   748→                  const tags = newPostTags.split(',').map(t => t.trim()).filter(Boolean).map(t => t.startsWith('#') ? t : `#${t}`)
+   749→                  const newPost: Post = {
+   750→                    id: String(Date.now()),
+   751→                    author: 'Alex Chen',
+   752→                    avatar: 'AC',
+   753→                    role: 'Pro Trader',
+   754→                    roleColor: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400',
+   755→                    timestamp: 'Just now',
+   756→                    content: newPostContent.trim(),
+   757→                    tags: tags.length > 0 ? tags : ['#trading'],
+   758→                    likes: 0,
+   759→                    comments: 0,
+   760→                    shares: 0,
+   761→                    hasImage: false,
+   762→                    commentList: [],
+   763→                    totalComments: 0,
+   764→                  }
+   765→                  setPosts(prev => [newPost, ...prev])
+   766→                  setNewPostOpen(false)
+   767→                  setNewPostContent('')
+   768→                  setNewPostTags('')
+   769→                  toast.success('Post published!', { description: 'Your post is now live in the community.' })
+   770→                }}
+   771→              >
+   772→                <Send className="mr-2 size-4" />
+   773→                Publish
+   774→              </Button>
+   775→            </DialogFooter>
+   776→          </DialogContent>
+   777→        </Dialog>
+   778→      </div>
+   779→    </div>
+   780→  )
+   781→}

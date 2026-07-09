@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Heart,
@@ -13,7 +13,19 @@ import {
   Clock,
   Users,
   Send,
+  X,
 } from 'lucide-react'
+import { toast } from 'sonner'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -279,10 +291,12 @@ function getAvatarColor(name: string): string {
   return colors[Math.abs(hash) % colors.length]
 }
 
-function PostCard({ post, index }: { post: Post; index: number }) {
+function PostCard({ post, index, onComment, onShare }: { post: Post; index: number; onComment: (postId: string, text: string) => void; onShare: (postId: string) => void }) {
   const [liked, setLiked] = useState(false)
   const [likeCount, setLikeCount] = useState(post.likes)
   const [showAllComments, setShowAllComments] = useState(false)
+  const [showCommentInput, setShowCommentInput] = useState(false)
+  const [localCommentText, setLocalCommentText] = useState('')
 
   const handleLike = () => {
     setLiked(!liked)
@@ -394,6 +408,7 @@ function PostCard({ post, index }: { post: Post; index: number }) {
               variant="ghost"
               size="sm"
               className="gap-1.5 h-8 px-3 text-muted-foreground hover:text-emerald-600"
+              onClick={() => setShowCommentInput(!showCommentInput)}
             >
               <MessageCircle className="size-4" />
               <span className="text-xs">Comment</span>
@@ -402,6 +417,7 @@ function PostCard({ post, index }: { post: Post; index: number }) {
               variant="ghost"
               size="sm"
               className="gap-1.5 h-8 px-3 text-muted-foreground hover:text-emerald-600"
+              onClick={() => onShare(post.id)}
             >
               <Share2 className="size-4" />
               <span className="text-xs">Share</span>
@@ -430,6 +446,44 @@ function PostCard({ post, index }: { post: Post; index: number }) {
                 </button>
               )}
             </div>
+          )}
+
+          {/* Inline Comment Input */}
+          {showCommentInput && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              className="mx-4 mb-4"
+            >
+              <Separator className="mb-3" />
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Write a comment..."
+                  value={localCommentText}
+                  onChange={(e) => setLocalCommentText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && localCommentText.trim()) {
+                      onComment(post.id, localCommentText.trim())
+                      setLocalCommentText('')
+                      setShowCommentInput(false)
+                    }
+                  }}
+                  className="flex-1"
+                />
+                <Button
+                  size="sm"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white shrink-0"
+                  disabled={!localCommentText.trim()}
+                  onClick={() => {
+                    onComment(post.id, localCommentText.trim())
+                    setLocalCommentText('')
+                    setShowCommentInput(false)
+                  }}
+                >
+                  <Send className="size-4" />
+                </Button>
+              </div>
+            </motion.div>
           )}
         </CardContent>
       </Card>
@@ -486,6 +540,28 @@ function CommentBubble({ comment }: { comment: Comment }) {
 export default function CommunityView() {
   const [searchQuery, setSearchQuery] = useState('')
   const [activeTab, setActiveTab] = useState('trending')
+  const [posts, setPosts] = useState(mockPosts)
+  const [newPostOpen, setNewPostOpen] = useState(false)
+  const [newPostContent, setNewPostContent] = useState('')
+  const [newPostTags, setNewPostTags] = useState('')
+  const [loadedMore, setLoadedMore] = useState(false)
+
+  const filteredPosts = useMemo(() => {
+    let result = [...posts]
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase()
+      result = result.filter(p =>
+        p.content.toLowerCase().includes(q) ||
+        p.author.toLowerCase().includes(q) ||
+        p.tags.some(t => t.toLowerCase().includes(q))
+      )
+    }
+    if (activeTab === 'latest') {
+      result.reverse()
+    }
+    // 'trending' and 'following' keep original order for now
+    return result
+  }, [posts, searchQuery, activeTab])
 
   return (
     <div className="min-h-screen bg-background">
@@ -496,6 +572,7 @@ export default function CommunityView() {
           <Button
             size="sm"
             className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5"
+            onClick={() => setNewPostOpen(true)}
           >
             <Plus className="size-4" />
             <span className="hidden sm:inline">New Post</span>
@@ -571,6 +648,7 @@ export default function CommunityView() {
                 <Button
                   size="sm"
                   className="bg-emerald-600 hover:bg-emerald-700 text-white shrink-0"
+                  onClick={() => toast.success('Joining session...', { description: 'Connecting to the live scalping masterclass.' })}
                 >
                   Join
                 </Button>
@@ -582,8 +660,35 @@ export default function CommunityView() {
         {/* Posts Feed */}
         <div className="space-y-4">
           <AnimatePresence mode="wait">
-            {mockPosts.map((post, index) => (
-              <PostCard key={post.id} post={post} index={index} />
+            {filteredPosts.map((post, index) => (
+              <PostCard
+                key={post.id}
+                post={post}
+                index={index}
+                onComment={(postId, text) => {
+                  setPosts(prev => prev.map(p => {
+                    if (p.id !== postId) return p
+                    const newComment: Comment = {
+                      id: `c-${Date.now()}`,
+                      author: 'Alex Chen',
+                      avatar: 'AC',
+                      role: 'Pro Trader',
+                      text,
+                      timestamp: 'Just now',
+                    }
+                    return {
+                      ...p,
+                      commentList: [newComment, ...p.commentList],
+                      totalComments: p.totalComments + 1,
+                      comments: p.comments + 1,
+                    }
+                  }))
+                  toast.success('Comment posted!')
+                }}
+                onShare={(postId) => {
+                  toast.success('Link copied!', { description: 'Post link has been copied to clipboard.' })
+                }}
+              />
             ))}
           </AnimatePresence>
         </div>
@@ -593,10 +698,83 @@ export default function CommunityView() {
           <Button
             variant="outline"
             className="text-emerald-600 border-emerald-200 hover:bg-emerald-50 dark:text-emerald-400 dark:border-emerald-800 dark:hover:bg-emerald-950/50"
+            onClick={() => {
+              if (!loadedMore) {
+                setLoadedMore(true)
+                toast.info('Loading more posts...', { description: 'Fetching older community posts.' })
+              } else {
+                toast.info('No more posts', { description: "You've reached the end of the feed." })
+              }
+            }}
           >
-            Load More Posts
+            {loadedMore ? 'No More Posts' : 'Load More Posts'}
           </Button>
         </div>
+
+        {/* New Post Dialog */}
+        <Dialog open={newPostOpen} onOpenChange={setNewPostOpen}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Create New Post</DialogTitle>
+              <DialogDescription>Share your trading insights with the community.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 mt-4">
+              <div className="space-y-2">
+                <Label>Content</Label>
+                <Textarea
+                  placeholder="Share your analysis, trade idea, or question..."
+                  value={newPostContent}
+                  onChange={(e) => setNewPostContent(e.target.value)}
+                  rows={4}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Tags (comma separated)</Label>
+                <Input
+                  placeholder="#technical-analysis, #forex"
+                  value={newPostTags}
+                  onChange={(e) => setNewPostTags(e.target.value)}
+                />
+              </div>
+            </div>
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={() => { setNewPostOpen(false); setNewPostContent(''); setNewPostTags('') }}>
+                Cancel
+              </Button>
+              <Button
+                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                disabled={!newPostContent.trim()}
+                onClick={() => {
+                  const tags = newPostTags.split(',').map(t => t.trim()).filter(Boolean).map(t => t.startsWith('#') ? t : `#${t}`)
+                  const newPost: Post = {
+                    id: String(Date.now()),
+                    author: 'Alex Chen',
+                    avatar: 'AC',
+                    role: 'Pro Trader',
+                    roleColor: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400',
+                    timestamp: 'Just now',
+                    content: newPostContent.trim(),
+                    tags: tags.length > 0 ? tags : ['#trading'],
+                    likes: 0,
+                    comments: 0,
+                    shares: 0,
+                    hasImage: false,
+                    commentList: [],
+                    totalComments: 0,
+                  }
+                  setPosts(prev => [newPost, ...prev])
+                  setNewPostOpen(false)
+                  setNewPostContent('')
+                  setNewPostTags('')
+                  toast.success('Post published!', { description: 'Your post is now live in the community.' })
+                }}
+              >
+                <Send className="mr-2 size-4" />
+                Publish
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   )

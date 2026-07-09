@@ -1,0 +1,998 @@
+     1→'use client'
+     2→
+     3→import { useState } from 'react'
+     4→import { motion } from 'framer-motion'
+     5→import {
+     6→  AreaChart,
+     7→  Area,
+     8→  XAxis,
+     9→  YAxis,
+    10→  CartesianGrid,
+    11→  Tooltip,
+    12→  ResponsiveContainer,
+    13→} from 'recharts'
+    14→import {
+    15→  Users,
+    16→  CreditCard,
+    17→  DollarSign,
+    18→  GraduationCap,
+    19→  Plus,
+    20→  Search,
+    21→  MoreHorizontal,
+    22→  Edit3,
+    23→  Ban,
+    24→  Trash2,
+    25→  Pencil,
+    26→  ArrowUpRight,
+    27→  ArrowDownRight,
+    28→  FileText,
+    29→  Signal,
+    30→  LayoutDashboard,
+    31→  BookOpen,
+    32→  BarChart3,
+    33→} from 'lucide-react'
+    34→import { Button } from '@/components/ui/button'
+    35→import {
+    36→  Card,
+    37→  CardContent,
+    38→  CardHeader,
+    39→  CardTitle,
+    40→  CardDescription,
+    41→  CardFooter,
+    42→} from '@/components/ui/card'
+    43→import { Badge } from '@/components/ui/badge'
+    44→import { Input } from '@/components/ui/input'
+    45→import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+    46→import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+    47→import {
+    48→  Select,
+    49→  SelectContent,
+    50→  SelectItem,
+    51→  SelectTrigger,
+    52→  SelectValue,
+    53→} from '@/components/ui/select'
+    54→import {
+    55→  Table,
+    56→  TableBody,
+    57→  TableCell,
+    58→  TableHead,
+    59→  TableHeader,
+    60→  TableRow,
+    61→} from '@/components/ui/table'
+    62→import {
+    63→  DropdownMenu,
+    64→  DropdownMenuContent,
+    65→  DropdownMenuItem,
+    66→  DropdownMenuSeparator,
+    67→  DropdownMenuTrigger,
+    68→} from '@/components/ui/dropdown-menu'
+    69→import { Progress } from '@/components/ui/progress'
+    70→import {
+    71→  ChartContainer,
+    72→  ChartTooltip,
+    73→  ChartTooltipContent,
+    74→  type ChartConfig,
+    75→} from '@/components/ui/chart'
+    76→import { toast } from 'sonner'
+    77→
+    78→// ── Mock Data ────────────────────────────────────────────────────────────────
+    79→
+    80→const userGrowthData = [
+    81→  { month: 'Jul', users: 1820 },
+    82→  { month: 'Aug', users: 2010 },
+    83→  { month: 'Sep', users: 2230 },
+    84→  { month: 'Oct', users: 2410 },
+    85→  { month: 'Nov', users: 2630 },
+    86→  { month: 'Dec', users: 2847 },
+    87→]
+    88→
+    89→const chartConfig: ChartConfig = {
+    90→  users: {
+    91→    label: 'Users',
+    92→    color: '#059669',
+    93→  },
+    94→}
+    95→
+    96→interface MockUser {
+    97→  id: string
+    98→  name: string
+    99→  email: string
+   100→  avatar: string
+   101→  role: string
+   102→  roleBadge: string
+   103→  plan: string
+   104→  joined: string
+   105→  status: 'active' | 'suspended'
+   106→}
+   107→
+   108→const mockUsers: MockUser[] = [
+   109→  {
+   110→    id: '1',
+   111→    name: 'Sarah Mitchell',
+   112→    email: 'sarah@example.com',
+   113→    avatar: 'SM',
+   114→    role: 'Instructor',
+   115→    roleBadge:
+   116→      'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400',
+   117→    plan: 'Elite',
+   118→    joined: '2024-01-15',
+   119→    status: 'active',
+   120→  },
+   121→  {
+   122→    id: '2',
+   123→    name: 'Alex Chen',
+   124→    email: 'alex@example.com',
+   125→    avatar: 'AC',
+   126→    role: 'Premium',
+   127→    roleBadge:
+   128→      'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400',
+   129→    plan: 'Pro',
+   130→    joined: '2024-02-20',
+   131→    status: 'active',
+   132→  },
+   133→  {
+   134→    id: '3',
+   135→    name: 'James Wilson',
+   136→    email: 'james@example.com',
+   137→    avatar: 'JW',
+   138→    role: 'Student',
+   139→    roleBadge:
+   140→      'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400',
+   141→    plan: 'Free',
+   142→    joined: '2024-03-10',
+   143→    status: 'active',
+   144→  },
+   145→  {
+   146→    id: '4',
+   147→    name: 'Emma Davis',
+   148→    email: 'emma@example.com',
+   149→    avatar: 'ED',
+   150→    role: 'Student',
+   151→    roleBadge:
+   152→      'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400',
+   153→    plan: 'Pro',
+   154→    joined: '2024-04-05',
+   155→    status: 'active',
+   156→  },
+   157→  {
+   158→    id: '5',
+   159→    name: 'Marcus Lee',
+   160→    email: 'marcus@example.com',
+   161→    avatar: 'ML',
+   162→    role: 'Trader',
+   163→    roleBadge:
+   164→      'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-400',
+   165→    plan: 'Elite',
+   166→    joined: '2024-05-12',
+   167→    status: 'active',
+   168→  },
+   169→  {
+   170→    id: '6',
+   171→    name: 'Lisa Park',
+   172→    email: 'lisa@example.com',
+   173→    avatar: 'LP',
+   174→    role: 'Student',
+   175→    roleBadge:
+   176→      'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400',
+   177→    plan: 'Free',
+   178→    joined: '2024-06-18',
+   179→    status: 'suspended',
+   180→  },
+   181→  {
+   182→    id: '7',
+   183→    name: 'David Kim',
+   184→    email: 'david@example.com',
+   185→    avatar: 'DK',
+   186→    role: 'Premium',
+   187→    roleBadge:
+   188→      'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400',
+   189→    plan: 'Pro',
+   190→    joined: '2024-07-22',
+   191→    status: 'active',
+   192→  },
+   193→  {
+   194→    id: '8',
+   195→    name: 'Mike Ross',
+   196→    email: 'mike@example.com',
+   197→    avatar: 'MR',
+   198→    role: 'Student',
+   199→    roleBadge:
+   200→      'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400',
+   201→    plan: 'Free',
+   202→    joined: '2024-08-01',
+   203→    status: 'active',
+   204→  },
+   205→]
+   206→
+   207→interface Course {
+   208→  id: string
+   209→  title: string
+   210→  students: number
+   211→  rating: number
+   212→  status: 'Published' | 'Draft'
+   213→  category: string
+   214→}
+   215→
+   216→const mockCourses: Course[] = [
+   217→  {
+   218→    id: '1',
+   219→    title: 'Price Action Mastery',
+   220→    students: 847,
+   221→    rating: 4.9,
+   222→    status: 'Published',
+   223→    category: 'Technical Analysis',
+   224→  },
+   225→  {
+   226→    id: '2',
+   227→    title: 'Smart Money Concepts',
+   228→    students: 623,
+   229→    rating: 4.8,
+   230→    status: 'Published',
+   231→    category: 'Advanced',
+   232→  },
+   233→  {
+   234→    id: '3',
+   235→    title: 'Trading Psychology 101',
+   236→    students: 1205,
+   237→    rating: 4.7,
+   238→    status: 'Published',
+   239→    category: 'Psychology',
+   240→  },
+   241→  {
+   242→    id: '4',
+   243→    title: 'Advanced Risk Management',
+   244→    students: 0,
+   245→    rating: 0,
+   246→    status: 'Draft',
+   247→    category: 'Risk Management',
+   248→  },
+   249→]
+   250→
+   251→interface TradingSignal {
+   252→  id: string
+   253→  pair: string
+   254→  direction: 'Long' | 'Short'
+   255→  status: 'Active' | 'Expired' | 'Hit TP' | 'Hit SL'
+   256→  created: string
+   257→}
+   258→
+   259→const mockSignals: TradingSignal[] = [
+   260→  { id: '1', pair: 'EUR/USD', direction: 'Long', status: 'Active', created: '2024-12-18' },
+   261→  { id: '2', pair: 'GBP/JPY', direction: 'Short', status: 'Hit TP', created: '2024-12-17' },
+   262→  { id: '3', pair: 'XAU/USD', direction: 'Long', status: 'Active', created: '2024-12-18' },
+   263→  { id: '4', pair: 'USD/CAD', direction: 'Short', status: 'Hit SL', created: '2024-12-16' },
+   264→  { id: '5', pair: 'AUD/USD', direction: 'Long', status: 'Expired', created: '2024-12-15' },
+   265→  { id: '6', pair: 'EUR/GBP', direction: 'Short', status: 'Active', created: '2024-12-18' },
+   266→]
+   267→
+   268→interface BlogPost {
+   269→  id: string
+   270→  title: string
+   271→  status: 'Published' | 'Draft' | 'Scheduled'
+   272→  date: string
+   273→}
+   274→
+   275→const mockPosts: BlogPost[] = [
+   276→  { id: '1', title: 'How to Build a Winning Trading Routine', status: 'Published', date: '2024-12-17' },
+   277→  { id: '2', title: 'Understanding Market Structure Like a Pro', status: 'Published', date: '2024-12-15' },
+   278→  { id: '3', title: 'Top 5 Mistakes New Traders Make', status: 'Scheduled', date: '2024-12-20' },
+   279→  { id: '4', title: 'The Complete Guide to Order Blocks', status: 'Draft', date: '2024-12-18' },
+   280→  { id: '5', title: 'NFP Trading Strategy Deep Dive', status: 'Published', date: '2024-12-12' },
+   281→]
+   282→
+   283→// ── Helpers ──────────────────────────────────────────────────────────────────
+   284→
+   285→function getAvatarColor(name: string): string {
+   286→  const colors = [
+   287→    'bg-emerald-600',
+   288→    'bg-teal-600',
+   289→    'bg-green-600',
+   290→    'bg-cyan-600',
+   291→    'bg-emerald-700',
+   292→    'bg-teal-700',
+   293→  ]
+   294→  let hash = 0
+   295→  for (let i = 0; i < name.length; i++) {
+   296→    hash = name.charCodeAt(i) + ((hash << 5) - hash)
+   297→  }
+   298→  return colors[Math.abs(hash) % colors.length]
+   299→}
+   300→
+   301→function getSignalStatusBadge(status: TradingSignal['status']) {
+   302→  const map: Record<
+   303→    TradingSignal['status'],
+   304→    { className: string; dotClass: string }
+   305→  > = {
+   306→    Active: {
+   307→      className:
+   308→        'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400',
+   309→      dotClass: 'bg-emerald-500',
+   310→    },
+   311→    Expired: {
+   312→      className: 'bg-muted text-muted-foreground',
+   313→      dotClass: 'bg-muted-foreground',
+   314→    },
+   315→    'Hit TP': {
+   316→      className:
+   317→        'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400',
+   318→      dotClass: 'bg-emerald-500',
+   319→    },
+   320→    'Hit SL': {
+   321→      className: 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-400',
+   322→      dotClass: 'bg-rose-500',
+   323→    },
+   324→  }
+   325→  const { className, dotClass } = map[status]
+   326→  return (
+   327→    <Badge variant="secondary" className={`${className} gap-1.5`}>
+   328→      <span className={`size-1.5 rounded-full ${dotClass}`} />
+   329→      {status}
+   330→    </Badge>
+   331→  )
+   332→}
+   333→
+   334→function getDirectionBadge(direction: 'Long' | 'Short') {
+   335→  return (
+   336→    <Badge
+   337→      variant="outline"
+   338→      className={
+   339→        direction === 'Long'
+   340→          ? 'text-emerald-600 border-emerald-200 dark:text-emerald-400 dark:border-emerald-800'
+   341→          : 'text-rose-600 border-rose-200 dark:text-rose-400 dark:border-rose-800'
+   342→      }
+   343→    >
+   344→      <ArrowUpRight
+   345→        className={`size-3 ${direction === 'Short' ? 'rotate-90' : ''}`}
+   346→      />
+   347→      {direction}
+   348→    </Badge>
+   349→  )
+   350→}
+   351→
+   352→function getPostStatusBadge(status: BlogPost['status']) {
+   353→  const map: Record<
+   354→    BlogPost['status'],
+   355→    { className: string }
+   356→  > = {
+   357→    Published: {
+   358→      className:
+   359→        'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400',
+   360→    },
+   361→    Draft: {
+   362→      className: 'bg-muted text-muted-foreground',
+   363→    },
+   364→    Scheduled: {
+   365→      className:
+   366→        'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400',
+   367→    },
+   368→  }
+   369→  return (
+   370→    <Badge variant="secondary" className={map[status].className}>
+   371→      {status}
+   372→    </Badge>
+   373→  )
+   374→}
+   375→
+   376→// ── Overview Tab ──────────────────────────────────────────────────────────────
+   377→
+   378→function OverviewTab() {
+   379→  const stats = [
+   380→    {
+   381→      label: 'Total Users',
+   382→      value: '2,847',
+   383→      change: '+12.5%',
+   384→      up: true,
+   385→      icon: <Users className="size-4 text-muted-foreground" />,
+   386→    },
+   387→    {
+   388→      label: 'Active Subscriptions',
+   389→      value: '1,234',
+   390→      change: '+8.2%',
+   391→      up: true,
+   392→      icon: <CreditCard className="size-4 text-muted-foreground" />,
+   393→    },
+   394→    {
+   395→      label: 'Revenue',
+   396→      value: '$45,678',
+   397→      change: '+23.1%',
+   398→      up: true,
+   399→      icon: <DollarSign className="size-4 text-muted-foreground" />,
+   400→    },
+   401→    {
+   402→      label: 'Course Completion Rate',
+   403→      value: '72%',
+   404→      change: '-2.4%',
+   405→      up: false,
+   406→      icon: <GraduationCap className="size-4 text-muted-foreground" />,
+   407→    },
+   408→  ]
+   409→
+   410→  return (
+   411→    <div className="space-y-6">
+   412→      {/* Stat Cards */}
+   413→      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+   414→        {stats.map((stat, index) => (
+   415→          <motion.div
+   416→            key={stat.label}
+   417→            initial={{ opacity: 0, y: 20 }}
+   418→            animate={{ opacity: 1, y: 0 }}
+   419→            transition={{ duration: 0.4, delay: index * 0.08 }}
+   420→          >
+   421→            <Card>
+   422→              <CardContent className="p-4">
+   423→                <div className="flex items-center justify-between mb-3">
+   424→                  <span className="text-sm text-muted-foreground">
+   425→                    {stat.label}
+   426→                  </span>
+   427→                  <div className="size-8 rounded-lg bg-muted flex items-center justify-center">
+   428→                    {stat.icon}
+   429→                  </div>
+   430→                </div>
+   431→                <div className="flex items-baseline gap-2">
+   432→                  <span className="text-2xl font-bold">{stat.value}</span>
+   433→                  <span
+   434→                    className={`text-xs font-medium flex items-center gap-0.5 ${
+   435→                      stat.up
+   436→                        ? 'text-emerald-600 dark:text-emerald-400'
+   437→                        : 'text-rose-600 dark:text-rose-400'
+   438→                    }`}
+   439→                  >
+   440→                    {stat.up ? (
+   441→                      <ArrowUpRight className="size-3" />
+   442→                    ) : (
+   443→                      <ArrowDownRight className="size-3" />
+   444→                    )}
+   445→                    {stat.change}
+   446→                  </span>
+   447→                </div>
+   448→              </CardContent>
+   449→            </Card>
+   450→          </motion.div>
+   451→        ))}
+   452→      </div>
+   453→
+   454→      {/* User Growth Chart */}
+   455→      <motion.div
+   456→        initial={{ opacity: 0, y: 20 }}
+   457→        animate={{ opacity: 1, y: 0 }}
+   458→        transition={{ duration: 0.5, delay: 0.35 }}
+   459→      >
+   460→        <Card>
+   461→          <CardHeader>
+   462→            <CardTitle className="text-base">User Growth</CardTitle>
+   463→            <CardDescription>
+   464→              Total registered users over the last 6 months
+   465→            </CardDescription>
+   466→          </CardHeader>
+   467→          <CardContent>
+   468→            <ChartContainer config={chartConfig} className="h-64 w-full">
+   469→              <AreaChart
+   470→                data={userGrowthData}
+   471→                margin={{ top: 5, right: 10, left: 10, bottom: 0 }}
+   472→              >
+   473→                <defs>
+   474→                  <linearGradient
+   475→                    id="fillUsers"
+   476→                    x1="0"
+   477→                    y1="0"
+   478→                    x2="0"
+   479→                    y2="1"
+   480→                  >
+   481→                    <stop
+   482→                      offset="5%"
+   483→                      stopColor="var(--color-users)"
+   484→                      stopOpacity={0.3}
+   485→                    />
+   486→                    <stop
+   487→                      offset="95%"
+   488→                      stopColor="var(--color-users)"
+   489→                      stopOpacity={0.02}
+   490→                    />
+   491→                  </linearGradient>
+   492→                </defs>
+   493→                <CartesianGrid
+   494→                  vertical={false}
+   495→                  strokeDasharray="3 3"
+   496→                  className="stroke-border"
+   497→                />
+   498→                <XAxis
+   499→                  dataKey="month"
+   500→                  tickLine={false}
+   501→                  axisLine={false}
+   502→                  className="text-xs"
+   503→                />
+   504→                <YAxis
+   505→                  tickLine={false}
+   506→                  axisLine={false}
+   507→                  className="text-xs"
+   508→                  tickFormatter={(v) => `${(v / 1000).toFixed(1)}k`}
+   509→                />
+   510→                <ChartTooltip
+   511→                  content={<ChartTooltipContent indicator="dot" />}
+   512→                />
+   513→                <Area
+   514→                  type="monotone"
+   515→                  dataKey="users"
+   516→                  stroke="var(--color-users)"
+   517→                  fill="url(#fillUsers)"
+   518→                  strokeWidth={2}
+   519→                />
+   520→              </AreaChart>
+   521→            </ChartContainer>
+   522→          </CardContent>
+   523→        </Card>
+   524→      </motion.div>
+   525→    </div>
+   526→  )
+   527→}
+   528→
+   529→// ── Users Tab ────────────────────────────────────────────────────────────────
+   530→
+   531→function UsersTab() {
+   532→  const [searchQuery, setSearchQuery] = useState('')
+   533→  const [roleFilter, setRoleFilter] = useState('all')
+   534→  const [users, setUsers] = useState(mockUsers)
+   535→
+   536→  const filteredUsers = users.filter((user) => {
+   537→    const matchesSearch =
+   538→      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+   539→      user.email.toLowerCase().includes(searchQuery.toLowerCase())
+   540→    const matchesRole =
+   541→      roleFilter === 'all' || user.role.toLowerCase() === roleFilter
+   542→    return matchesSearch && matchesRole
+   543→  })
+   544→
+   545→  return (
+   546→    <div className="space-y-4">
+   547→      <div className="flex flex-col sm:flex-row gap-3">
+   548→        <div className="relative flex-1">
+   549→          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+   550→          <Input
+   551→            placeholder="Search users by name or email..."
+   552→            className="pl-9"
+   553→            value={searchQuery}
+   554→            onChange={(e) => setSearchQuery(e.target.value)}
+   555→          />
+   556→        </div>
+   557→        <Select value={roleFilter} onValueChange={setRoleFilter}>
+   558→          <SelectTrigger className="w-full sm:w-44">
+   559→            <SelectValue placeholder="Filter by role" />
+   560→          </SelectTrigger>
+   561→          <SelectContent>
+   562→            <SelectItem value="all">All Roles</SelectItem>
+   563→            <SelectItem value="student">Student</SelectItem>
+   564→            <SelectItem value="trader">Trader</SelectItem>
+   565→            <SelectItem value="premium">Premium</SelectItem>
+   566→            <SelectItem value="instructor">Instructor</SelectItem>
+   567→            <SelectItem value="admin">Admin</SelectItem>
+   568→          </SelectContent>
+   569→        </Select>
+   570→      </div>
+   571→
+   572→      <Card>
+   573→        <CardContent className="p-0">
+   574→          <Table>
+   575→            <TableHeader>
+   576→              <TableRow>
+   577→                <TableHead className="pl-4">User</TableHead>
+   578→                <TableHead className="hidden md:table-cell">Email</TableHead>
+   579→                <TableHead>Role</TableHead>
+   580→                <TableHead className="hidden sm:table-cell">Plan</TableHead>
+   581→                <TableHead className="hidden lg:table-cell">Joined</TableHead>
+   582→                <TableHead>Status</TableHead>
+   583→                <TableHead className="pr-4 w-10" />
+   584→              </TableRow>
+   585→            </TableHeader>
+   586→            <TableBody>
+   587→              {filteredUsers.map((user, index) => (
+   588→                <motion.tr
+   589→                  key={user.id}
+   590→                  initial={{ opacity: 0, x: -10 }}
+   591→                  animate={{ opacity: 1, x: 0 }}
+   592→                  transition={{ duration: 0.3, delay: index * 0.04 }}
+   593→                  className="hover:bg-muted/50 border-b transition-colors"
+   594→                >
+   595→                  <TableCell className="pl-4 py-3">
+   596→                    <div className="flex items-center gap-3">
+   597→                      <Avatar className="size-8">
+   598→                        <AvatarFallback
+   599→                          className={`${getAvatarColor(user.name)} text-white text-xs font-semibold`}
+   600→                        >
+   601→                          {user.avatar}
+   602→                        </AvatarFallback>
+   603→                      </Avatar>
+   604→                      <span className="font-medium text-sm whitespace-nowrap">
+   605→                        {user.name}
+   606→                      </span>
+   607→                    </div>
+   608→                  </TableCell>
+   609→                  <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
+   610→                    {user.email}
+   611→                  </TableCell>
+   612→                  <TableCell>
+   613→                    <Badge
+   614→                      variant="secondary"
+   615→                      className={`text-[10px] ${user.roleBadge}`}
+   616→                    >
+   617→                      {user.role}
+   618→                    </Badge>
+   619→                  </TableCell>
+   620→                  <TableCell className="hidden sm:table-cell text-sm">
+   621→                    {user.plan}
+   622→                  </TableCell>
+   623→                  <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
+   624→                    {user.joined}
+   625→                  </TableCell>
+   626→                  <TableCell>
+   627→                    <Badge
+   628→                      variant="secondary"
+   629→                      className={
+   630→                        user.status === 'active'
+   631→                          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
+   632→                          : 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-400'
+   633→                      }
+   634→                    >
+   635→                      {user.status}
+   636→                    </Badge>
+   637→                  </TableCell>
+   638→                  <TableCell className="pr-4">
+   639→                    <DropdownMenu>
+   640→                      <DropdownMenuTrigger asChild>
+   641→                        <Button variant="ghost" size="icon" className="size-8">
+   642→                          <MoreHorizontal className="size-4" />
+   643→                        </Button>
+   644→                      </DropdownMenuTrigger>
+   645→                      <DropdownMenuContent align="end">
+   646→                        <DropdownMenuItem onClick={() => toast.info('Edit User', { description: `Editing ${user.name}'s profile.` })}>
+   647→                          <Edit3 className="size-4 mr-2" />
+   648→                          Edit
+   649→                        </DropdownMenuItem>
+   650→                        <DropdownMenuItem onClick={() => {
+   651→                          setUsers(prev => prev.map(u => u.id === user.id ? { ...u, status: u.status === 'active' ? 'suspended' as const : 'active' as const } : u))
+   652→                          toast.success(user.status === 'active' ? 'User Suspended' : 'User Reactivated', { description: `${user.name}'s account has been ${user.status === 'active' ? 'suspended' : 'reactivated'}.` })
+   653→                        }}>
+   654→                          <Ban className="size-4 mr-2" />
+   655→                          {user.status === 'active' ? 'Suspend' : 'Reactivate'}
+   656→                        </DropdownMenuItem>
+   657→                        <DropdownMenuSeparator />
+   658→                        <DropdownMenuItem
+   659→                          variant="destructive"
+   660→                          onClick={() => {
+   661→                            setUsers(prev => prev.filter(u => u.id !== user.id))
+   662→                            toast.success('User Deleted', { description: `${user.name} has been removed from the platform.` })
+   663→                          }}
+   664→                        >
+   665→                          <Trash2 className="size-4 mr-2" />
+   666→                          Delete
+   667→                        </DropdownMenuItem>
+   668→                      </DropdownMenuContent>
+   669→                    </DropdownMenu>
+   670→                  </TableCell>
+   671→                </motion.tr>
+   672→              ))}
+   673→            </TableBody>
+   674→          </Table>
+   675→        </CardContent>
+   676→      </Card>
+   677→    </div>
+   678→  )
+   679→}
+   680→
+   681→// ── Courses Tab ──────────────────────────────────────────────────────────────
+   682→
+   683→function CoursesTab() {
+   684→  return (
+   685→    <div className="space-y-4">
+   686→      <div className="flex justify-between items-center">
+   687→        <h3 className="text-sm font-medium text-muted-foreground">
+   688→          {mockCourses.length} courses
+   689→        </h3>
+   690→        <Button
+   691→          size="sm"
+   692→          className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5"
+   693→          onClick={() => toast.info('Create Course', { description: 'Course creation wizard would open here.' })}
+   694→        >
+   695→          <Plus className="size-4" />
+   696→          Create New Course
+   697→        </Button>
+   698→      </div>
+   699→
+   700→      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+   701→        {mockCourses.map((course, index) => (
+   702→          <motion.div
+   703→            key={course.id}
+   704→            initial={{ opacity: 0, y: 20 }}
+   705→            animate={{ opacity: 1, y: 0 }}
+   706→            transition={{ duration: 0.4, delay: index * 0.08 }}
+   707→          >
+   708→            <Card className="h-full">
+   709→              <CardHeader className="pb-3">
+   710→                <div className="flex items-start justify-between gap-2">
+   711→                  <div className="min-w-0">
+   712→                    <CardTitle className="text-sm leading-snug">
+   713→                      {course.title}
+   714→                    </CardTitle>
+   715→                    <CardDescription className="mt-1">
+   716→                      {course.category}
+   717→                    </CardDescription>
+   718→                  </div>
+   719→                  <Badge
+   720→                    variant="secondary"
+   721→                    className={`shrink-0 ${
+   722→                      course.status === 'Published'
+   723→                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
+   724→                        : 'bg-muted text-muted-foreground'
+   725→                    }`}
+   726→                  >
+   727→                    {course.status}
+   728→                  </Badge>
+   729→                </div>
+   730→              </CardHeader>
+   731→              <CardContent>
+   732→                <div className="flex items-center justify-between text-sm text-muted-foreground">
+   733→                  <div className="flex items-center gap-1.5">
+   734→                    <Users className="size-3.5" />
+   735→                    <span>{course.students.toLocaleString()} students</span>
+   736→                  </div>
+   737→                  {course.rating > 0 && (
+   738→                    <div className="flex items-center gap-1">
+   739→                      <span className="text-amber-500">&#9733;</span>
+   740→                      <span>{course.rating}</span>
+   741→                    </div>
+   742→                  )}
+   743→                </div>
+   744→              </CardContent>
+   745→              <CardFooter className="pt-0">
+   746→                <Button
+   747→                  variant="outline"
+   748→                  size="sm"
+   749→                  className="w-full gap-1.5"
+   750→                  onClick={() => toast.info('Edit Course', { description: `Editing "${course.title}".` })}
+   751→                >
+   752→                  <Pencil className="size-3.5" />
+   753→                  Edit Course
+   754→                </Button>
+   755→              </CardFooter>
+   756→            </Card>
+   757→          </motion.div>
+   758→        ))}
+   759→      </div>
+   760→    </div>
+   761→  )
+   762→}
+   763→
+   764→// ── Signals Tab ──────────────────────────────────────────────────────────────
+   765→
+   766→function SignalsTab() {
+   767→  return (
+   768→    <div className="space-y-4">
+   769→      <div className="flex justify-between items-center">
+   770→        <h3 className="text-sm font-medium text-muted-foreground">
+   771→          Recent trading signals
+   772→        </h3>
+   773→        <Button
+   774→          size="sm"
+   775→          className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5"
+   776→          onClick={() => toast.info('Create Signal', { description: 'Signal creation form would open here.' })}
+   777→        >
+   778→          <Plus className="size-4" />
+   779→          Create Signal
+   780→        </Button>
+   781→      </div>
+   782→
+   783→      <Card>
+   784→        <CardContent className="p-0">
+   785→          <Table>
+   786→            <TableHeader>
+   787→              <TableRow>
+   788→                <TableHead className="pl-4">Pair</TableHead>
+   789→                <TableHead>Direction</TableHead>
+   790→                <TableHead>Status</TableHead>
+   791→                <TableHead className="hidden sm:table-cell">Created</TableHead>
+   792→                <TableHead className="pr-4 w-10" />
+   793→              </TableRow>
+   794→            </TableHeader>
+   795→            <TableBody>
+   796→              {mockSignals.map((signal, index) => (
+   797→                <motion.tr
+   798→                  key={signal.id}
+   799→                  initial={{ opacity: 0, x: -10 }}
+   800→                  animate={{ opacity: 1, x: 0 }}
+   801→                  transition={{ duration: 0.3, delay: index * 0.04 }}
+   802→                  className="hover:bg-muted/50 border-b transition-colors"
+   803→                >
+   804→                  <TableCell className="pl-4 py-3 font-medium text-sm">
+   805→                    {signal.pair}
+   806→                  </TableCell>
+   807→                  <TableCell>{getDirectionBadge(signal.direction)}</TableCell>
+   808→                  <TableCell>{getSignalStatusBadge(signal.status)}</TableCell>
+   809→                  <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">
+   810→                    {signal.created}
+   811→                  </TableCell>
+   812→                  <TableCell className="pr-4">
+   813→                    <DropdownMenu>
+   814→                      <DropdownMenuTrigger asChild>
+   815→                        <Button variant="ghost" size="icon" className="size-8">
+   816→                          <MoreHorizontal className="size-4" />
+   817→                        </Button>
+   818→                      </DropdownMenuTrigger>
+   819→                      <DropdownMenuContent align="end">
+   820→                        <DropdownMenuItem onClick={() => toast.info('Edit Signal', { description: `Editing ${signal.pair} signal.` })}>
+   821→                          <Edit3 className="size-4 mr-2" />
+   822→                          Edit
+   823→                        </DropdownMenuItem>
+   824→                        <DropdownMenuItem
+   825→                          variant="destructive"
+   826→                          onClick={() => toast.success('Signal Deleted', { description: `${signal.pair} signal has been removed.` })}
+   827→                        >
+   828→                          <Trash2 className="size-4 mr-2" />
+   829→                          Delete
+   830→                        </DropdownMenuItem>
+   831→                      </DropdownMenuContent>
+   832→                    </DropdownMenu>
+   833→                  </TableCell>
+   834→                </motion.tr>
+   835→              ))}
+   836→            </TableBody>
+   837→          </Table>
+   838→        </CardContent>
+   839→      </Card>
+   840→    </div>
+   841→  )
+   842→}
+   843→
+   844→// ── Content Tab ──────────────────────────────────────────────────────────────
+   845→
+   846→function ContentTab() {
+   847→  return (
+   848→    <div className="space-y-4">
+   849→      <div className="flex justify-between items-center">
+   850→        <h3 className="text-sm font-medium text-muted-foreground">
+   851→          Blog posts & content
+   852→        </h3>
+   853→        <Button
+   854→          size="sm"
+   855→          className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5"
+   856→          onClick={() => toast.info('Create Post', { description: 'Post editor would open here.' })}
+   857→        >
+   858→          <Plus className="size-4" />
+   859→          Create Post
+   860→        </Button>
+   861→      </div>
+   862→
+   863→      <Card>
+   864→        <CardContent className="p-0">
+   865→          <Table>
+   866→            <TableHeader>
+   867→              <TableRow>
+   868→                <TableHead className="pl-4">Title</TableHead>
+   869→                <TableHead>Status</TableHead>
+   870→                <TableHead className="hidden sm:table-cell">Date</TableHead>
+   871→                <TableHead className="pr-4 w-10" />
+   872→              </TableRow>
+   873→            </TableHeader>
+   874→            <TableBody>
+   875→              {mockPosts.map((post, index) => (
+   876→                <motion.tr
+   877→                  key={post.id}
+   878→                  initial={{ opacity: 0, x: -10 }}
+   879→                  animate={{ opacity: 1, x: 0 }}
+   880→                  transition={{ duration: 0.3, delay: index * 0.04 }}
+   881→                  className="hover:bg-muted/50 border-b transition-colors"
+   882→                >
+   883→                  <TableCell className="pl-4 py-3">
+   884→                    <div className="flex items-center gap-2">
+   885→                      <FileText className="size-4 text-muted-foreground shrink-0" />
+   886→                      <span className="font-medium text-sm">
+   887→                        {post.title}
+   888→                      </span>
+   889→                    </div>
+   890→                  </TableCell>
+   891→                  <TableCell>{getPostStatusBadge(post.status)}</TableCell>
+   892→                  <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">
+   893→                    {post.date}
+   894→                  </TableCell>
+   895→                  <TableCell className="pr-4">
+   896→                    <DropdownMenu>
+   897→                      <DropdownMenuTrigger asChild>
+   898→                        <Button variant="ghost" size="icon" className="size-8">
+   899→                          <MoreHorizontal className="size-4" />
+   900→                        </Button>
+   901→                      </DropdownMenuTrigger>
+   902→                      <DropdownMenuContent align="end">
+   903→                        <DropdownMenuItem onClick={() => toast.info('Edit Post', { description: `Editing "${post.title}".` })}>
+   904→                          <Edit3 className="size-4 mr-2" />
+   905→                          Edit
+   906→                        </DropdownMenuItem>
+   907→                        <DropdownMenuItem
+   908→                          variant="destructive"
+   909→                          onClick={() => toast.success('Post Deleted', { description: `"${post.title}" has been deleted.` })}
+   910→                        >
+   911→                          <Trash2 className="size-4 mr-2" />
+   912→                          Delete
+   913→                        </DropdownMenuItem>
+   914→                      </DropdownMenuContent>
+   915→                    </DropdownMenu>
+   916→                  </TableCell>
+   917→                </motion.tr>
+   918→              ))}
+   919→            </TableBody>
+   920→          </Table>
+   921→        </CardContent>
+   922→      </Card>
+   923→    </div>
+   924→  )
+   925→}
+   926→
+   927→// ── Main Component ───────────────────────────────────────────────────────────
+   928→
+   929→export default function AdminView() {
+   930→  const [activeTab, setActiveTab] = useState('overview')
+   931→
+   932→  return (
+   933→    <div className="min-h-screen bg-background">
+   934→      <div className="max-w-6xl mx-auto px-4 py-6 sm:py-8">
+   935→        {/* Header */}
+   936→        <motion.div
+   937→          initial={{ opacity: 0, y: -20 }}
+   938→          animate={{ opacity: 1, y: 0 }}
+   939→          transition={{ duration: 0.4 }}
+   940→          className="mb-6"
+   941→        >
+   942→          <h1 className="text-2xl font-bold tracking-tight">Admin Panel</h1>
+   943→          <p className="text-sm text-muted-foreground mt-1">
+   944→            Manage your platform, users, courses, and content.
+   945→          </p>
+   946→        </motion.div>
+   947→
+   948→        {/* Tab Navigation */}
+   949→        <motion.div
+   950→          initial={{ opacity: 0, y: -10 }}
+   951→          animate={{ opacity: 1, y: 0 }}
+   952→          transition={{ duration: 0.4, delay: 0.1 }}
+   953→        >
+   954→          <Tabs value={activeTab} onValueChange={setActiveTab}>
+   955→            <TabsList className="mb-6">
+   956→              <TabsTrigger value="overview" className="gap-1.5 text-xs sm:text-sm">
+   957→                <LayoutDashboard className="size-3.5" />
+   958→                <span className="hidden sm:inline">Overview</span>
+   959→              </TabsTrigger>
+   960→              <TabsTrigger value="users" className="gap-1.5 text-xs sm:text-sm">
+   961→                <Users className="size-3.5" />
+   962→                <span className="hidden sm:inline">Users</span>
+   963→              </TabsTrigger>
+   964→              <TabsTrigger value="courses" className="gap-1.5 text-xs sm:text-sm">
+   965→                <BookOpen className="size-3.5" />
+   966→                <span className="hidden sm:inline">Courses</span>
+   967→              </TabsTrigger>
+   968→              <TabsTrigger value="signals" className="gap-1.5 text-xs sm:text-sm">
+   969→                <Signal className="size-3.5" />
+   970→                <span className="hidden sm:inline">Signals</span>
+   971→              </TabsTrigger>
+   972→              <TabsTrigger value="content" className="gap-1.5 text-xs sm:text-sm">
+   973→                <FileText className="size-3.5" />
+   974→                <span className="hidden sm:inline">Content</span>
+   975→              </TabsTrigger>
+   976→            </TabsList>
+   977→
+   978→            <TabsContent value="overview">
+   979→              <OverviewTab />
+   980→            </TabsContent>
+   981→            <TabsContent value="users">
+   982→              <UsersTab />
+   983→            </TabsContent>
+   984→            <TabsContent value="courses">
+   985→              <CoursesTab />
+   986→            </TabsContent>
+   987→            <TabsContent value="signals">
+   988→              <SignalsTab />
+   989→            </TabsContent>
+   990→            <TabsContent value="content">
+   991→              <ContentTab />
+   992→            </TabsContent>
+   993→          </Tabs>
+   994→        </motion.div>
+   995→      </div>
+   996→    </div>
+   997→  )
+   998→}

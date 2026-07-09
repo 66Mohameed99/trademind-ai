@@ -1,0 +1,1170 @@
+     1→'use client'
+     2→
+     3→import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
+     4→import { motion, AnimatePresence } from 'framer-motion'
+     5→import {
+     6→  BarChart3,
+     7→  TrendingUp,
+     8→  TrendingDown,
+     9→  DollarSign,
+    10→  Target,
+    11→  Plus,
+    12→  ArrowUpRight,
+    13→  ArrowDownRight,
+    14→  Minus,
+    15→  Brain,
+    16→  Sparkles,
+    17→  ChevronUp,
+    18→  ChevronDown,
+    19→  Activity,
+    20→  Lightbulb,
+    21→  AlertTriangle,
+    22→  CheckCircle2,
+    23→  X,
+    24→  Loader2,
+    25→} from 'lucide-react'
+    26→import { toast } from 'sonner'
+    27→import { Badge } from '@/components/ui/badge'
+    28→import { Button } from '@/components/ui/button'
+    29→import { Progress } from '@/components/ui/progress'
+    30→import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+    31→import { Input } from '@/components/ui/input'
+    32→import { Textarea } from '@/components/ui/textarea'
+    33→import { Separator } from '@/components/ui/separator'
+    34→import {
+    35→  Dialog,
+    36→  DialogContent,
+    37→  DialogHeader,
+    38→  DialogTitle,
+    39→  DialogDescription,
+    40→  DialogFooter,
+    41→} from '@/components/ui/dialog'
+    42→import {
+    43→  Select,
+    44→  SelectContent,
+    45→  SelectItem,
+    46→  SelectTrigger,
+    47→  SelectValue,
+    48→} from '@/components/ui/select'
+    49→import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+    50→import { Slider } from '@/components/ui/slider'
+    51→import { Label } from '@/components/ui/label'
+    52→import {
+    53→  Table,
+    54→  TableHeader,
+    55→  TableBody,
+    56→  TableHead,
+    57→  TableRow,
+    58→  TableCell,
+    59→} from '@/components/ui/table'
+    60→import { ScrollArea } from '@/components/ui/scroll-area'
+    61→import { Card } from '@/components/ui/card'
+    62→import {
+    63→  ChartContainer,
+    64→  ChartTooltip,
+    65→  ChartTooltipContent,
+    66→} from '@/components/ui/chart'
+    67→import { Bar, BarChart, XAxis, YAxis, CartesianGrid } from 'recharts'
+    68→
+    69→// ─── Types ───────────────────────────────────────────────────────────────────
+    70→
+    71→type TradeResult = 'Win' | 'Loss' | 'Break Even'
+    72→type SortKey =
+    73→  | 'date'
+    74→  | 'pair'
+    75→  | 'direction'
+    76→  | 'entry'
+    77→  | 'exit'
+    78→  | 'pnl'
+    79→  | 'result'
+    80→
+    81→interface Trade {
+    82→  id: number
+    83→  date: string
+    84→  pair: string
+    85→  direction: 'Buy' | 'Sell'
+    86→  entry: number
+    87→  exit: number
+    88→  stopLoss: number
+    89→  takeProfit: number
+    90→  pnl: number
+    91→  result: TradeResult
+    92→  notes: string
+    93→  mood: string
+    94→  confidence: number
+    95→}
+    96→
+    97→interface PnlDataPoint {
+    98→  date: string
+    99→  pnl: number
+   100→  fill: string
+   101→}
+   102→
+   103→// ─── Mock Data ───────────────────────────────────────────────────────────────
+   104→
+   105→const trades: Trade[] = [
+   106→  {
+   107→    id: 1,
+   108→    date: '2025-01-14',
+   109→    pair: 'EUR/USD',
+   110→    direction: 'Buy',
+   111→    entry: 1.0842,
+   112→    exit: 1.0898,
+   113→    stopLoss: 1.0812,
+   114→    takeProfit: 1.0910,
+   115→    pnl: 560,
+   116→    result: 'Win',
+   117→    notes: 'Strong BOS confirmation on 15m, entered on retest of supply zone.',
+   118→    mood: 'Bullish',
+   119→    confidence: 8,
+   120→  },
+   121→  {
+   122→    id: 2,
+   123→    date: '2025-01-14',
+   124→    pair: 'GBP/JPY',
+   125→    direction: 'Sell',
+   126→    entry: 191.45,
+   127→    exit: 191.12,
+   128→    stopLoss: 191.80,
+   129→    takeProfit: 190.90,
+   130→    pnl: 413.5,
+   131→    result: 'Win',
+   132→    notes: 'Range high rejection, bearish engulfing at key resistance.',
+   133→    mood: 'Neutral',
+   134→    confidence: 7,
+   135→  },
+   136→  {
+   137→    id: 3,
+   138→    date: '2025-01-13',
+   139→    pair: 'USD/JPY',
+   140→    direction: 'Buy',
+   141→    entry: 157.22,
+   142→    exit: 156.88,
+   143→    stopLoss: 156.95,
+   144→    takeProfit: 157.80,
+   145→    pnl: -340,
+   146→    result: 'Loss',
+   147→    notes: 'Stopped out by spike below support. Premature entry.',
+   148→    mood: 'Bullish',
+   149→    confidence: 6,
+   150→  },
+   151→  {
+   152→    id: 4,
+   153→    date: '2025-01-13',
+   154→    pair: 'AUD/USD',
+   155→    direction: 'Sell',
+   156→    entry: 0.6285,
+   157→    exit: 0.6251,
+   158→    stopLoss: 0.6310,
+   159→    takeProfit: 0.6240,
+   160→    pnl: 340,
+   161→    result: 'Win',
+   162→    notes: 'Clean CHoCH on 1H, liquidity sweep of previous highs.',
+   163→    mood: 'Bearish',
+   164→    confidence: 9,
+   165→  },
+   166→  {
+   167→    id: 5,
+   168→    date: '2025-01-12',
+   169→    pair: 'EUR/GBP',
+   170→    direction: 'Buy',
+   171→    entry: 0.8522,
+   172→    exit: 0.8524,
+   173→    stopLoss: 0.8500,
+   174→    takeProfit: 0.8560,
+   175→    pnl: 0,
+   176→    result: 'Break Even',
+   177→    notes: 'Price stalled at resistance, moved SL to breakeven and got out.',
+   178→    mood: 'Neutral',
+   179→    confidence: 5,
+   180→  },
+   181→  {
+   182→    id: 6,
+   183→    date: '2025-01-12',
+   184→    pair: 'XAU/USD',
+   185→    direction: 'Sell',
+   186→    entry: 2658.50,
+   187→    exit: 2672.30,
+   188→    stopLoss: 2675.00,
+   189→    takeProfit: 2638.00,
+   190→    pnl: -1380,
+   191→    result: 'Loss',
+   192→    notes: 'Gold rallied on USD weakness. Should have waited for confirmation.',
+   193→    mood: 'Neutral',
+   194→    confidence: 4,
+   195→  },
+   196→  {
+   197→    id: 7,
+   198→    date: '2025-01-11',
+   199→    pair: 'NZD/USD',
+   200→    direction: 'Buy',
+   201→    entry: 0.5688,
+   202→    exit: 0.5732,
+   203→    stopLoss: 0.5662,
+   204→    takeProfit: 0.5750,
+   205→    pnl: 440,
+   206→    result: 'Win',
+   207→    notes: 'Demand zone bounce with RSI divergence. Perfect entry.',
+   208→    mood: 'Bullish',
+   209→    confidence: 8,
+   210→  },
+   211→  {
+   212→    id: 8,
+   213→    date: '2025-01-11',
+   214→    pair: 'USD/CAD',
+   215→    direction: 'Sell',
+   216→    entry: 1.3520,
+   217→    exit: 1.3478,
+   218→    stopLoss: 1.3555,
+   219→    takeProfit: 1.3460,
+   220→    pnl: 420,
+   221→    result: 'Win',
+   222→    notes: 'Oil inventory data boosted CAD. Sold the breakout retest.',
+   223→    mood: 'Bearish',
+   224→    confidence: 7,
+   225→  },
+   226→  {
+   227→    id: 9,
+   228→    date: '2025-01-10',
+   229→    pair: 'GBP/USD',
+   230→    direction: 'Buy',
+   231→    entry: 1.2530,
+   232→    exit: 1.2505,
+   233→    stopLoss: 1.2490,
+   234→    takeProfit: 1.2590,
+   235→    pnl: -250,
+   236→    result: 'Loss',
+   237→    notes: 'UK CPI data missed expectations. Exit was too slow.',
+   238→    mood: 'Bullish',
+   239→    confidence: 6,
+   240→  },
+   241→  {
+   242→    id: 10,
+   243→    date: '2025-01-10',
+   244→    pair: 'EUR/JPY',
+   245→    direction: 'Buy',
+   246→    entry: 170.35,
+   247→    exit: 171.20,
+   248→    stopLoss: 170.00,
+   249→    takeProfit: 171.50,
+   250→    pnl: 637.5,
+   251→    result: 'Win',
+   252→    notes: 'Yen weakness across the board. Rode the trend to TP.',
+   253→    mood: 'Bullish',
+   254→    confidence: 9,
+   255→  },
+   256→]
+   257→
+   258→const pnlChartData: PnlDataPoint[] = [
+   259→  { date: 'Jan 1', pnl: 320, fill: '#10b981' },
+   260→  { date: 'Jan 2', pnl: -180, fill: '#ef4444' },
+   261→  { date: 'Jan 3', pnl: 540, fill: '#10b981' },
+   262→  { date: 'Jan 4', pnl: 120, fill: '#10b981' },
+   263→  { date: 'Jan 5', pnl: -90, fill: '#ef4444' },
+   264→  { date: 'Jan 6', pnl: 780, fill: '#10b981' },
+   265→  { date: 'Jan 7', pnl: -420, fill: '#ef4444' },
+   266→  { date: 'Jan 8', pnl: 350, fill: '#10b981' },
+   267→  { date: 'Jan 9', pnl: -150, fill: '#ef4444' },
+   268→  { date: 'Jan 10', pnl: 387, fill: '#10b981' },
+   269→  { date: 'Jan 11', pnl: 860, fill: '#10b981' },
+   270→  { date: 'Jan 12', pnl: 0, fill: '#94a3b8' },
+   271→  { date: 'Jan 13', pnl: -0, fill: '#ef4444' },
+   272→  { date: 'Jan 14', pnl: 973, fill: '#10b981' },
+   273→]
+   274→
+   275→const chartConfig = {
+   276→  pnl: {
+   277→    label: 'P&L ($)',
+   278→    color: '#10b981',
+   279→  },
+   280→}
+   281→
+   282→// ─── Animated Counter ─────────────────────────────────────────────────────────
+   283→
+   284→function AnimatedCounter({
+   285→  value,
+   286→  prefix = '',
+   287→  suffix = '',
+   288→  decimals = 0,
+   289→}: {
+   290→  value: number
+   291→  prefix?: string
+   292→  suffix?: string
+   293→  decimals?: number
+   294→}) {
+   295→  const [display, setDisplay] = useState(0)
+   296→  const ref = useRef<HTMLSpanElement>(null)
+   297→  const hasAnimated = useRef(false)
+   298→
+   299→  useEffect(() => {
+   300→    if (hasAnimated.current) return
+   301→    hasAnimated.current = true
+   302→
+   303→    const prefersReduced = window.matchMedia(
+   304→      '(prefers-reduced-motion: reduce)'
+   305→    ).matches
+   306→    if (prefersReduced) {
+   307→      displayRef.current = value
+   308→      return
+   309→    }
+   310→
+   311→    const duration = 1200
+   312→    const start = performance.now()
+   313→
+   314→    function animate(now: number) {
+   315→      const elapsed = now - start
+   316→      const progress = Math.min(elapsed / duration, 1)
+   317→      const eased = 1 - Math.pow(1 - progress, 3)
+   318→      setDisplay(eased * value)
+   319→      if (progress < 1) requestAnimationFrame(animate)
+   320→    }
+   321→
+   322→    requestAnimationFrame(animate)
+   323→  }, [value])
+   324→
+   325→  return (
+   326→    <span ref={ref}>
+   327→      {prefix}
+   328→      {display.toFixed(decimals)}
+   329→      {suffix}
+   330→    </span>
+   331→  )
+   332→}
+   333→
+   334→// ─── Stat Card ────────────────────────────────────────────────────────────────
+   335→
+   336→function StatCard({
+   337→  label,
+   338→  value,
+   339→  prefix,
+   340→  suffix,
+   341→  decimals,
+   342→  icon: Icon,
+   343→  colorClass,
+   344→  subValue,
+   345→}: {
+   346→  label: string
+   347→  value: number
+   348→  prefix?: string
+   349→  suffix?: string
+   350→  decimals?: number
+   351→  icon: React.ComponentType<{ className?: string }>
+   352→  colorClass?: string
+   353→  subValue?: React.ReactNode
+   354→}) {
+   355→  return (
+   356→    <motion.div
+   357→      initial={{ opacity: 0, y: 20 }}
+   358→      animate={{ opacity: 1, y: 0 }}
+   359→      whileHover={{ y: -3 }}
+   360→      transition={{ type: 'spring', stiffness: 300, damping: 24 }}
+   361→      className="rounded-xl border bg-card p-4 shadow-sm"
+   362→    >
+   363→      <div className="flex items-center justify-between">
+   364→        <p className="text-sm text-muted-foreground">{label}</p>
+   365→        <div
+   366→          className={`rounded-lg p-2 ${colorClass || 'bg-emerald-100 dark:bg-emerald-900/30'}`}
+   367→        >
+   368→          <Icon
+   369→            className={`size-4 ${colorClass?.includes('rose') || colorClass?.includes('red') ? 'text-rose-600 dark:text-rose-400' : colorClass?.includes('amber') ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'}`}
+   370→          />
+   371→        </div>
+   372→      </div>
+   373→      <div className="mt-2">
+   374→        <p className="text-2xl font-bold tabular-nums">
+   375→          <AnimatedCounter
+   376→            value={value}
+   377→            prefix={prefix}
+   378→            suffix={suffix}
+   379→            decimals={decimals}
+   380→          />
+   381→        </p>
+   382→        {subValue && <div className="mt-1">{subValue}</div>}
+   383→      </div>
+   384→    </motion.div>
+   385→  )
+   386→}
+   387→
+   388→// ─── AI Feedback Panel ───────────────────────────────────────────────────────
+   389→
+   390→function AIFeedbackPanel() {
+   391→  const [expanded, setExpanded] = useState(false)
+   392→  const [loading, setLoading] = useState(false)
+   393→
+   394→  return (
+   395→    <motion.div
+   396→      initial={{ opacity: 0, x: 20 }}
+   397→      animate={{ opacity: 1, x: 0 }}
+   398→      transition={{ duration: 0.5, delay: 0.3 }}
+   399→    >
+   400→      <div className="rounded-xl border bg-card overflow-hidden">
+   401→        <div className="bg-gradient-to-r from-emerald-600 to-emerald-500 px-5 py-3.5">
+   402→          <div className="flex items-center gap-2 text-white">
+   403→            <Sparkles className="size-5" />
+   404→            <h3 className="font-semibold">AI Trade Analysis</h3>
+   405→          </div>
+   406→          <p className="mt-0.5 text-xs text-emerald-100">
+   407→            Latest trade: EUR/USD Buy — Win +$560
+   408→          </p>
+   409→        </div>
+   410→        <div className="p-5 space-y-4">
+   411→          {/* Entry Analysis */}
+   412→          <div className="space-y-1.5">
+   413→            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+   414→              <CheckCircle2 className="size-4 text-emerald-500" />
+   415→              Entry Timing
+   416→            </div>
+   417→            <p className="text-sm text-muted-foreground pl-6">
+   418→              Your entry was well-timed with the BOS confirmation on the 15m
+   419→              chart. The retest of the supply zone provided excellent
+   420→              confluence. Consider waiting for the candle close next time for
+   421→              even higher probability setups.
+   422→            </p>
+   423→          </div>
+   424→
+   425→          <Separator />
+   426→
+   427→          {/* Suggestions */}
+   428→          <div className="space-y-1.5">
+   429→            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+   430→              <Lightbulb className="size-4 text-amber-500" />
+   431→              Suggestions for Improvement
+   432→            </div>
+   433→            <ul className="space-y-1 pl-6">
+   434→              <li className="flex items-start gap-2 text-sm text-muted-foreground">
+   435→                <ArrowUpRight className="mt-0.5 size-3 shrink-0 text-emerald-500" />
+   436→                Your R:R ratio of 1:2.3 is excellent — keep this discipline.
+   437→              </li>
+   438→              <li className="flex items-start gap-2 text-sm text-muted-foreground">
+   439→                <ArrowUpRight className="mt-0.5 size-3 shrink-0 text-emerald-500" />
+   440→                Consider scaling out 50% at the first TP for better risk
+   441→                management.
+   442→              </li>
+   443→              <li className="flex items-start gap-2 text-sm text-muted-foreground">
+   444→                <AlertTriangle className="mt-0.5 size-3 shrink-0 text-amber-500" />
+   445→                You&apos;ve been overtrading on Fridays — consider reducing
+   446→                position size on low-liquidity sessions.
+   447→              </li>
+   448→            </ul>
+   449→          </div>
+   450→
+   451→          <Separator />
+   452→
+   453→          {/* Psychology */}
+   454→          <div className="space-y-1.5">
+   455→            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+   456→              <Brain className="size-4 text-purple-500" />
+   457→              Psychology Insights
+   458→            </div>
+   459→            <p className="text-sm text-muted-foreground pl-6">
+   460→              Your bullish mood before this trade correlated with a
+   461→              well-planned entry. However, note that 3 of your 4 losses this
+   462→              week also started with a &quot;Bullish&quot; mood — be mindful
+   463→              of confirmation bias when feeling overly confident.
+   464→            </p>
+   465→          </div>
+   466→
+   467→          <Button
+   468→            variant="outline"
+   469→            className="w-full border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-950"
+   470→            onClick={() => {
+   471→              if (expanded) { setExpanded(false); return }
+   472→              setLoading(true)
+   473→              setTimeout(() => {
+   474→                setLoading(false)
+   475→                setExpanded(true)
+   476→                toast.success('AI Analysis Complete', { description: 'Full trade analysis has been generated.' })
+   477→              }, 1500)
+   478→            }}
+   479→            disabled={loading}
+   480→          >
+   481→            {loading ? (
+   482→              <><Loader2 className="mr-2 size-4 animate-spin" />Analyzing...</>
+   483→            ) : expanded ? (
+   484→              <><ChevronUp className="mr-2 size-4" />Show Less</>
+   485→            ) : (
+   486→              <><Sparkles className="mr-2 size-4" />Get Full Analysis</>
+   487→            )}
+   488→          </Button>
+   489→          {expanded && (
+   490→            <motion.div
+   491→              initial={{ opacity: 0, height: 0 }}
+   492→              animate={{ opacity: 1, height: 'auto' }}
+   493→              className="mt-4 space-y-3 text-sm text-muted-foreground"
+   494→            >
+   495→              <Separator />
+   496→              <div className="space-y-2 pt-2">
+   497→                <p className="font-medium text-foreground">Risk-Reward Analysis</p>
+   498→                <p>Your average R:R of 1:2.3 is in the top 15% of traders on the platform. Your position sizing has been consistent, averaging 1.2% risk per trade.</p>
+   499→              </div>
+   500→              <div className="space-y-2">
+   501→                <p className="font-medium text-foreground">Pattern Recognition</p>
+   502→                <p>You perform best on H4 timeframe with order block entries (78% win rate). Your M15 scalping trades show lower consistency (52% win rate) — consider focusing on higher timeframes.</p>
+   503→              </div>
+   504→              <div className="space-y-2">
+   505→                <p className="font-medium text-foreground">Weekly Goal Progress</p>
+   506→                <div className="space-y-1.5">
+   507→                  <div className="flex justify-between text-xs"><span>Target P&amp;L</span><span className="text-emerald-600 font-medium">$3,950 / $5,000</span></div>
+   508→                  <Progress value={79} className="h-1.5 [&>[data-slot=progress-indicator]]:bg-emerald-500" />
+   509→                </div>
+   510→              </div>
+   511→            </motion.div>
+   512→          )}
+   513→        </div>
+   514→      </div>
+   515→    </motion.div>
+   516→  )
+   517→}
+   518→
+   519→// ─── New Trade Dialog ────────────────────────────────────────────────────────
+   520→
+   521→function NewTradeDialog({
+   522→  open,
+   523→  onOpenChange,
+   524→}: {
+   525→  open: boolean
+   526→  onOpenChange: (open: boolean) => void
+   527→}) {
+   528→  const [direction, setDirection] = useState<'Buy' | 'Sell'>('Buy')
+   529→  const [mood, setMood] = useState('Neutral')
+   530→  const [confidence, setConfidence] = useState([5])
+   531→
+   532→  const handleClose = useCallback(
+   533→    (val: boolean) => {
+   534→      if (!val) {
+   535→        setDirection('Buy')
+   536→        setMood('Neutral')
+   537→        setConfidence([5])
+   538→      }
+   539→      onOpenChange(val)
+   540→    },
+   541→    [onOpenChange]
+   542→  )
+   543→
+   544→  return (
+   545→    <Dialog open={open} onOpenChange={handleClose}>
+   546→      <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
+   547→        <motion.div
+   548→          initial={{ opacity: 0, y: 20 }}
+   549→          animate={{ opacity: 1, y: 0 }}
+   550→          transition={{ duration: 0.3 }}
+   551→        >
+   552→          <DialogHeader>
+   553→            <DialogTitle className="text-xl">Log New Trade</DialogTitle>
+   554→            <DialogDescription>
+   555→              Record your trade details for analysis and AI feedback.
+   556→            </DialogDescription>
+   557→          </DialogHeader>
+   558→
+   559→          <div className="mt-6 space-y-6">
+   560→            {/* Pair */}
+   561→            <div className="space-y-2">
+   562→              <Label className="text-sm font-medium">Currency Pair</Label>
+   563→              <Select>
+   564→                <SelectTrigger className="w-full">
+   565→                  <SelectValue placeholder="Select a pair" />
+   566→                </SelectTrigger>
+   567→                <SelectContent>
+   568→                  {[
+   569→                    'EUR/USD',
+   570→                    'GBP/USD',
+   571→                    'USD/JPY',
+   572→                    'GBP/JPY',
+   573→                    'AUD/USD',
+   574→                    'NZD/USD',
+   575→                    'USD/CAD',
+   576→                    'EUR/GBP',
+   577→                    'EUR/JPY',
+   578→                    'XAU/USD',
+   579→                  ].map((p) => (
+   580→                    <SelectItem key={p} value={p}>
+   581→                      {p}
+   582→                    </SelectItem>
+   583→                  ))}
+   584→                </SelectContent>
+   585→              </Select>
+   586→            </div>
+   587→
+   588→            {/* Direction */}
+   589→            <div className="space-y-2">
+   590→              <Label className="text-sm font-medium">Direction</Label>
+   591→              <RadioGroup
+   592→                value={direction}
+   593→                onValueChange={(v) => setDirection(v as 'Buy' | 'Sell')}
+   594→                className="flex gap-4"
+   595→              >
+   596→                <div className="flex items-center gap-2 rounded-lg border px-4 py-3 flex-1 cursor-pointer transition-colors has-[[data-state=checked]]:border-emerald-500 has-[[data-state=checked]]:bg-emerald-50 dark:has-[[data-state=checked]]:bg-emerald-950/30">
+   597→                  <RadioGroupItem value="Buy" id="dir-buy" />
+   598→                  <Label
+   599→                    htmlFor="dir-buy"
+   600→                    className="flex items-center gap-2 cursor-pointer font-medium"
+   601→                  >
+   602→                    <ArrowUpRight className="size-4 text-emerald-500" />
+   603→                    Buy
+   604→                  </Label>
+   605→                </div>
+   606→                <div className="flex items-center gap-2 rounded-lg border px-4 py-3 flex-1 cursor-pointer transition-colors has-[[data-state=checked]]:border-rose-500 has-[[data-state=checked]]:bg-rose-50 dark:has-[[data-state=checked]]:bg-rose-950/30">
+   607→                  <RadioGroupItem value="Sell" id="dir-sell" />
+   608→                  <Label
+   609→                    htmlFor="dir-sell"
+   610→                    className="flex items-center gap-2 cursor-pointer font-medium"
+   611→                  >
+   612→                    <ArrowDownRight className="size-4 text-rose-500" />
+   613→                    Sell
+   614→                  </Label>
+   615→                </div>
+   616→              </RadioGroup>
+   617→            </div>
+   618→
+   619→            {/* Price Fields */}
+   620→            <div className="grid grid-cols-2 gap-4">
+   621→              <div className="space-y-2">
+   622→                <Label className="text-sm font-medium">Entry Price</Label>
+   623→                <Input type="number" step="0.0001" placeholder="0.0000" />
+   624→              </div>
+   625→              <div className="space-y-2">
+   626→                <Label className="text-sm font-medium">Exit Price</Label>
+   627→                <Input type="number" step="0.0001" placeholder="0.0000" />
+   628→              </div>
+   629→              <div className="space-y-2">
+   630→                <Label className="text-sm font-medium">Stop Loss</Label>
+   631→                <Input type="number" step="0.0001" placeholder="0.0000" />
+   632→              </div>
+   633→              <div className="space-y-2">
+   634→                <Label className="text-sm font-medium">Take Profit</Label>
+   635→                <Input type="number" step="0.0001" placeholder="0.0000" />
+   636→              </div>
+   637→            </div>
+   638→
+   639→            {/* Lot Size */}
+   640→            <div className="space-y-2">
+   641→              <Label className="text-sm font-medium">Lot Size</Label>
+   642→              <Input type="number" step="0.01" placeholder="0.10" />
+   643→            </div>
+   644→
+   645→            {/* Notes */}
+   646→            <div className="space-y-2">
+   647→              <Label className="text-sm font-medium">Trade Notes</Label>
+   648→              <Textarea
+   649→                placeholder="Describe your analysis, reasoning, and any observations..."
+   650→                rows={3}
+   651→              />
+   652→            </div>
+   653→
+   654→            <Separator />
+   655→
+   656→            {/* Psychology Section */}
+   657→            <div>
+   658→              <h4 className="flex items-center gap-2 text-sm font-semibold mb-4">
+   659→                <Brain className="size-4 text-purple-500" />
+   660→                Psychology
+   661→              </h4>
+   662→
+   663→              {/* Mood */}
+   664→              <div className="space-y-2 mb-4">
+   665→                <Label className="text-sm font-medium">Market Mood</Label>
+   666→                <RadioGroup
+   667→                  value={mood}
+   668→                  onValueChange={setMood}
+   669→                  className="grid grid-cols-3 gap-3"
+   670→                >
+   671→                  <div className="flex items-center gap-2 rounded-lg border px-3 py-2.5 cursor-pointer transition-colors has-[[data-state=checked]]:border-emerald-500 has-[[data-state=checked]]:bg-emerald-50 dark:has-[[data-state=checked]]:bg-emerald-950/30">
+   672→                    <RadioGroupItem value="Bullish" id="mood-bull" />
+   673→                    <Label
+   674→                      htmlFor="mood-bull"
+   675→                      className="cursor-pointer text-sm flex-1"
+   676→                    >
+   677→                      🐂 Bullish
+   678→                    </Label>
+   679→                  </div>
+   680→                  <div className="flex items-center gap-2 rounded-lg border px-3 py-2.5 cursor-pointer transition-colors has-[[data-state=checked]]:border-slate-500 has-[[data-state=checked]]:bg-slate-50 dark:has-[[data-state=checked]]:bg-slate-900/30">
+   681→                    <RadioGroupItem value="Neutral" id="mood-neut" />
+   682→                    <Label
+   683→                      htmlFor="mood-neut"
+   684→                      className="cursor-pointer text-sm flex-1"
+   685→                    >
+   686→                      😐 Neutral
+   687→                    </Label>
+   688→                  </div>
+   689→                  <div className="flex items-center gap-2 rounded-lg border px-3 py-2.5 cursor-pointer transition-colors has-[[data-state=checked]]:border-rose-500 has-[[data-state=checked]]:bg-rose-50 dark:has-[[data-state=checked]]:bg-rose-950/30">
+   690→                    <RadioGroupItem value="Bearish" id="mood-bear" />
+   691→                    <Label
+   692→                      htmlFor="mood-bear"
+   693→                      className="cursor-pointer text-sm flex-1"
+   694→                    >
+   695→                      🐻 Bearish
+   696→                    </Label>
+   697→                  </div>
+   698→                </RadioGroup>
+   699→              </div>
+   700→
+   701→              {/* Confidence */}
+   702→              <div className="space-y-3">
+   703→                <div className="flex items-center justify-between">
+   704→                  <Label className="text-sm font-medium">Confidence Level</Label>
+   705→                  <span className="text-sm font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
+   706→                    {confidence[0]}/10
+   707→                  </span>
+   708→                </div>
+   709→                <Slider
+   710→                  value={confidence}
+   711→                  onValueChange={setConfidence}
+   712→                  min={1}
+   713→                  max={10}
+   714→                  step={1}
+   715→                  className="[&_[data-slot=slider-range]]:bg-emerald-500 [&_[data-slot=slider-thumb]]:border-emerald-500"
+   716→                />
+   717→                <div className="flex justify-between text-xs text-muted-foreground">
+   718→                  <span>Low</span>
+   719→                  <span>Medium</span>
+   720→                  <span>High</span>
+   721→                </div>
+   722→              </div>
+   723→            </div>
+   724→          </div>
+   725→
+   726→          <DialogFooter className="mt-6 gap-3">
+   727→            <Button
+   728→              variant="outline"
+   729→              onClick={() => handleClose(false)}
+   730→            >
+   731→              Cancel
+   732→            </Button>
+   733→            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => { handleClose(false); toast.success('Trade logged!', { description: 'Your trade has been saved to the journal.' }) }}>
+   734→              <Plus className="mr-2 size-4" />
+   735→              Save Trade
+   736→            </Button>
+   737→            <Button className="bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white" onClick={() => { handleClose(false); setTimeout(() => toast.success('AI Feedback Ready', { description: 'Your trade analysis is available in the AI panel.' }), 1000) }}>
+   738→              <Sparkles className="mr-2 size-4" />
+   739→              Save & Get AI Feedback
+   740→            </Button>
+   741→          </DialogFooter>
+   742→        </motion.div>
+   743→      </DialogContent>
+   744→    </Dialog>
+   745→  )
+   746→}
+   747→
+   748→// ─── Sort Header ─────────────────────────────────────────────────────────────
+   749→
+   750→function SortableHeader({
+   751→  label,
+   752→  sortKey,
+   753→  currentSort,
+   754→  sortDir,
+   755→  onSort,
+   756→}: {
+   757→  label: string
+   758→  sortKey: SortKey
+   759→  currentSort: SortKey
+   760→  sortDir: 'asc' | 'desc'
+   761→  onSort: (key: SortKey) => void
+   762→}) {
+   763→  const isActive = currentSort === sortKey
+   764→  return (
+   765→    <TableHead
+   766→      className="cursor-pointer select-none hover:text-foreground transition-colors"
+   767→      onClick={() => onSort(sortKey)}
+   768→    >
+   769→      <div className="flex items-center gap-1">
+   770→        {label}
+   771→        {isActive ? (
+   772→          sortDir === 'asc' ? (
+   773→            <ChevronUp className="size-3.5 text-emerald-500" />
+   774→          ) : (
+   775→            <ChevronDown className="size-3.5 text-emerald-500" />
+   776→          )
+   777→        ) : (
+   778→          <ChevronDown className="size-3.5 opacity-30" />
+   779→        )}
+   780→      </div>
+   781→    </TableHead>
+   782→  )
+   783→}
+   784→
+   785→// ─── Main Component ──────────────────────────────────────────────────────────
+   786→
+   787→export default function JournalView() {
+   788→  const [filter, setFilter] = useState('all')
+   789→  const [newTradeOpen, setNewTradeOpen] = useState(false)
+   790→  const [sortKey, setSortKey] = useState<SortKey>('date')
+   791→  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
+   792→
+   793→  const handleSort = useCallback(
+   794→    (key: SortKey) => {
+   795→      if (sortKey === key) {
+   796→        setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
+   797→      } else {
+   798→        setSortKey(key)
+   799→        setSortDir('desc')
+   800→      }
+   801→    },
+   802→    [sortKey]
+   803→  )
+   804→
+   805→  const filteredTrades = useMemo(() => {
+   806→    let result = [...trades]
+   807→    if (filter !== 'all') {
+   808→      result = result.filter((t) => t.result.toLowerCase().replace(' ', '-') === filter)
+   809→    }
+   810→    result.sort((a, b) => {
+   811→      let cmp = 0
+   812→      switch (sortKey) {
+   813→        case 'date':
+   814→          cmp = a.date.localeCompare(b.date)
+   815→          break
+   816→        case 'pair':
+   817→          cmp = a.pair.localeCompare(b.pair)
+   818→          break
+   819→        case 'direction':
+   820→          cmp = a.direction.localeCompare(b.direction)
+   821→          break
+   822→        case 'entry':
+   823→          cmp = a.entry - b.entry
+   824→          break
+   825→        case 'exit':
+   826→          cmp = a.exit - b.exit
+   827→          break
+   828→        case 'pnl':
+   829→          cmp = a.pnl - b.pnl
+   830→          break
+   831→        case 'result':
+   832→          cmp = a.result.localeCompare(b.result)
+   833→          break
+   834→      }
+   835→      return sortDir === 'asc' ? cmp : -cmp
+   836→    })
+   837→    return result
+   838→  }, [filter, sortKey, sortDir])
+   839→
+   840→  return (
+   841→    <div className="min-h-screen bg-background">
+   842→      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+   843→        {/* ── Header ────────────────────────────────────────────── */}
+   844→        <motion.div
+   845→          initial={{ opacity: 0, y: -20 }}
+   846→          animate={{ opacity: 1, y: 0 }}
+   847→          transition={{ duration: 0.5 }}
+   848→          className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+   849→        >
+   850→          <div>
+   851→            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+   852→              Trading Journal
+   853→            </h1>
+   854→            <p className="text-sm text-muted-foreground">
+   855→              Track, analyze, and improve your trading performance
+   856→            </p>
+   857→          </div>
+   858→          <Button
+   859→            className="bg-emerald-600 hover:bg-emerald-700 text-white"
+   860→            onClick={() => setNewTradeOpen(true)}
+   861→          >
+   862→            <Plus className="mr-2 size-4" />
+   863→            New Trade
+   864→          </Button>
+   865→        </motion.div>
+   866→
+   867→        {/* ── Filter Tabs ───────────────────────────────────────── */}
+   868→        <motion.div
+   869→          initial={{ opacity: 0, y: 10 }}
+   870→          animate={{ opacity: 1, y: 0 }}
+   871→          transition={{ duration: 0.4, delay: 0.1 }}
+   872→          className="mt-6"
+   873→        >
+   874→          <Tabs value={filter} onValueChange={setFilter}>
+   875→            <TabsList className="bg-muted/60">
+   876→              <TabsTrigger value="all">All</TabsTrigger>
+   877→              <TabsTrigger value="win">Win</TabsTrigger>
+   878→              <TabsTrigger value="loss">Loss</TabsTrigger>
+   879→              <TabsTrigger value="break-even">Break Even</TabsTrigger>
+   880→            </TabsList>
+   881→          </Tabs>
+   882→        </motion.div>
+   883→
+   884→        {/* ── Stats Summary ─────────────────────────────────────── */}
+   885→        <motion.div
+   886→          initial={{ opacity: 0, y: 20 }}
+   887→          animate={{ opacity: 1, y: 0 }}
+   888→          transition={{ duration: 0.5, delay: 0.15 }}
+   889→          className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-5"
+   890→        >
+   891→          <StatCard
+   892→            label="Total Trades"
+   893→            value={156}
+   894→            icon={Activity}
+   895→          />
+   896→          <StatCard
+   897→            label="Win Rate"
+   898→            value={67.5}
+   899→            suffix="%"
+   900→            decimals={1}
+   901→            icon={Target}
+   902→            subValue={
+   903→              <Progress
+   904→                value={67.5}
+   905→                className="mt-2 h-1.5 [&>[data-slot=progress-indicator]]:bg-emerald-500"
+   906→              />
+   907→            }
+   908→          />
+   909→          <StatCard
+   910→            label="Avg Win"
+   911→            value={245}
+   912→            prefix="+$"
+   913→            icon={TrendingUp}
+   914→          />
+   915→          <StatCard
+   916→            label="Avg Loss"
+   917→            value={128}
+   918→            prefix="-$"
+   919→            icon={TrendingDown}
+   920→            colorClass="bg-rose-100 dark:bg-rose-900/30"
+   921→          />
+   922→          <StatCard
+   923→            label="Profit Factor"
+   924→            value={1.92}
+   925→            decimals={2}
+   926→            icon={DollarSign}
+   927→          />
+   928→        </motion.div>
+   929→
+   930→        {/* ── P&L Chart ─────────────────────────────────────────── */}
+   931→        <motion.div
+   932→          initial={{ opacity: 0, y: 20 }}
+   933→          animate={{ opacity: 1, y: 0 }}
+   934→          transition={{ duration: 0.5, delay: 0.2 }}
+   935→          className="mt-6"
+   936→        >
+   937→          <Card className="py-4">
+   938→            <div className="px-6 pb-2">
+   939→              <div className="flex items-center justify-between">
+   940→                <div>
+   941→                  <h2 className="text-base font-semibold">
+   942→                    Daily P&L
+   943→                  </h2>
+   944→                  <p className="text-sm text-muted-foreground">
+   945→                    Last 14 days performance
+   946→                  </p>
+   947→                </div>
+   948→                <div className="flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-1.5 dark:bg-emerald-950/30">
+   949→                  <TrendingUp className="size-4 text-emerald-600 dark:text-emerald-400" />
+   950→                  <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+   951→                    +$3,950
+   952→                  </span>
+   953→                </div>
+   954→              </div>
+   955→            </div>
+   956→            <div className="px-2">
+   957→              <ChartContainer config={chartConfig} className="h-[250px] w-full">
+   958→                <BarChart data={pnlChartData} barSize={28}>
+   959→                  <CartesianGrid vertical={false} strokeDasharray="3 3" />
+   960→                  <XAxis
+   961→                    dataKey="date"
+   962→                    tickLine={false}
+   963→                    axisLine={false}
+   964→                    tick={{ fontSize: 12 }}
+   965→                  />
+   966→                  <YAxis
+   967→                    tickLine={false}
+   968→                    axisLine={false}
+   969→                    tick={{ fontSize: 12 }}
+   970→                    tickFormatter={(v) => `$${v}`}
+   971→                  />
+   972→                  <ChartTooltip
+   973→                    content={
+   974→                      <ChartTooltipContent
+   975→                        formatter={(value) => (
+   976→                          <span
+   977→                            className={
+   978→                              Number(value) >= 0
+   979→                                ? 'text-emerald-600 dark:text-emerald-400'
+   980→                                : 'text-rose-600 dark:text-rose-400'
+   981→                            }
+   982→                          >
+   983→                            {Number(value) >= 0 ? '+' : ''}$
+   984→                            {Number(value).toLocaleString()}
+   985→                          </span>
+   986→                        )}
+   987→                      />
+   988→                    }
+   989→                  />
+   990→                  <Bar dataKey="pnl" radius={[4, 4, 0, 0]} />
+   991→                </BarChart>
+   992→              </ChartContainer>
+   993→            </div>
+   994→          </Card>
+   995→        </motion.div>
+   996→
+   997→        {/* ── Trade History + AI Feedback ───────────────────────── */}
+   998→        <div className="mt-6 flex flex-col gap-6 lg:flex-row">
+   999→          {/* Trade History Table */}
+  1000→          <motion.div
+  1001→            initial={{ opacity: 0, y: 20 }}
+  1002→            animate={{ opacity: 1, y: 0 }}
+  1003→            transition={{ duration: 0.5, delay: 0.25 }}
+  1004→            className="flex-1 min-w-0"
+  1005→          >
+  1006→            <Card className="py-4">
+  1007→              <div className="px-6 pb-2">
+  1008→                <h2 className="text-base font-semibold">
+  1009→                  Trade History
+  1010→                  <span className="ml-2 text-sm font-normal text-muted-foreground">
+  1011→                    ({filteredTrades.length} trades)
+  1012→                  </span>
+  1013→                </h2>
+  1014→              </div>
+  1015→              <ScrollArea className="max-h-96">
+  1016→                <Table>
+  1017→                  <TableHeader>
+  1018→                    <TableRow>
+  1019→                      <SortableHeader
+  1020→                        label="Date"
+  1021→                        sortKey="date"
+  1022→                        currentSort={sortKey}
+  1023→                        sortDir={sortDir}
+  1024→                        onSort={handleSort}
+  1025→                      />
+  1026→                      <SortableHeader
+  1027→                        label="Pair"
+  1028→                        sortKey="pair"
+  1029→                        currentSort={sortKey}
+  1030→                        sortDir={sortDir}
+  1031→                        onSort={handleSort}
+  1032→                      />
+  1033→                      <SortableHeader
+  1034→                        label="Dir"
+  1035→                        sortKey="direction"
+  1036→                        currentSort={sortKey}
+  1037→                        sortDir={sortDir}
+  1038→                        onSort={handleSort}
+  1039→                      />
+  1040→                      <SortableHeader
+  1041→                        label="Entry"
+  1042→                        sortKey="entry"
+  1043→                        currentSort={sortKey}
+  1044→                        sortDir={sortDir}
+  1045→                        onSort={handleSort}
+  1046→                      />
+  1047→                      <SortableHeader
+  1048→                        label="Exit"
+  1049→                        sortKey="exit"
+  1050→                        currentSort={sortKey}
+  1051→                        sortDir={sortDir}
+  1052→                        onSort={handleSort}
+  1053→                      />
+  1054→                      <SortableHeader
+  1055→                        label="P&L"
+  1056→                        sortKey="pnl"
+  1057→                        currentSort={sortKey}
+  1058→                        sortDir={sortDir}
+  1059→                        onSort={handleSort}
+  1060→                      />
+  1061→                      <SortableHeader
+  1062→                        label="Result"
+  1063→                        sortKey="result"
+  1064→                        currentSort={sortKey}
+  1065→                        sortDir={sortDir}
+  1066→                        onSort={handleSort}
+  1067→                      />
+  1068→                      <TableHead className="hidden lg:table-cell">
+  1069→                        Notes
+  1070→                      </TableHead>
+  1071→                    </TableRow>
+  1072→                  </TableHeader>
+  1073→                  <TableBody>
+  1074→                    <AnimatePresence>
+  1075→                      {filteredTrades.map((trade) => (
+  1076→                        <motion.tr
+  1077→                          key={trade.id}
+  1078→                          initial={{ opacity: 0 }}
+  1079→                          animate={{ opacity: 1 }}
+  1080→                          exit={{ opacity: 0 }}
+  1081→                          className="border-b transition-colors hover:bg-muted/50"
+  1082→                        >
+  1083→                          <TableCell className="text-sm">
+  1084→                            {trade.date}
+  1085→                          </TableCell>
+  1086→                          <TableCell className="text-sm font-medium">
+  1087→                            {trade.pair}
+  1088→                          </TableCell>
+  1089→                          <TableCell>
+  1090→                            {trade.direction === 'Buy' ? (
+  1091→                              <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-0 gap-0.5">
+  1092→                                <ArrowUpRight className="size-3" />
+  1093→                                Buy
+  1094→                              </Badge>
+  1095→                            ) : (
+  1096→                              <Badge className="bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 border-0 gap-0.5">
+  1097→                                <ArrowDownRight className="size-3" />
+  1098→                                Sell
+  1099→                              </Badge>
+  1100→                            )}
+  1101→                          </TableCell>
+  1102→                          <TableCell className="text-sm font-mono tabular-nums">
+  1103→                            {trade.entry.toFixed(
+  1104→                              trade.pair === 'XAU/USD' ? 2 : 4
+  1105→                            )}
+  1106→                          </TableCell>
+  1107→                          <TableCell className="text-sm font-mono tabular-nums">
+  1108→                            {trade.exit.toFixed(
+  1109→                              trade.pair === 'XAU/USD' ? 2 : 4
+  1110→                            )}
+  1111→                          </TableCell>
+  1112→                          <TableCell>
+  1113→                            <span
+  1114→                              className={`text-sm font-semibold tabular-nums ${
+  1115→                                trade.pnl > 0
+  1116→                                  ? 'text-emerald-600 dark:text-emerald-400'
+  1117→                                  : trade.pnl < 0
+  1118→                                    ? 'text-rose-600 dark:text-rose-400'
+  1119→                                    : 'text-muted-foreground'
+  1120→                              }`}
+  1121→                            >
+  1122→                              {trade.pnl > 0 ? '+' : ''}
+  1123→                              ${Math.abs(trade.pnl).toLocaleString()}
+  1124→                            </span>
+  1125→                          </TableCell>
+  1126→                          <TableCell>
+  1127→                            {trade.result === 'Win' ? (
+  1128→                              <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-0">
+  1129→                                Win
+  1130→                              </Badge>
+  1131→                            ) : trade.result === 'Loss' ? (
+  1132→                              <Badge className="bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 border-0">
+  1133→                                Loss
+  1134→                              </Badge>
+  1135→                            ) : (
+  1136→                              <Badge
+  1137→                                variant="secondary"
+  1138→                                className="gap-0.5"
+  1139→                              >
+  1140→                                <Minus className="size-3" />
+  1141→                                Even
+  1142→                              </Badge>
+  1143→                            )}
+  1144→                          </TableCell>
+  1145→                          <TableCell className="hidden lg:table-cell max-w-[200px]">
+  1146→                            <span className="line-clamp-1 text-xs text-muted-foreground">
+  1147→                              {trade.notes}
+  1148→                            </span>
+  1149→                          </TableCell>
+  1150→                        </motion.tr>
+  1151→                      ))}
+  1152→                    </AnimatePresence>
+  1153→                  </TableBody>
+  1154→                </Table>
+  1155→              </ScrollArea>
+  1156→            </Card>
+  1157→          </motion.div>
+  1158→
+  1159→          {/* AI Feedback Panel */}
+  1160→          <div className="w-full lg:w-[340px] shrink-0">
+  1161→            <AIFeedbackPanel />
+  1162→          </div>
+  1163→        </div>
+  1164→      </main>
+  1165→
+  1166→      {/* New Trade Dialog */}
+  1167→      <NewTradeDialog open={newTradeOpen} onOpenChange={setNewTradeOpen} />
+  1168→    </div>
+  1169→  )
+  1170→}

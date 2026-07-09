@@ -32,6 +32,7 @@ import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
+import { useNavigation } from '@/store/navigation'
 import {
   Accordion,
   AccordionContent,
@@ -284,6 +285,7 @@ function ComparisonCell({ value }: { value: boolean | string }) {
 // ── Main Component ───────────────────────────────────────────────────────────
 
 export default function PricingView() {
+  const { setView } = useNavigation()
   const [isAnnual, setIsAnnual] = useState(false)
   const [couponCode, setCouponCode] = useState('')
   const [couponApplied, setCouponApplied] = useState(false)
@@ -449,6 +451,9 @@ export default function PricingView() {
                       variant={plan.buttonVariant}
                       className={`w-full ${plan.buttonClass || ''}`}
                       disabled={plan.name === 'Free'}
+                      onClick={() => {
+                        if (plan.name === 'Pro' || plan.name === 'Elite') setView('settings')
+                      }}
                     >
                       {plan.name === 'Pro' && <Zap className="size-4" />}
                       {plan.name === 'Elite' && <Crown className="size-4" />}

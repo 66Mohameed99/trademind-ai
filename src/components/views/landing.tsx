@@ -159,11 +159,18 @@ const testimonials = [
   },
 ]
 
-const footerLinks = {
-  Product: ['Features', 'Pricing', 'AI Mentor', 'Chart Analyzer', 'Academy', 'Trading Journal'],
-  Company: ['About', 'Blog', 'Careers', 'Press', 'Partners', 'Contact'],
-  Resources: ['Documentation', 'Help Center', 'Community', 'API', 'Status', 'Changelog'],
-  Legal: ['Privacy', 'Terms', 'Security', 'Cookies', 'Licenses', 'GDPR'],
+const footerLinks: Record<string, { label: string; action?: () => void }[]> = {
+  Product: [
+    { label: 'Features', action: () => document.querySelector('#features')?.scrollIntoView({ behavior: 'smooth' }) },
+    { label: 'Pricing', action: () => useNavigation.getState().setView('pricing') },
+    { label: 'AI Mentor' },
+    { label: 'Chart Analyzer' },
+    { label: 'Academy' },
+    { label: 'Trading Journal' },
+  ],
+  Company: [{ label: 'About' }, { label: 'Blog' }, { label: 'Careers' }, { label: 'Press' }, { label: 'Partners' }, { label: 'Contact' }],
+  Resources: [{ label: 'Documentation' }, { label: 'Help Center' }, { label: 'Community' }, { label: 'API' }, { label: 'Status' }, { label: 'Changelog' }],
+  Legal: [{ label: 'Privacy' }, { label: 'Terms' }, { label: 'Security' }, { label: 'Cookies' }, { label: 'Licenses' }, { label: 'GDPR' }],
 }
 
 // ─── Sub-Components ────────────────────────────────────────────────────
@@ -862,9 +869,12 @@ export default function LandingView() {
                 <h4 className="text-sm font-semibold text-foreground">{category}</h4>
                 <ul className="mt-4 flex flex-col gap-2.5">
                   {links.map((link) => (
-                    <li key={link}>
-                      <button className="text-sm text-muted-foreground transition-colors hover:text-emerald-600 dark:hover:text-emerald-400">
-                        {link}
+                    <li key={link.label}>
+                      <button
+                        onClick={link.action}
+                        className="text-sm text-muted-foreground transition-colors hover:text-emerald-600 dark:hover:text-emerald-400"
+                      >
+                        {link.label}
                       </button>
                     </li>
                   ))}

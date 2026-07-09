@@ -82,32 +82,40 @@ export function AuthDialog() {
 
   const passwordStrength = React.useMemo(() => getPasswordStrength(signupPassword), [signupPassword])
 
+  const doLogin = React.useCallback(() => {
+    setLoginLoading(true)
+    setTimeout(() => {
+      setLoginLoading(false)
+      setAuthenticated(true)
+      closeAuthDialog()
+      setView('dashboard')
+    }, 1000)
+  }, [setAuthenticated, closeAuthDialog, setView])
+
+  const doSignup = React.useCallback(() => {
+    setSignupLoading(true)
+    setTimeout(() => {
+      setSignupLoading(false)
+      setAuthenticated(true)
+      closeAuthDialog()
+      setView('dashboard')
+    }, 1000)
+  }, [setAuthenticated, closeAuthDialog, setView])
+
   const handleLogin = React.useCallback(
     (e: React.FormEvent) => {
       e.preventDefault()
-      setLoginLoading(true)
-      setTimeout(() => {
-        setLoginLoading(false)
-        setAuthenticated(true)
-        closeAuthDialog()
-        setView('dashboard')
-      }, 1000)
+      doLogin()
     },
-    [setAuthenticated, closeAuthDialog, setView]
+    [doLogin]
   )
 
   const handleSignup = React.useCallback(
     (e: React.FormEvent) => {
       e.preventDefault()
-      setSignupLoading(true)
-      setTimeout(() => {
-        setSignupLoading(false)
-        setAuthenticated(true)
-        closeAuthDialog()
-        setView('dashboard')
-      }, 1000)
+      doSignup()
     },
-    [setAuthenticated, closeAuthDialog, setView]
+    [doSignup]
   )
 
   // Reset form fields when dialog opens/closes
@@ -233,22 +241,20 @@ export function AuthDialog() {
                     </motion.div>
 
                     <motion.div variants={staggerItem}>
-                      <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}>
-                        <Button
-                          type="submit"
-                          className="w-full h-10 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
-                          disabled={loginLoading}
-                        >
-                          {loginLoading ? (
-                            <>
-                              <Loader2 className="size-4 animate-spin" />
-                              Signing in...
-                            </>
-                          ) : (
-                            'Sign In'
-                          )}
-                        </Button>
-                      </motion.div>
+                      <Button
+                        type="submit"
+                        className="w-full h-10 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
+                        disabled={loginLoading}
+                      >
+                        {loginLoading ? (
+                          <>
+                            <Loader2 className="size-4 animate-spin" />
+                            Signing in...
+                          </>
+                        ) : (
+                          'Sign In'
+                        )}
+                      </Button>
                     </motion.div>
 
                     <motion.div variants={staggerItem}>
@@ -261,26 +267,26 @@ export function AuthDialog() {
                     </motion.div>
 
                     <motion.div variants={staggerItem} className="grid grid-cols-2 gap-3">
-                      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="w-full h-10 font-medium"
-                        >
-                          <Chrome className="size-4" />
-                          Google
-                        </Button>
-                      </motion.div>
-                      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="w-full h-10 font-medium"
-                        >
-                          <Apple className="size-4" />
-                          Apple
-                        </Button>
-                      </motion.div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full h-10 font-medium"
+                        onClick={doLogin}
+                        disabled={loginLoading}
+                      >
+                        <Chrome className="size-4" />
+                        Google
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full h-10 font-medium"
+                        onClick={doLogin}
+                        disabled={loginLoading}
+                      >
+                        <Apple className="size-4" />
+                        Apple
+                      </Button>
                     </motion.div>
 
                     <motion.div variants={staggerItem} className="text-center pt-2">
@@ -449,22 +455,20 @@ export function AuthDialog() {
                     </motion.div>
 
                     <motion.div variants={staggerItem}>
-                      <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}>
-                        <Button
-                          type="submit"
-                          className="w-full h-10 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
-                          disabled={signupLoading || !agreeTerms}
-                        >
-                          {signupLoading ? (
-                            <>
-                              <Loader2 className="size-4 animate-spin" />
-                              Creating account...
-                            </>
-                          ) : (
-                            'Create Account'
-                          )}
-                        </Button>
-                      </motion.div>
+                      <Button
+                        type="submit"
+                        className="w-full h-10 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
+                        disabled={signupLoading || !agreeTerms}
+                      >
+                        {signupLoading ? (
+                          <>
+                            <Loader2 className="size-4 animate-spin" />
+                            Creating account...
+                          </>
+                        ) : (
+                          'Create Account'
+                        )}
+                      </Button>
                     </motion.div>
 
                     <motion.div variants={staggerItem}>
@@ -477,26 +481,26 @@ export function AuthDialog() {
                     </motion.div>
 
                     <motion.div variants={staggerItem} className="grid grid-cols-2 gap-3">
-                      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="w-full h-10 font-medium"
-                        >
-                          <Chrome className="size-4" />
-                          Google
-                        </Button>
-                      </motion.div>
-                      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="w-full h-10 font-medium"
-                        >
-                          <Apple className="size-4" />
-                          Apple
-                        </Button>
-                      </motion.div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full h-10 font-medium"
+                        onClick={doSignup}
+                        disabled={signupLoading}
+                      >
+                        <Chrome className="size-4" />
+                        Google
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full h-10 font-medium"
+                        onClick={doSignup}
+                        disabled={signupLoading}
+                      >
+                        <Apple className="size-4" />
+                        Apple
+                      </Button>
                     </motion.div>
 
                     <motion.div variants={staggerItem} className="text-center pt-2">

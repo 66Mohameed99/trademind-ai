@@ -73,6 +73,7 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from '@/components/ui/chart'
+import { toast } from 'sonner'
 
 // ── Mock Data ────────────────────────────────────────────────────────────────
 
@@ -530,8 +531,9 @@ function OverviewTab() {
 function UsersTab() {
   const [searchQuery, setSearchQuery] = useState('')
   const [roleFilter, setRoleFilter] = useState('all')
+  const [users, setUsers] = useState(mockUsers)
 
-  const filteredUsers = mockUsers.filter((user) => {
+  const filteredUsers = users.filter((user) => {
     const matchesSearch =
       user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.email.toLowerCase().includes(searchQuery.toLowerCase())
@@ -641,16 +643,25 @@ function UsersTab() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => toast.info('Edit User', { description: `Editing ${user.name}'s profile.` })}>
                           <Edit3 className="size-4 mr-2" />
                           Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => {
+                          setUsers(prev => prev.map(u => u.id === user.id ? { ...u, status: u.status === 'active' ? 'suspended' as const : 'active' as const } : u))
+                          toast.success(user.status === 'active' ? 'User Suspended' : 'User Reactivated', { description: `${user.name}'s account has been ${user.status === 'active' ? 'suspended' : 'reactivated'}.` })
+                        }}>
                           <Ban className="size-4 mr-2" />
-                          Suspend
+                          {user.status === 'active' ? 'Suspend' : 'Reactivate'}
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem variant="destructive">
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onClick={() => {
+                            setUsers(prev => prev.filter(u => u.id !== user.id))
+                            toast.success('User Deleted', { description: `${user.name} has been removed from the platform.` })
+                          }}
+                        >
                           <Trash2 className="size-4 mr-2" />
                           Delete
                         </DropdownMenuItem>
@@ -679,6 +690,7 @@ function CoursesTab() {
         <Button
           size="sm"
           className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5"
+          onClick={() => toast.info('Create Course', { description: 'Course creation wizard would open here.' })}
         >
           <Plus className="size-4" />
           Create New Course
@@ -731,7 +743,12 @@ function CoursesTab() {
                 </div>
               </CardContent>
               <CardFooter className="pt-0">
-                <Button variant="outline" size="sm" className="w-full gap-1.5">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full gap-1.5"
+                  onClick={() => toast.info('Edit Course', { description: `Editing "${course.title}".` })}
+                >
                   <Pencil className="size-3.5" />
                   Edit Course
                 </Button>
@@ -756,6 +773,7 @@ function SignalsTab() {
         <Button
           size="sm"
           className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5"
+          onClick={() => toast.info('Create Signal', { description: 'Signal creation form would open here.' })}
         >
           <Plus className="size-4" />
           Create Signal
@@ -799,11 +817,14 @@ function SignalsTab() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => toast.info('Edit Signal', { description: `Editing ${signal.pair} signal.` })}>
                           <Edit3 className="size-4 mr-2" />
                           Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem variant="destructive">
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onClick={() => toast.success('Signal Deleted', { description: `${signal.pair} signal has been removed.` })}
+                        >
                           <Trash2 className="size-4 mr-2" />
                           Delete
                         </DropdownMenuItem>
@@ -832,6 +853,7 @@ function ContentTab() {
         <Button
           size="sm"
           className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5"
+          onClick={() => toast.info('Create Post', { description: 'Post editor would open here.' })}
         >
           <Plus className="size-4" />
           Create Post
@@ -878,11 +900,14 @@ function ContentTab() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => toast.info('Edit Post', { description: `Editing "${post.title}".` })}>
                           <Edit3 className="size-4 mr-2" />
                           Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem variant="destructive">
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onClick={() => toast.success('Post Deleted', { description: `"${post.title}" has been deleted.` })}
+                        >
                           <Trash2 className="size-4 mr-2" />
                           Delete
                         </DropdownMenuItem>

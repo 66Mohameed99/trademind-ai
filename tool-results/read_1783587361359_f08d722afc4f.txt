@@ -1,0 +1,502 @@
+    60→    60→  { name: 'Technical Analysis Masterclass', progress: 75, icon: '📊' },
+    61→    61→  { name: 'Risk Management Fundamentals', progress: 45, icon: '🛡️' },
+    62→    62→  { name: 'Price Action Trading', progress: 90, icon: '🕯️' },
+    63→    63→]
+    64→    64→
+    65→    65→const signals = [
+    66→    66→  { pair: 'EUR/USD', direction: 'Buy' as const, entry: '1.0845', sl: '1.0810', tp: '1.0920', timeframe: 'H4', status: 'Active' as const },
+    67→    67→  { pair: 'GBP/JPY', direction: 'Sell' as const, entry: '191.35', sl: '191.80', tp: '190.50', timeframe: 'H1', status: 'Hit TP' as const },
+    68→    68→  { pair: 'BTC/USD', direction: 'Buy' as const, entry: '67,250', sl: '66,800', tp: '69,000', timeframe: 'D1', status: 'Active' as const },
+    69→    69→  { pair: 'XAU/USD', direction: 'Sell' as const, entry: '2,415.50', sl: '2,425.00', tp: '2,390.00', timeframe: 'H4', status: 'Hit SL' as const },
+    70→    70→  { pair: 'USD/JPY', direction: 'Buy' as const, entry: '157.80', sl: '157.40', tp: '158.50', timeframe: 'M15', status: 'Expired' as const },
+    71→    71→]
+    72→    72→
+    73→    73→const watchlist = [
+    74→    74→  { pair: 'EUR/USD', price: '1.0867', change: +0.32 },
+    75→    75→  { pair: 'GBP/JPY', price: '191.24', change: -0.15 },
+    76→    76→  { pair: 'BTC/USD', price: '68,420', change: +2.45 },
+    77→    77→  { pair: 'XAU/USD', price: '2,418.30', change: +0.89 },
+    78→    78→  { pair: 'USD/JPY', price: '157.92', change: -0.08 },
+    79→    79→  { pair: 'AAPL', price: '198.54', change: +1.23 },
+    80→    80→]
+    81→    81→
+    82→    82→const events = [
+    83→    83→  { name: 'NFP Report', time: 'Friday 8:30 AM' },
+    84→    84→  { name: 'FOMC Meeting', time: 'Wednesday 2:00 PM' },
+    85→    85→  { name: 'Live Session: Scalping', time: 'Thursday 7:00 PM' },
+    86→    86→  { name: 'Quiz: Risk Management', time: 'Monday 9:00 AM' },
+    87→    87→]
+    88→    88→
+    89→    89→const pnlData = Array.from({ length: 30 }, (_, i) => {
+    90→    90→  const day = i + 1
+    91→    91→  const base = 200 + i * 18
+    92→    92→  const noise = Math.sin(i * 1.7) * 120 + Math.cos(i * 0.8) * 60
+    93→    93→  const value = Math.round((base + noise) * 100) / 100
+    94→    94→  return { day: `Day ${day}`, pnl: value }
+    95→    95→})
+    96→    96→
+    97→    97→// ─── Animation Variants ──────────────────────────────────────────────────────
+    98→    98→
+    99→    99→const containerVariants = {
+   100→   100→  hidden: { opacity: 0 },
+   101→   101→  visible: {
+   102→   102→    opacity: 1,
+   103→   103→    transition: { staggerChildren: 0.08, delayChildren: 0.1 },
+   104→   104→  },
+   105→   105→}
+   106→   106→
+   107→   107→const itemVariants = {
+   108→   108→  hidden: { opacity: 0, y: 20 },
+   109→   109→  visible: {
+   110→   110→    opacity: 1,
+   111→   111→    y: 0,
+   112→   112→    transition: { type: 'spring', stiffness: 300, damping: 24 },
+   113→   113→  },
+   114→   114→}
+   115→   115→
+   116→   116→const cardHoverProps = {
+   117→   117→  whileHover: { y: -2, boxShadow: '0 8px 30px rgba(16, 185, 129, 0.08)' },
+   118→   118→  transition: { type: 'spring', stiffness: 400, damping: 25 },
+   119→   119→}
+   120→   120→
+   121→   121→// ─── Sub-components ──────────────────────────────────────────────────────────
+   122→   122→
+   123→   123→function DirectionBadge({ direction }: { direction: 'Buy' | 'Sell' }) {
+   124→   124→  const isBuy = direction === 'Buy'
+   125→   125→  return (
+   126→   126→    <Badge
+   127→   127→      className={
+   128→   128→        isBuy
+   129→   129→          ? 'bg-emerald-500/15 text-emerald-600 border-emerald-500/25 hover:bg-emerald-500/25 dark:text-emerald-400 dark:border-emerald-500/30'
+   130→   130→          : 'bg-rose-500/15 text-rose-600 border-rose-500/25 hover:bg-rose-500/25 dark:text-rose-400 dark:border-rose-500/30'
+   131→   131→      }
+   132→   132→    >
+   133→   133→      {isBuy ? <ArrowUpRight className="size-3" /> : <ArrowDownRight className="size-3" />}
+   134→   134→      {direction}
+   135→   135→    </Badge>
+   136→   136→  )
+   137→   137→}
+   138→   138→
+   139→   139→function StatusBadge({ status }: { status: 'Active' | 'Hit TP' | 'Hit SL' | 'Expired' }) {
+   140→   140→  const styles: Record<string, string> = {
+   141→   141→    Active: 'bg-emerald-500/15 text-emerald-600 border-emerald-500/25 dark:text-emerald-400',
+   142→   142→    'Hit TP': 'bg-emerald-500/15 text-emerald-600 border-emerald-500/25 dark:text-emerald-400',
+   143→   143→    'Hit SL': 'bg-rose-500/15 text-rose-600 border-rose-500/25 dark:text-rose-400',
+   144→   144→    Expired: 'bg-muted text-muted-foreground border-muted-foreground/25',
+   145→   145→  }
+   146→   146→  return (
+   147→   147→    <Badge variant="outline" className={styles[status]}>
+   148→   148→      {status === 'Active' && <span className="mr-1 size-1.5 rounded-full bg-emerald-500 animate-pulse" />}
+   149→   149→      {status}
+   150→   150→    </Badge>
+   151→   151→  )
+   152→   152→}
+   153→   153→
+   154→   154→// ─── Main Component ──────────────────────────────────────────────────────────
+   155→   155→
+   156→   156→export default function DashboardView() {
+   157→   157→  const { setView } = useNavigation()
+   158→   158→  const [journalText, setJournalText] = useState('')
+   159→   159→  const [mood, setMood] = useState<'bullish' | 'bearish' | null>(null)
+   160→   160→  const [journalSaved, setJournalSaved] = useState(false)
+   161→   161→
+   162→   162→  const today = new Date().toLocaleDateString('en-US', {
+   163→   163→    weekday: 'long',
+   164→   164→    year: 'numeric',
+   165→   165→    month: 'long',
+   166→   166→    day: 'numeric',
+   167→   167→  })
+   168→   168→
+   169→   169→  const handleSaveJournal = () => {
+   170→   170→    if (journalText.trim()) {
+   171→   171→      setJournalSaved(true)
+   172→   172→      toast.success('Journal entry saved!', { description: 'Your quick journal has been recorded.' })
+   173→   173→      setTimeout(() => setJournalSaved(false), 2000)
+   174→   174→    }
+   175→   175→  }
+   176→   176→
+   177→   177→  return (
+   178→   178→    <motion.div
+   179→   179→      className="min-h-screen w-full"
+   180→   180→      variants={containerVariants}
+   181→   181→      initial="hidden"
+   182→   182→      animate="visible"
+   183→   183→    >
+   184→   184→      <div className="mx-auto max-w-7xl space-y-6 p-4 sm:p-6 lg:p-8">
+   185→   185→        {/* ── Welcome Banner ──────────────────────────────────────────────── */}
+   186→   186→        <motion.div variants={itemVariants}>
+   187→   187→          <Card className="relative overflow-hidden border-emerald-500/20 bg-gradient-to-br from-emerald-950/40 via-emerald-900/20 to-background dark:from-emerald-950/60 dark:via-emerald-900/30">
+   188→   188→            <CardContent className="py-6 sm:py-8">
+   189→   189→              <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+   190→   190→                <div className="space-y-1.5">
+   191→   191→                  <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+   192→   192→                    Welcome back,{' '}
+   193→   193→                    <span className="bg-gradient-to-r from-emerald-400 to-emerald-600 bg-clip-text text-transparent">
+   194→   194→                      Alex
+   195→   195→                    </span>
+   196→   196→                  </h1>
+   197→   197→                  <p className="text-sm text-muted-foreground sm:text-base">{today}</p>
+   198→   198→                  <p className="text-xs text-muted-foreground/70">
+   199→   199→                    Your portfolio is up <span className="text-emerald-500 font-semibold">+4.2%</span> this month. Keep it up!
+   200→   200→                  </p>
+   201→   201→                </div>
+   202→   202→                <div className="flex flex-wrap gap-2 sm:gap-3">
+   203→   203→                  <Button
+   204→   204→                    onClick={() => setView('chart-analyzer')}
+   205→   205→                    className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/20"
+   206→   206→                  >
+   207→   207→                    <BarChart3 className="size-4" />
+   208→   208→                    <span className="hidden sm:inline">Analyze Chart</span>
+   209→   209→                    <span className="sm:hidden">Analyze</span>
+   210→   210→                  </Button>
+   211→   211→                  <Button
+   212→   212→                    onClick={() => setView('journal')}
+   213→   213→                    variant="outline"
+   214→   214→                    className="border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10 hover:text-emerald-500 dark:text-emerald-400"
+   215→   215→                  >
+   216→   216→                    <Plus className="size-4" />
+   217→   217→                    New Trade
+   218→   218→                  </Button>
+   219→   219→                  <Button
+   220→   220→                    onClick={() => setView('ai-mentor')}
+   221→   221→                    variant="outline"
+   222→   222→                    className="border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10 hover:text-emerald-500 dark:text-emerald-400"
+   223→   223→                  >
+   224→   224→                    <Bot className="size-4" />
+   225→   225→                    <span className="hidden sm:inline">AI Mentor</span>
+   226→   226→                    <span className="sm:hidden">Mentor</span>
+   227→   227→                  </Button>
+   228→   228→                </div>
+   229→   229→              </div>
+   230→   230→            </CardContent>
+   231→   231→          </Card>
+   232→   232→        </motion.div>
+   233→   233→
+   234→   234→        {/* ── Stats Row ──────────────────────────────────────────────────── */}
+   235→   235→        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+   236→   236→          {[
+   237→   237→            {
+   238→   238→              label: 'Total Courses',
+   239→   239→              value: '12',
+   240→   240→              icon: BookOpen,
+   241→   241→              sub: '8 completed',
+   242→   242→              subIcon: '📚',
+   243→   243→              color: 'text-emerald-500',
+   244→   244→              bg: 'bg-emerald-500/10',
+   245→   245→            },
+   246→   246→            {
+   247→   247→              label: 'Win Rate',
+   248→   248→              value: '67.5%',
+   249→   249→              icon: Target,
+   250→   250→              sub: 'winning trades',
+   251→   251→              sparkline: true,
+   252→   252→              color: 'text-emerald-500',
+   253→   253→              bg: 'bg-emerald-500/10',
+   254→   254→            },
+   255→   255→            {
+   256→   256→              label: 'Total Trades',
+   257→   257→              value: '156',
+   258→   258→              icon: Activity,
+   259→   259→              sub: '+12 this week',
+   260→   260→              badge: '+12 this week',
+   261→   261→              color: 'text-blue-500',
+   262→   262→              bg: 'bg-blue-500/10',
+   263→   263→            },
+   264→   264→            {
+   265→   265→              label: 'Streak',
+   266→   266→              value: '7 Days',
+   267→   267→              icon: Flame,
+   268→   268→              sub: 'Keep going!',
+   269→   269→              color: 'text-orange-500',
+   270→   270→              bg: 'bg-orange-500/10',
+   271→   271→            },
+   272→   272→          ].map((stat, i) => (
+   273→   273→            <motion.div key={stat.label} variants={itemVariants}>
+   274→   274→              <motion.div
+   275→   275→                {...cardHoverProps}
+   276→   276→                className="rounded-xl border bg-card p-4 sm:p-5 transition-colors"
+   277→   277→              >
+   278→   278→                <div className="flex items-start justify-between">
+   279→   279→                  <div className={`rounded-lg p-2 ${stat.bg}`}>
+   280→   280→                    <stat.icon className={`size-4 sm:size-5 ${stat.color}`} />
+   281→   281→                  </div>
+   282→   282→                  {stat.badge && (
+   283→   283→                    <Badge className="bg-emerald-500/15 text-emerald-600 border-emerald-500/25 text-[10px] dark:text-emerald-400">
+   284→   284→                      {stat.badge}
+   285→   285→                    </Badge>
+   286→   286→                  )}
+   287→   287→                </div>
+   288→   288→                <div className="mt-3 space-y-0.5">
+   289→   289→                  <p className="text-xs text-muted-foreground sm:text-sm">{stat.label}</p>
+   290→   290→                  <div className="flex items-baseline gap-2">
+   291→   291→                    <p className="text-xl font-bold tracking-tight sm:text-2xl">{stat.value}</p>
+   292→   292→                    {stat.sparkline && (
+   293→   293→                      <div className="h-6 w-16 sm:w-20">
+   294→   294→                        <ResponsiveContainer width="100%" height="100%">
+   295→   295→                          <RechartsLineChart data={winRateSparkline}>
+   296→   296→                            <Line
+   297→   297→                              type="monotone"
+   298→   298→                              dataKey="v"
+   299→   299→                              stroke="#10b981"
+   300→   300→                              strokeWidth={2}
+   301→   301→                              dot={false}
+   302→   302→                            />
+   303→   303→                          </RechartsLineChart>
+   304→   304→                        </ResponsiveContainer>
+   305→   305→                      </div>
+   306→   306→                    )}
+   307→   307→                  </div>
+   308→   308→                  <p className="text-xs text-muted-foreground">{stat.sub}</p>
+   309→   309→                </div>
+   310→   310→              </motion.div>
+   311→   311→            </motion.div>
+   312→   312→          ))}
+   313→   313→        </div>
+   314→   314→
+   315→   315→        {/* ── Two-Column Layout ──────────────────────────────────────────── */}
+   316→   316→        <div className="grid gap-6 lg:grid-cols-3">
+   317→   317→          {/* Left Column (2/3) */}
+   318→   318→          <div className="space-y-6 lg:col-span-2">
+   319→   319→            {/* Learning Progress */}
+   320→   320→            <motion.div variants={itemVariants}>
+   321→   321→              <Card className="hover:border-emerald-500/20 transition-colors">
+   322→   322→                <CardHeader>
+   323→   323→                  <CardTitle className="flex items-center gap-2 text-lg">
+   324→   324→                    <LineChart className="size-5 text-emerald-500" />
+   325→   325→                    Learning Progress
+   326→   326→                  </CardTitle>
+   327→   327→                  <CardDescription>Continue where you left off</CardDescription>
+   328→   328→                </CardHeader>
+   329→   329→                <CardContent className="space-y-4">
+   330→   330→                  {courses.map((course) => (
+   331→   331→                    <motion.div
+   332→   332→                      key={course.name}
+   333→   333→                      className="group rounded-lg border p-4 transition-all hover:border-emerald-500/25 hover:bg-emerald-500/[0.02]"
+   334→   334→                      whileHover={{ scale: 1.005 }}
+   335→   335→                      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+   336→   336→                    >
+   337→   337→                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+   338→   338→                        <div className="flex items-center gap-3 min-w-0">
+   339→   339→                          <span className="text-xl shrink-0">{course.icon}</span>
+   340→   340→                          <div className="min-w-0">
+   341→   341→                            <p className="text-sm font-medium truncate">{course.name}</p>
+   342→   342→                            <p className="text-xs text-muted-foreground">
+   343→   343→                              {course.progress}% complete
+   344→   344→                            </p>
+   345→   345→                          </div>
+   346→   346→                        </div>
+   347→   347→                        <div className="flex items-center gap-3 sm:w-48">
+   348→   348→                          <div className="flex-1">
+   349→   349→                            <Progress
+   350→   350→                              value={course.progress}
+   351→   351→                              className="h-2 bg-emerald-500/10 [&>[data-slot=progress-indicator]]:bg-emerald-500"
+   352→   352→                            />
+   353→   353→                          </div>
+   354→   354→                          <Button
+   355→   355→                            size="sm"
+   356→   356→                            variant="outline"
+   357→   357→                            className="shrink-0 border-emerald-500/25 text-emerald-600 hover:bg-emerald-500/10 hover:text-emerald-500 dark:text-emerald-400"
+   358→   358→                            onClick={() => setView('academy')}
+   359→   359→                          >
+   360→   360→                            Continue
+   361→   361→                          </Button>
+   362→   362→                        </div>
+   363→   363→                      </div>
+   364→   364→                    </motion.div>
+   365→   365→                  ))}
+   366→   366→                </CardContent>
+   367→   367→              </Card>
+   368→   368→            </motion.div>
+   369→   369→
+   370→   370→            {/* Recent Signals */}
+   371→   371→            <motion.div variants={itemVariants}>
+   372→   372→              <Card className="hover:border-emerald-500/20 transition-colors">
+   373→   373→                <CardHeader>
+   374→   374→                  <CardTitle className="flex items-center gap-2 text-lg">
+   375→   375→                    <Activity className="size-5 text-emerald-500" />
+   376→   376→                    Recent Signals
+   377→   377→                  </CardTitle>
+   378→   378→                  <CardDescription>Latest AI-generated trading signals</CardDescription>
+   379→   379→                </CardHeader>
+   380→   380→                <CardContent className="px-0 pb-0">
+   381→   381→                  <ScrollArea className="max-h-96">
+   382→   382→                    {/* Desktop Table */}
+   383→   383→                    <div className="hidden md:block">
+   384→   384→                      <div className="grid grid-cols-[1fr_0.7fr_0.7fr_0.7fr_0.7fr_0.5fr_0.8fr] gap-2 px-6 py-2.5 text-xs font-medium text-muted-foreground border-b">
+   385→   385→                        <span>Pair</span>
+   386→   386→                        <span>Direction</span>
+   387→   387→                        <span>Entry</span>
+   388→   388→                        <span>SL</span>
+   389→   389→                        <span>TP</span>
+   390→   390→                        <span>TF</span>
+   391→   391→                        <span>Status</span>
+   392→   392→                      </div>
+   393→   393→                      {signals.map((signal, idx) => (
+   394→   394→                        <motion.div
+   395→   395→                          key={signal.pair + idx}
+   396→   396→                          className="grid grid-cols-[1fr_0.7fr_0.7fr_0.7fr_0.7fr_0.5fr_0.8fr] gap-2 items-center px-6 py-3 text-sm border-b last:border-b-0 hover:bg-emerald-500/[0.02] transition-colors"
+   397→   397→                          initial={{ opacity: 0, x: -10 }}
+   398→   398→                          animate={{ opacity: 1, x: 0 }}
+   399→   399→                          transition={{ delay: idx * 0.05 }}
+   400→   400→                        >
+   401→   401→                          <span className="font-semibold">{signal.pair}</span>
+   402→   402→                          <DirectionBadge direction={signal.direction} />
+   403→   403→                          <span className="font-mono text-xs">{signal.entry}</span>
+   404→   404→                          <span className="font-mono text-xs text-rose-500">{signal.sl}</span>
+   405→   405→                          <span className="font-mono text-xs text-emerald-500">{signal.tp}</span>
+   406→   406→                          <Badge variant="secondary" className="text-[10px] justify-center">
+   407→   407→                            {signal.timeframe}
+   408→   408→                          </Badge>
+   409→   409→                          <StatusBadge status={signal.status} />
+   410→   410→                        </motion.div>
+   411→   411→                      ))}
+   412→   412→                    </div>
+   413→   413→
+   414→   414→                    {/* Mobile Cards */}
+   415→   415→                    <div className="flex flex-col gap-2 p-4 md:hidden">
+   416→   416→                      {signals.map((signal, idx) => (
+   417→   417→                        <motion.div
+   418→   418→                          key={signal.pair + idx}
+   419→   419→                          className="rounded-lg border p-3 space-y-2"
+   420→   420→                          initial={{ opacity: 0, y: 10 }}
+   421→   421→                          animate={{ opacity: 1, y: 0 }}
+   422→   422→                          transition={{ delay: idx * 0.05 }}
+   423→   423→                        >
+   424→   424→                          <div className="flex items-center justify-between">
+   425→   425→                            <span className="font-semibold">{signal.pair}</span>
+   426→   426→                            <StatusBadge status={signal.status} />
+   427→   427→                          </div>
+   428→   428→                          <div className="flex items-center gap-2">
+   429→   429→                            <DirectionBadge direction={signal.direction} />
+   430→   430→                            <Badge variant="secondary" className="text-[10px]">
+   431→   431→                              {signal.timeframe}
+   432→   432→                            </Badge>
+   433→   433→                          </div>
+   434→   434→                          <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground">
+   435→   435→                            <div>
+   436→   436→                              <span className="block text-[10px] uppercase tracking-wider">Entry</span>
+   437→   437→                              <span className="font-mono text-foreground">{signal.entry}</span>
+   438→   438→                            </div>
+   439→   439→                            <div>
+   440→   440→                              <span className="block text-[10px] uppercase tracking-wider text-rose-500">SL</span>
+   441→   441→                              <span className="font-mono text-foreground">{signal.sl}</span>
+   442→   442→                            </div>
+   443→   443→                            <div>
+   444→   444→                              <span className="block text-[10px] uppercase tracking-wider text-emerald-500">TP</span>
+   445→   445→                              <span className="font-mono text-foreground">{signal.tp}</span>
+   446→   446→                            </div>
+   447→   447→                          </div>
+   448→   448→                        </motion.div>
+   449→   449→                      ))}
+   450→   450→                    </div>
+   451→   451→                  </ScrollArea>
+   452→   452→                </CardContent>
+   453→   453→              </Card>
+   454→   454→            </motion.div>
+   455→   455→          </div>
+   456→   456→
+   457→   457→          {/* Right Column (1/3) */}
+   458→   458→          <div className="space-y-6">
+   459→   459→            {/* Watchlist */}
+   460→   460→            <motion.div variants={itemVariants}>
+   461→   461→              <Card className="hover:border-emerald-500/20 transition-colors">
+   462→   462→                <CardHeader>
+   463→   463→                  <CardTitle className="flex items-center gap-2 text-lg">
+   464→   464→                    <TrendingUp className="size-5 text-emerald-500" />
+   465→   465→                    Watchlist
+   466→   466→                  </CardTitle>
+   467→   467→                </CardHeader>
+   468→   468→                <CardContent className="px-0 pb-0">
+   469→   469→                  <ScrollArea className="max-h-80">
+   470→   470→                    <div className="flex flex-col">
+   471→   471→                      {watchlist.map((item, idx) => {
+   472→   472→                        const isPositive = item.change >= 0
+   473→   473→                        return (
+   474→   474→                          <motion.div
+   475→   475→                            key={item.pair}
+   476→   476→                            className="flex items-center justify-between px-6 py-2.5 border-b last:border-b-0 hover:bg-emerald-500/[0.02] transition-colors cursor-pointer"
+   477→   477→                            whileHover={{ x: 2 }}
+   478→   478→                            transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+   479→   479→                            onClick={() => setView('chart-analyzer')}
+   480→   480→                          >
+   481→   481→                            <div>
+   482→   482→                              <p className="text-sm font-semibold">{item.pair}</p>
+   483→   483→                              <p className="text-xs font-mono text-muted-foreground">{item.price}</p>
+   484→   484→                            </div>
+   485→   485→                            <div className="flex items-center gap-1">
+   486→   486→                              {isPositive ? (
+   487→   487→                                <TrendingUp className="size-3.5 text-emerald-500" />
+   488→   488→                              ) : (
+   489→   489→                                <TrendingDown className="size-3.5 text-rose-500" />
+   490→   490→                              )}
+   491→   491→                              <span
+   492→   492→                                className={`text-sm font-semibold ${
+   493→   493→                                  isPositive ? 'text-emerald-500' : 'text-rose-500'
+   494→   494→                                }`}
+   495→   495→                              >
+   496→   496→                                {isPositive ? '+' : ''}
+   497→   497→                                {item.change}%
+   498→   498→                              </span>
+   499→   499→                            </div>
+   500→   500→                          </motion.div>
+   501→   501→                        )
+   502→   502→                      })}
+   503→   503→                    </div>
+   504→   504→                  </ScrollArea>
+   505→   505→                </CardContent>
+   506→   506→              </Card>
+   507→   507→            </motion.div>
+   508→   508→
+   509→   509→            {/* Upcoming Events */}
+   510→   510→            <motion.div variants={itemVariants}>
+   511→   511→              <Card className="hover:border-emerald-500/20 transition-colors">
+   512→   512→                <CardHeader>
+   513→   513→                  <CardTitle className="flex items-center gap-2 text-lg">
+   514→   514→                    <CalendarDays className="size-5 text-emerald-500" />
+   515→   515→                    Upcoming Events
+   516→   516→                  </CardTitle>
+   517→   517→                </CardHeader>
+   518→   518→                <CardContent className="space-y-0 px-0">
+   519→   519→                  {events.map((event, idx) => (
+   520→   520→                    <motion.div
+   521→   521→                      key={event.name}
+   522→   522→                      className="flex items-start gap-3 px-6 py-3 border-b last:border-b-0 hover:bg-emerald-500/[0.02] transition-colors"
+   523→   523→                      whileHover={{ x: 2 }}
+   524→   524→                      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+   525→   525→                    >
+   526→   526→                      <div className="mt-0.5 rounded-md bg-emerald-500/10 p-1.5">
+   527→   527→                        <CalendarDays className="size-3.5 text-emerald-500" />
+   528→   528→                      </div>
+   529→   529→                      <div className="min-w-0">
+   530→   530→                        <p className="text-sm font-medium truncate">{event.name}</p>
+   531→   531→                        <p className="flex items-center gap-1 text-xs text-muted-foreground">
+   532→   532→                          <Clock className="size-3" />
+   533→   533→                          {event.time}
+   534→   534→                        </p>
+   535→   535→                      </div>
+   536→   536→                    </motion.div>
+   537→   537→                  ))}
+   538→   538→                </CardContent>
+   539→   539→              </Card>
+   540→   540→            </motion.div>
+   541→   541→
+   542→   542→            {/* Quick Journal Entry */}
+   543→   543→            <motion.div variants={itemVariants}>
+   544→   544→              <Card className="hover:border-emerald-500/20 transition-colors">
+   545→   545→                <CardHeader>
+   546→   546→                  <CardTitle className="text-lg">Quick Journal</CardTitle>
+   547→   547→                  <CardDescription>How are you feeling about the market?</CardDescription>
+   548→   548→                </CardHeader>
+   549→   549→                <CardContent className="space-y-3">
+   550→   550→                  <Textarea
+   551→   551→                    placeholder="How are you feeling about today's market?"
+   552→   552→                    className="min-h-20 resize-none bg-muted/30 border-muted-foreground/10 focus-visible:border-emerald-500/50 focus-visible:ring-emerald-500/20"
+   553→   553→                    value={journalText}
+   554→   554→                    onChange={(e) => setJournalText(e.target.value)}
+   555→   555→                  />
+   556→   556→                  <div className="flex items-center justify-between gap-2">
+   557→   557→                    <div className="flex gap-2">
+   558→   558→                      <Button
+   559→   559→                        size="sm"
+
+[showing lines 60-559 of 697; use offset=560 with limit to continue reading]

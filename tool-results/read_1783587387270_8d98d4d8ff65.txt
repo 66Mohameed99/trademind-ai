@@ -1,0 +1,610 @@
+    88→
+    89→const pnlData = Array.from({ length: 30 }, (_, i) => {
+    90→  const day = i + 1
+    91→  const base = 200 + i * 18
+    92→  const noise = Math.sin(i * 1.7) * 120 + Math.cos(i * 0.8) * 60
+    93→  const value = Math.round((base + noise) * 100) / 100
+    94→  return { day: `Day ${day}`, pnl: value }
+    95→})
+    96→
+    97→// ─── Animation Variants ──────────────────────────────────────────────────────
+    98→
+    99→const containerVariants = {
+   100→  hidden: { opacity: 0 },
+   101→  visible: {
+   102→    opacity: 1,
+   103→    transition: { staggerChildren: 0.08, delayChildren: 0.1 },
+   104→  },
+   105→}
+   106→
+   107→const itemVariants = {
+   108→  hidden: { opacity: 0, y: 20 },
+   109→  visible: {
+   110→    opacity: 1,
+   111→    y: 0,
+   112→    transition: { type: 'spring', stiffness: 300, damping: 24 },
+   113→  },
+   114→}
+   115→
+   116→const cardHoverProps = {
+   117→  whileHover: { y: -2, boxShadow: '0 8px 30px rgba(16, 185, 129, 0.08)' },
+   118→  transition: { type: 'spring', stiffness: 400, damping: 25 },
+   119→}
+   120→
+   121→// ─── Sub-components ──────────────────────────────────────────────────────────
+   122→
+   123→function DirectionBadge({ direction }: { direction: 'Buy' | 'Sell' }) {
+   124→  const isBuy = direction === 'Buy'
+   125→  return (
+   126→    <Badge
+   127→      className={
+   128→        isBuy
+   129→          ? 'bg-emerald-500/15 text-emerald-600 border-emerald-500/25 hover:bg-emerald-500/25 dark:text-emerald-400 dark:border-emerald-500/30'
+   130→          : 'bg-rose-500/15 text-rose-600 border-rose-500/25 hover:bg-rose-500/25 dark:text-rose-400 dark:border-rose-500/30'
+   131→      }
+   132→    >
+   133→      {isBuy ? <ArrowUpRight className="size-3" /> : <ArrowDownRight className="size-3" />}
+   134→      {direction}
+   135→    </Badge>
+   136→  )
+   137→}
+   138→
+   139→function StatusBadge({ status }: { status: 'Active' | 'Hit TP' | 'Hit SL' | 'Expired' }) {
+   140→  const styles: Record<string, string> = {
+   141→    Active: 'bg-emerald-500/15 text-emerald-600 border-emerald-500/25 dark:text-emerald-400',
+   142→    'Hit TP': 'bg-emerald-500/15 text-emerald-600 border-emerald-500/25 dark:text-emerald-400',
+   143→    'Hit SL': 'bg-rose-500/15 text-rose-600 border-rose-500/25 dark:text-rose-400',
+   144→    Expired: 'bg-muted text-muted-foreground border-muted-foreground/25',
+   145→  }
+   146→  return (
+   147→    <Badge variant="outline" className={styles[status]}>
+   148→      {status === 'Active' && <span className="mr-1 size-1.5 rounded-full bg-emerald-500 animate-pulse" />}
+   149→      {status}
+   150→    </Badge>
+   151→  )
+   152→}
+   153→
+   154→// ─── Main Component ──────────────────────────────────────────────────────────
+   155→
+   156→export default function DashboardView() {
+   157→  const { setView } = useNavigation()
+   158→  const [journalText, setJournalText] = useState('')
+   159→  const [mood, setMood] = useState<'bullish' | 'bearish' | null>(null)
+   160→  const [journalSaved, setJournalSaved] = useState(false)
+   161→
+   162→  const today = new Date().toLocaleDateString('en-US', {
+   163→    weekday: 'long',
+   164→    year: 'numeric',
+   165→    month: 'long',
+   166→    day: 'numeric',
+   167→  })
+   168→
+   169→  const handleSaveJournal = () => {
+   170→    if (journalText.trim()) {
+   171→      setJournalSaved(true)
+   172→      toast.success('Journal entry saved!', { description: 'Your quick journal has been recorded.' })
+   173→      setTimeout(() => setJournalSaved(false), 2000)
+   174→    }
+   175→  }
+   176→
+   177→  return (
+   178→    <motion.div
+   179→      className="min-h-screen w-full"
+   180→      variants={containerVariants}
+   181→      initial="hidden"
+   182→      animate="visible"
+   183→    >
+   184→      <div className="mx-auto max-w-7xl space-y-6 p-4 sm:p-6 lg:p-8">
+   185→        {/* ── Welcome Banner ──────────────────────────────────────────────── */}
+   186→        <motion.div variants={itemVariants}>
+   187→          <Card className="relative overflow-hidden border-emerald-500/20 bg-gradient-to-br from-emerald-950/40 via-emerald-900/20 to-background dark:from-emerald-950/60 dark:via-emerald-900/30">
+   188→            <CardContent className="py-6 sm:py-8">
+   189→              <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+   190→                <div className="space-y-1.5">
+   191→                  <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+   192→                    Welcome back,{' '}
+   193→                    <span className="bg-gradient-to-r from-emerald-400 to-emerald-600 bg-clip-text text-transparent">
+   194→                      Alex
+   195→                    </span>
+   196→                  </h1>
+   197→                  <p className="text-sm text-muted-foreground sm:text-base">{today}</p>
+   198→                  <p className="text-xs text-muted-foreground/70">
+   199→                    Your portfolio is up <span className="text-emerald-500 font-semibold">+4.2%</span> this month. Keep it up!
+   200→                  </p>
+   201→                </div>
+   202→                <div className="flex flex-wrap gap-2 sm:gap-3">
+   203→                  <Button
+   204→                    onClick={() => setView('chart-analyzer')}
+   205→                    className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/20"
+   206→                  >
+   207→                    <BarChart3 className="size-4" />
+   208→                    <span className="hidden sm:inline">Analyze Chart</span>
+   209→                    <span className="sm:hidden">Analyze</span>
+   210→                  </Button>
+   211→                  <Button
+   212→                    onClick={() => setView('journal')}
+   213→                    variant="outline"
+   214→                    className="border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10 hover:text-emerald-500 dark:text-emerald-400"
+   215→                  >
+   216→                    <Plus className="size-4" />
+   217→                    New Trade
+   218→                  </Button>
+   219→                  <Button
+   220→                    onClick={() => setView('ai-mentor')}
+   221→                    variant="outline"
+   222→                    className="border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10 hover:text-emerald-500 dark:text-emerald-400"
+   223→                  >
+   224→                    <Bot className="size-4" />
+   225→                    <span className="hidden sm:inline">AI Mentor</span>
+   226→                    <span className="sm:hidden">Mentor</span>
+   227→                  </Button>
+   228→                </div>
+   229→              </div>
+   230→            </CardContent>
+   231→          </Card>
+   232→        </motion.div>
+   233→
+   234→        {/* ── Stats Row ──────────────────────────────────────────────────── */}
+   235→        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+   236→          {[
+   237→            {
+   238→              label: 'Total Courses',
+   239→              value: '12',
+   240→              icon: BookOpen,
+   241→              sub: '8 completed',
+   242→              subIcon: '📚',
+   243→              color: 'text-emerald-500',
+   244→              bg: 'bg-emerald-500/10',
+   245→            },
+   246→            {
+   247→              label: 'Win Rate',
+   248→              value: '67.5%',
+   249→              icon: Target,
+   250→              sub: 'winning trades',
+   251→              sparkline: true,
+   252→              color: 'text-emerald-500',
+   253→              bg: 'bg-emerald-500/10',
+   254→            },
+   255→            {
+   256→              label: 'Total Trades',
+   257→              value: '156',
+   258→              icon: Activity,
+   259→              sub: '+12 this week',
+   260→              badge: '+12 this week',
+   261→              color: 'text-blue-500',
+   262→              bg: 'bg-blue-500/10',
+   263→            },
+   264→            {
+   265→              label: 'Streak',
+   266→              value: '7 Days',
+   267→              icon: Flame,
+   268→              sub: 'Keep going!',
+   269→              color: 'text-orange-500',
+   270→              bg: 'bg-orange-500/10',
+   271→            },
+   272→          ].map((stat, i) => (
+   273→            <motion.div key={stat.label} variants={itemVariants}>
+   274→              <motion.div
+   275→                {...cardHoverProps}
+   276→                className="rounded-xl border bg-card p-4 sm:p-5 transition-colors"
+   277→              >
+   278→                <div className="flex items-start justify-between">
+   279→                  <div className={`rounded-lg p-2 ${stat.bg}`}>
+   280→                    <stat.icon className={`size-4 sm:size-5 ${stat.color}`} />
+   281→                  </div>
+   282→                  {stat.badge && (
+   283→                    <Badge className="bg-emerald-500/15 text-emerald-600 border-emerald-500/25 text-[10px] dark:text-emerald-400">
+   284→                      {stat.badge}
+   285→                    </Badge>
+   286→                  )}
+   287→                </div>
+   288→                <div className="mt-3 space-y-0.5">
+   289→                  <p className="text-xs text-muted-foreground sm:text-sm">{stat.label}</p>
+   290→                  <div className="flex items-baseline gap-2">
+   291→                    <p className="text-xl font-bold tracking-tight sm:text-2xl">{stat.value}</p>
+   292→                    {stat.sparkline && (
+   293→                      <div className="h-6 w-16 sm:w-20">
+   294→                        <ResponsiveContainer width="100%" height="100%">
+   295→                          <RechartsLineChart data={winRateSparkline}>
+   296→                            <Line
+   297→                              type="monotone"
+   298→                              dataKey="v"
+   299→                              stroke="#10b981"
+   300→                              strokeWidth={2}
+   301→                              dot={false}
+   302→                            />
+   303→                          </RechartsLineChart>
+   304→                        </ResponsiveContainer>
+   305→                      </div>
+   306→                    )}
+   307→                  </div>
+   308→                  <p className="text-xs text-muted-foreground">{stat.sub}</p>
+   309→                </div>
+   310→              </motion.div>
+   311→            </motion.div>
+   312→          ))}
+   313→        </div>
+   314→
+   315→        {/* ── Two-Column Layout ──────────────────────────────────────────── */}
+   316→        <div className="grid gap-6 lg:grid-cols-3">
+   317→          {/* Left Column (2/3) */}
+   318→          <div className="space-y-6 lg:col-span-2">
+   319→            {/* Learning Progress */}
+   320→            <motion.div variants={itemVariants}>
+   321→              <Card className="hover:border-emerald-500/20 transition-colors">
+   322→                <CardHeader>
+   323→                  <CardTitle className="flex items-center gap-2 text-lg">
+   324→                    <LineChart className="size-5 text-emerald-500" />
+   325→                    Learning Progress
+   326→                  </CardTitle>
+   327→                  <CardDescription>Continue where you left off</CardDescription>
+   328→                </CardHeader>
+   329→                <CardContent className="space-y-4">
+   330→                  {courses.map((course) => (
+   331→                    <motion.div
+   332→                      key={course.name}
+   333→                      className="group rounded-lg border p-4 transition-all hover:border-emerald-500/25 hover:bg-emerald-500/[0.02]"
+   334→                      whileHover={{ scale: 1.005 }}
+   335→                      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+   336→                    >
+   337→                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+   338→                        <div className="flex items-center gap-3 min-w-0">
+   339→                          <span className="text-xl shrink-0">{course.icon}</span>
+   340→                          <div className="min-w-0">
+   341→                            <p className="text-sm font-medium truncate">{course.name}</p>
+   342→                            <p className="text-xs text-muted-foreground">
+   343→                              {course.progress}% complete
+   344→                            </p>
+   345→                          </div>
+   346→                        </div>
+   347→                        <div className="flex items-center gap-3 sm:w-48">
+   348→                          <div className="flex-1">
+   349→                            <Progress
+   350→                              value={course.progress}
+   351→                              className="h-2 bg-emerald-500/10 [&>[data-slot=progress-indicator]]:bg-emerald-500"
+   352→                            />
+   353→                          </div>
+   354→                          <Button
+   355→                            size="sm"
+   356→                            variant="outline"
+   357→                            className="shrink-0 border-emerald-500/25 text-emerald-600 hover:bg-emerald-500/10 hover:text-emerald-500 dark:text-emerald-400"
+   358→                            onClick={() => setView('academy')}
+   359→                          >
+   360→                            Continue
+   361→                          </Button>
+   362→                        </div>
+   363→                      </div>
+   364→                    </motion.div>
+   365→                  ))}
+   366→                </CardContent>
+   367→              </Card>
+   368→            </motion.div>
+   369→
+   370→            {/* Recent Signals */}
+   371→            <motion.div variants={itemVariants}>
+   372→              <Card className="hover:border-emerald-500/20 transition-colors">
+   373→                <CardHeader>
+   374→                  <CardTitle className="flex items-center gap-2 text-lg">
+   375→                    <Activity className="size-5 text-emerald-500" />
+   376→                    Recent Signals
+   377→                  </CardTitle>
+   378→                  <CardDescription>Latest AI-generated trading signals</CardDescription>
+   379→                </CardHeader>
+   380→                <CardContent className="px-0 pb-0">
+   381→                  <ScrollArea className="max-h-96">
+   382→                    {/* Desktop Table */}
+   383→                    <div className="hidden md:block">
+   384→                      <div className="grid grid-cols-[1fr_0.7fr_0.7fr_0.7fr_0.7fr_0.5fr_0.8fr] gap-2 px-6 py-2.5 text-xs font-medium text-muted-foreground border-b">
+   385→                        <span>Pair</span>
+   386→                        <span>Direction</span>
+   387→                        <span>Entry</span>
+   388→                        <span>SL</span>
+   389→                        <span>TP</span>
+   390→                        <span>TF</span>
+   391→                        <span>Status</span>
+   392→                      </div>
+   393→                      {signals.map((signal, idx) => (
+   394→                        <motion.div
+   395→                          key={signal.pair + idx}
+   396→                          className="grid grid-cols-[1fr_0.7fr_0.7fr_0.7fr_0.7fr_0.5fr_0.8fr] gap-2 items-center px-6 py-3 text-sm border-b last:border-b-0 hover:bg-emerald-500/[0.02] transition-colors"
+   397→                          initial={{ opacity: 0, x: -10 }}
+   398→                          animate={{ opacity: 1, x: 0 }}
+   399→                          transition={{ delay: idx * 0.05 }}
+   400→                        >
+   401→                          <span className="font-semibold">{signal.pair}</span>
+   402→                          <DirectionBadge direction={signal.direction} />
+   403→                          <span className="font-mono text-xs">{signal.entry}</span>
+   404→                          <span className="font-mono text-xs text-rose-500">{signal.sl}</span>
+   405→                          <span className="font-mono text-xs text-emerald-500">{signal.tp}</span>
+   406→                          <Badge variant="secondary" className="text-[10px] justify-center">
+   407→                            {signal.timeframe}
+   408→                          </Badge>
+   409→                          <StatusBadge status={signal.status} />
+   410→                        </motion.div>
+   411→                      ))}
+   412→                    </div>
+   413→
+   414→                    {/* Mobile Cards */}
+   415→                    <div className="flex flex-col gap-2 p-4 md:hidden">
+   416→                      {signals.map((signal, idx) => (
+   417→                        <motion.div
+   418→                          key={signal.pair + idx}
+   419→                          className="rounded-lg border p-3 space-y-2"
+   420→                          initial={{ opacity: 0, y: 10 }}
+   421→                          animate={{ opacity: 1, y: 0 }}
+   422→                          transition={{ delay: idx * 0.05 }}
+   423→                        >
+   424→                          <div className="flex items-center justify-between">
+   425→                            <span className="font-semibold">{signal.pair}</span>
+   426→                            <StatusBadge status={signal.status} />
+   427→                          </div>
+   428→                          <div className="flex items-center gap-2">
+   429→                            <DirectionBadge direction={signal.direction} />
+   430→                            <Badge variant="secondary" className="text-[10px]">
+   431→                              {signal.timeframe}
+   432→                            </Badge>
+   433→                          </div>
+   434→                          <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground">
+   435→                            <div>
+   436→                              <span className="block text-[10px] uppercase tracking-wider">Entry</span>
+   437→                              <span className="font-mono text-foreground">{signal.entry}</span>
+   438→                            </div>
+   439→                            <div>
+   440→                              <span className="block text-[10px] uppercase tracking-wider text-rose-500">SL</span>
+   441→                              <span className="font-mono text-foreground">{signal.sl}</span>
+   442→                            </div>
+   443→                            <div>
+   444→                              <span className="block text-[10px] uppercase tracking-wider text-emerald-500">TP</span>
+   445→                              <span className="font-mono text-foreground">{signal.tp}</span>
+   446→                            </div>
+   447→                          </div>
+   448→                        </motion.div>
+   449→                      ))}
+   450→                    </div>
+   451→                  </ScrollArea>
+   452→                </CardContent>
+   453→              </Card>
+   454→            </motion.div>
+   455→          </div>
+   456→
+   457→          {/* Right Column (1/3) */}
+   458→          <div className="space-y-6">
+   459→            {/* Watchlist */}
+   460→            <motion.div variants={itemVariants}>
+   461→              <Card className="hover:border-emerald-500/20 transition-colors">
+   462→                <CardHeader>
+   463→                  <CardTitle className="flex items-center gap-2 text-lg">
+   464→                    <TrendingUp className="size-5 text-emerald-500" />
+   465→                    Watchlist
+   466→                  </CardTitle>
+   467→                </CardHeader>
+   468→                <CardContent className="px-0 pb-0">
+   469→                  <ScrollArea className="max-h-80">
+   470→                    <div className="flex flex-col">
+   471→                      {watchlist.map((item, idx) => {
+   472→                        const isPositive = item.change >= 0
+   473→                        return (
+   474→                          <motion.div
+   475→                            key={item.pair}
+   476→                            className="flex items-center justify-between px-6 py-2.5 border-b last:border-b-0 hover:bg-emerald-500/[0.02] transition-colors cursor-pointer"
+   477→                            whileHover={{ x: 2 }}
+   478→                            transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+   479→                            onClick={() => setView('chart-analyzer')}
+   480→                          >
+   481→                            <div>
+   482→                              <p className="text-sm font-semibold">{item.pair}</p>
+   483→                              <p className="text-xs font-mono text-muted-foreground">{item.price}</p>
+   484→                            </div>
+   485→                            <div className="flex items-center gap-1">
+   486→                              {isPositive ? (
+   487→                                <TrendingUp className="size-3.5 text-emerald-500" />
+   488→                              ) : (
+   489→                                <TrendingDown className="size-3.5 text-rose-500" />
+   490→                              )}
+   491→                              <span
+   492→                                className={`text-sm font-semibold ${
+   493→                                  isPositive ? 'text-emerald-500' : 'text-rose-500'
+   494→                                }`}
+   495→                              >
+   496→                                {isPositive ? '+' : ''}
+   497→                                {item.change}%
+   498→                              </span>
+   499→                            </div>
+   500→                          </motion.div>
+   501→                        )
+   502→                      })}
+   503→                    </div>
+   504→                  </ScrollArea>
+   505→                </CardContent>
+   506→              </Card>
+   507→            </motion.div>
+   508→
+   509→            {/* Upcoming Events */}
+   510→            <motion.div variants={itemVariants}>
+   511→              <Card className="hover:border-emerald-500/20 transition-colors">
+   512→                <CardHeader>
+   513→                  <CardTitle className="flex items-center gap-2 text-lg">
+   514→                    <CalendarDays className="size-5 text-emerald-500" />
+   515→                    Upcoming Events
+   516→                  </CardTitle>
+   517→                </CardHeader>
+   518→                <CardContent className="space-y-0 px-0">
+   519→                  {events.map((event, idx) => (
+   520→                    <motion.div
+   521→                      key={event.name}
+   522→                      className="flex items-start gap-3 px-6 py-3 border-b last:border-b-0 hover:bg-emerald-500/[0.02] transition-colors"
+   523→                      whileHover={{ x: 2 }}
+   524→                      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+   525→                    >
+   526→                      <div className="mt-0.5 rounded-md bg-emerald-500/10 p-1.5">
+   527→                        <CalendarDays className="size-3.5 text-emerald-500" />
+   528→                      </div>
+   529→                      <div className="min-w-0">
+   530→                        <p className="text-sm font-medium truncate">{event.name}</p>
+   531→                        <p className="flex items-center gap-1 text-xs text-muted-foreground">
+   532→                          <Clock className="size-3" />
+   533→                          {event.time}
+   534→                        </p>
+   535→                      </div>
+   536→                    </motion.div>
+   537→                  ))}
+   538→                </CardContent>
+   539→              </Card>
+   540→            </motion.div>
+   541→
+   542→            {/* Quick Journal Entry */}
+   543→            <motion.div variants={itemVariants}>
+   544→              <Card className="hover:border-emerald-500/20 transition-colors">
+   545→                <CardHeader>
+   546→                  <CardTitle className="text-lg">Quick Journal</CardTitle>
+   547→                  <CardDescription>How are you feeling about the market?</CardDescription>
+   548→                </CardHeader>
+   549→                <CardContent className="space-y-3">
+   550→                  <Textarea
+   551→                    placeholder="How are you feeling about today's market?"
+   552→                    className="min-h-20 resize-none bg-muted/30 border-muted-foreground/10 focus-visible:border-emerald-500/50 focus-visible:ring-emerald-500/20"
+   553→                    value={journalText}
+   554→                    onChange={(e) => setJournalText(e.target.value)}
+   555→                  />
+   556→                  <div className="flex items-center justify-between gap-2">
+   557→                    <div className="flex gap-2">
+   558→                      <Button
+   559→                        size="sm"
+   560→                        variant={mood === 'bullish' ? 'default' : 'outline'}
+   561→                        className={
+   562→                          mood === 'bullish'
+   563→                            ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600'
+   564→                            : 'border-emerald-500/25 text-emerald-600 hover:bg-emerald-500/10 hover:text-emerald-500 dark:text-emerald-400'
+   565→                        }
+   566→                        onClick={() => setMood(mood === 'bullish' ? null : 'bullish')}
+   567→                      >
+   568→                        <TrendingUp className="size-3.5" />
+   569→                        Bullish
+   570→                      </Button>
+   571→                      <Button
+   572→                        size="sm"
+   573→                        variant={mood === 'bearish' ? 'default' : 'outline'}
+   574→                        className={
+   575→                          mood === 'bearish'
+   576→                            ? 'bg-rose-600 hover:bg-rose-700 text-white border-rose-600'
+   577→                            : 'border-rose-500/25 text-rose-600 hover:bg-rose-500/10 hover:text-rose-500 dark:text-rose-400'
+   578→                        }
+   579→                        onClick={() => setMood(mood === 'bearish' ? null : 'bearish')}
+   580→                      >
+   581→                        <TrendingDown className="size-3.5" />
+   582→                        Bearish
+   583→                      </Button>
+   584→                    </div>
+   585→                    <Button
+   586→                      size="sm"
+   587→                      className="bg-emerald-600 hover:bg-emerald-700 text-white"
+   588→                      onClick={handleSaveJournal}
+   589→                    >
+   590→                      {journalSaved ? (
+   591→                        <>
+   592→                          <span className="size-2 rounded-full bg-white" />
+   593→                          Saved
+   594→                        </>
+   595→                      ) : (
+   596→                        <>
+   597→                          <Save className="size-3.5" />
+   598→                          Save
+   599→                        </>
+   600→                      )}
+   601→                    </Button>
+   602→                  </div>
+   603→                </CardContent>
+   604→              </Card>
+   605→            </motion.div>
+   606→          </div>
+   607→        </div>
+   608→
+   609→        {/* ── Performance Chart (Full Width) ─────────────────────────────── */}
+   610→        <motion.div variants={itemVariants}>
+   611→          <Card className="hover:border-emerald-500/20 transition-colors">
+   612→            <CardHeader>
+   613→              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+   614→                <div>
+   615→                  <CardTitle className="flex items-center gap-2 text-lg">
+   616→                    <BarChart3 className="size-5 text-emerald-500" />
+   617→                    Performance — P&L
+   618→                  </CardTitle>
+   619→                  <CardDescription>Profit & loss over the last 30 days</CardDescription>
+   620→                </div>
+   621→                <div className="flex items-center gap-3 text-sm">
+   622→                  <div className="flex items-center gap-1.5">
+   623→                    <span className="size-2.5 rounded-full bg-emerald-500" />
+   624→                    <span className="text-muted-foreground">P&L</span>
+   625→                  </div>
+   626→                  <Badge className="bg-emerald-500/15 text-emerald-600 border-emerald-500/25 dark:text-emerald-400">
+   627→                    <ArrowUpRight className="size-3" />
+   628→                    +$2,340
+   629→                  </Badge>
+   630→                </div>
+   631→              </div>
+   632→            </CardHeader>
+   633→            <CardContent>
+   634→              <div className="h-[300px] w-full">
+   635→                <ResponsiveContainer width="100%" height="100%">
+   636→                  <AreaChart data={pnlData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+   637→                    <defs>
+   638→                      <linearGradient id="pnlGradient" x1="0" y1="0" x2="0" y2="1">
+   639→                        <stop offset="0%" stopColor="#10b981" stopOpacity={0.3} />
+   640→                        <stop offset="50%" stopColor="#10b981" stopOpacity={0.1} />
+   641→                        <stop offset="100%" stopColor="#10b981" stopOpacity={0} />
+   642→                      </linearGradient>
+   643→                    </defs>
+   644→                    <CartesianGrid
+   645→                      strokeDasharray="3 3"
+   646→                      stroke="hsl(var(--border))"
+   647→                      vertical={false}
+   648→                    />
+   649→                    <XAxis
+   650→                      dataKey="day"
+   651→                      tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+   652→                      tickLine={false}
+   653→                      axisLine={false}
+   654→                      interval={4}
+   655→                    />
+   656→                    <YAxis
+   657→                      tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+   658→                      tickLine={false}
+   659→                      axisLine={false}
+   660→                      tickFormatter={(v: number) => `$${v}`}
+   661→                      width={60}
+   662→                    />
+   663→                    <Tooltip
+   664→                      contentStyle={{
+   665→                        backgroundColor: 'hsl(var(--card))',
+   666→                        border: '1px solid hsl(var(--border))',
+   667→                        borderRadius: '8px',
+   668→                        fontSize: '12px',
+   669→                        boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+   670→                      }}
+   671→                      labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 600 }}
+   672→                      formatter={(value: number) => [`$${value.toFixed(2)}`, 'P&L']}
+   673→                    />
+   674→                    <Area
+   675→                      type="monotone"
+   676→                      dataKey="pnl"
+   677→                      stroke="#10b981"
+   678→                      strokeWidth={2.5}
+   679→                      fill="url(#pnlGradient)"
+   680→                      dot={false}
+   681→                      activeDot={{
+   682→                        r: 5,
+   683→                        fill: '#10b981',
+   684→                        stroke: 'hsl(var(--background))',
+   685→                        strokeWidth: 2,
+   686→                      }}
+   687→                    />
+   688→                  </AreaChart>
+   689→                </ResponsiveContainer>
+   690→              </div>
+   691→            </CardContent>
+   692→          </Card>
+   693→        </motion.div>
+   694→      </div>
+   695→    </motion.div>
+   696→  )
+   697→}

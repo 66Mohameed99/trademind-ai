@@ -1,0 +1,907 @@
+     1→'use client'
+     2→
+     3→import { useState, useEffect } from 'react'
+     4→import { motion, AnimatePresence } from 'framer-motion'
+     5→import {
+     6→  Brain,
+     7→  LineChart,
+     8→  BookOpen,
+     9→  GraduationCap,
+    10→  Zap,
+    11→  Users,
+    12→  Play,
+    13→  ArrowRight,
+    14→  TrendingUp,
+    15→  Target,
+    16→  BarChart3,
+    17→  MessageSquare,
+    18→  Star,
+    19→  Twitter,
+    20→  Github,
+    21→  Linkedin,
+    22→  Youtube,
+    23→  CheckCircle2,
+    24→  Sparkles,
+    25→  ChevronRight,
+    26→  Shield,
+    27→  Clock,
+    28→  Globe,
+    29→  Menu,
+    30→  X,
+    31→} from 'lucide-react'
+    32→import { Button } from '@/components/ui/button'
+    33→import { Card, CardContent } from '@/components/ui/card'
+    34→import { Badge } from '@/components/ui/badge'
+    35→import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+    36→import { Separator } from '@/components/ui/separator'
+    37→import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'
+    38→import { useNavigation } from '@/store/navigation'
+    39→
+    40→// ─── Animation Variants ────────────────────────────────────────────────
+    41→const fadeInUp = {
+    42→  initial: { opacity: 0, y: 24 },
+    43→  whileInView: { opacity: 1, y: 0 },
+    44→  viewport: { once: true, margin: '-40px' },
+    45→  transition: { duration: 0.5, ease: [0.25, 0.4, 0.25, 1] },
+    46→}
+    47→
+    48→const staggerContainer = {
+    49→  initial: {},
+    50→  whileInView: { transition: { staggerChildren: 0.1 } },
+    51→  viewport: { once: true, margin: '-40px' },
+    52→}
+    53→
+    54→const staggerItem = {
+    55→  initial: { opacity: 0, y: 20 },
+    56→  whileInView: { opacity: 1, y: 0 },
+    57→  viewport: { once: true },
+    58→  transition: { duration: 0.45, ease: [0.25, 0.4, 0.25, 1] },
+    59→}
+    60→
+    61→const scaleIn = {
+    62→  initial: { opacity: 0, scale: 0.95 },
+    63→  whileInView: { opacity: 1, scale: 1 },
+    64→  viewport: { once: true, margin: '-40px' },
+    65→  transition: { duration: 0.5, ease: [0.25, 0.4, 0.25, 1] },
+    66→}
+    67→
+    68→// ─── Data ──────────────────────────────────────────────────────────────
+    69→const features = [
+    70→  {
+    71→    icon: Brain,
+    72→    title: 'AI Mentor',
+    73→    description:
+    74→      'Get personalized guidance from your AI trading mentor. Ask questions, get strategy feedback, and receive tailored learning recommendations 24/7.',
+    75→  },
+    76→  {
+    77→    icon: LineChart,
+    78→    title: 'Chart Analysis',
+    79→    description:
+    80→      'Upload any chart and get instant AI-powered technical analysis with pattern recognition, support/resistance levels, and actionable insights.',
+    81→  },
+    82→  {
+    83→    icon: BookOpen,
+    84→    title: 'Trading Journal',
+    85→    description:
+    86→      'Track every trade, analyze patterns, identify your strengths and weaknesses, and systematically improve your trading edge.',
+    87→  },
+    88→  {
+    89→    icon: GraduationCap,
+    90→    title: 'Academy Courses',
+    91→    description:
+    92→      'Structured learning paths from beginner to advanced. Master technical analysis, risk management, and trading psychology at your own pace.',
+    93→  },
+    94→  {
+    95→    icon: Zap,
+    96→    title: 'Real-time Signals',
+    97→    description:
+    98→      'Educational signals with full analysis breakdowns. Understand the reasoning behind every signal and learn to identify setups yourself.',
+    99→  },
+   100→  {
+   101→    icon: Users,
+   102→    title: 'Community',
+   103→    description:
+   104→      'Connect, share ideas, and learn from fellow traders. Join discussion rooms, participate in challenges, and grow together.',
+   105→  },
+   106→]
+   107→
+   108→const steps = [
+   109→  {
+   110→    number: '01',
+   111→    title: 'Learn',
+   112→    heading: 'Build Your Foundation',
+   113→    description:
+   114→      'Complete structured courses covering technical analysis, fundamental analysis, risk management, and trading psychology. Go from complete beginner to confident trader.',
+   115→    icon: GraduationCap,
+   116→  },
+   117→  {
+   118→    number: '02',
+   119→    title: 'Practice',
+   120→    heading: 'Apply AI-Powered Tools',
+   121→    description:
+   122→      'Use our AI chart analyzer, get real-time educational signals, and practice pattern recognition. Your AI mentor provides instant feedback on every analysis.',
+   123→    icon: LineChart,
+   124→  },
+   125→  {
+   126→    number: '03',
+   127→    title: 'Master',
+   128→    heading: 'Build Your Edge',
+   129→    description:
+   130→      'Track your progress with the trading journal, refine strategies based on data, and engage with the community. Develop a consistent, profitable trading system.',
+   131→    icon: Target,
+   132→  },
+   133→]
+   134→
+   135→const testimonials = [
+   136→  {
+   137→    name: 'Sarah Chen',
+   138→    role: 'Swing Trader · 2 years experience',
+   139→    initials: 'SC',
+   140→    quote:
+   141→      'TradeMind AI completely changed my approach to the markets. The AI mentor helped me identify patterns I was consistently missing. My win rate went from 42% to 68% in just four months. The journal feature alone is worth the subscription.',
+   142→    rating: 5,
+   143→  },
+   144→  {
+   145→    name: 'Marcus Johnson',
+   146→    role: 'Day Trader · 5 years experience',
+   147→    initials: 'MJ',
+   148→    quote:
+   149→      "Even with five years of experience, the AI chart analysis revealed blind spots in my strategy. The community is incredibly supportive, and the structured courses filled gaps in my knowledge I didn't know existed. Absolutely essential tool.",
+   150→    rating: 5,
+   151→  },
+   152→  {
+   153→    name: 'Elena Rodriguez',
+   154→    role: 'Forex Trader · Beginner',
+   155→    initials: 'ER',
+   156→    quote:
+   157→      "As a complete beginner, I was overwhelmed by the amount of information out there. TradeMind AI gave me a clear, structured path forward. The AI mentor is like having a patient teacher available 24/7. I made my first profitable trade within 6 weeks.",
+   158→    rating: 5,
+   159→  },
+   160→]
+   161→
+   162→const footerLinks: Record<string, { label: string; action?: () => void }[]> = {
+   163→  Product: [
+   164→    { label: 'Features', action: () => document.querySelector('#features')?.scrollIntoView({ behavior: 'smooth' }) },
+   165→    { label: 'Pricing', action: () => useNavigation.getState().setView('pricing') },
+   166→    { label: 'AI Mentor' },
+   167→    { label: 'Chart Analyzer' },
+   168→    { label: 'Academy' },
+   169→    { label: 'Trading Journal' },
+   170→  ],
+   171→  Company: [{ label: 'About' }, { label: 'Blog' }, { label: 'Careers' }, { label: 'Press' }, { label: 'Partners' }, { label: 'Contact' }],
+   172→  Resources: [{ label: 'Documentation' }, { label: 'Help Center' }, { label: 'Community' }, { label: 'API' }, { label: 'Status' }, { label: 'Changelog' }],
+   173→  Legal: [{ label: 'Privacy' }, { label: 'Terms' }, { label: 'Security' }, { label: 'Cookies' }, { label: 'Licenses' }, { label: 'GDPR' }],
+   174→}
+   175→
+   176→// ─── Sub-Components ────────────────────────────────────────────────────
+   177→
+   178→function FloatingStatCard({
+   179→  value,
+   180→  label,
+   181→  icon: Icon,
+   182→  className,
+   183→  delay = 0,
+   184→}: {
+   185→  value: string
+   186→  label: string
+   187→  icon: React.ComponentType<{ className?: string }>
+   188→  className?: string
+   189→  delay?: number
+   190→}) {
+   191→  return (
+   192→    <motion.div
+   193→      initial={{ opacity: 0, scale: 0.8, y: 20 }}
+   194→      animate={{ opacity: 1, scale: 1, y: 0 }}
+   195→      transition={{
+   196→        duration: 0.6,
+   197→        delay: 0.8 + delay,
+   198→        ease: [0.25, 0.4, 0.25, 1],
+   199→      }}
+   200→      className={className}
+   201→    >
+   202→      <motion.div
+   203→        animate={{ y: [0, -6, 0] }}
+   204→        transition={{
+   205→          duration: 3 + delay * 0.5,
+   206→          repeat: Infinity,
+   207→          ease: 'easeInOut',
+   208→          delay: delay * 0.3,
+   209→        }}
+   210→      >
+   211→        <Card className="border-emerald-200/50 bg-white/80 backdrop-blur-sm dark:border-emerald-800/40 dark:bg-emerald-950/60 py-4 px-5 shadow-lg">
+   212→          <CardContent className="flex items-center gap-3 p-0">
+   213→            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/50">
+   214→              <Icon className="size-5 text-emerald-600 dark:text-emerald-400" />
+   215→            </div>
+   216→            <div>
+   217→              <p className="text-lg font-bold text-foreground">{value}</p>
+   218→              <p className="text-xs text-muted-foreground">{label}</p>
+   219→            </div>
+   220→          </CardContent>
+   221→        </Card>
+   222→      </motion.div>
+   223→    </motion.div>
+   224→  )
+   225→}
+   226→
+   227→function FeatureCard({
+   228→  feature,
+   229→  index,
+   230→}: {
+   231→  feature: (typeof features)[0]
+   232→  index: number
+   233→}) {
+   234→  const Icon = feature.icon
+   235→  return (
+   236→    <motion.div
+   237→      variants={staggerItem}
+   238→      whileHover={{ scale: 1.02, y: -4 }}
+   239→      transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+   240→      className="group"
+   241→    >
+   242→      <Card className="h-full border-border/50 bg-card/50 backdrop-blur-sm transition-shadow duration-300 hover:glow-emerald hover:border-emerald-300/50 dark:hover:border-emerald-700/50 py-0 gap-0 overflow-hidden">
+   243→        <CardContent className="flex flex-col gap-4 p-6">
+   244→          <div className="flex size-12 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 transition-colors duration-300 group-hover:bg-emerald-600 group-hover:text-white dark:bg-emerald-900/50 dark:text-emerald-400 dark:group-hover:bg-emerald-600 dark:group-hover:text-white">
+   245→            <Icon className="size-6" />
+   246→          </div>
+   247→          <div className="flex flex-col gap-2">
+   248→            <h3 className="text-lg font-semibold text-foreground">
+   249→              {feature.title}
+   250→            </h3>
+   251→            <p className="text-sm leading-relaxed text-muted-foreground">
+   252→              {feature.description}
+   253→            </p>
+   254→          </div>
+   255→          <div className="mt-auto flex items-center gap-1 text-sm font-medium text-emerald-600 dark:text-emerald-400 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+   256→            Learn more <ChevronRight className="size-4" />
+   257→          </div>
+   258→        </CardContent>
+   259→      </Card>
+   260→    </motion.div>
+   261→  )
+   262→}
+   263→
+   264→function StepCard({
+   265→  step,
+   266→  index,
+   267→  isLast,
+   268→}: {
+   269→  step: (typeof steps)[0]
+   270→  index: number
+   271→  isLast: boolean
+   272→}) {
+   273→  const Icon = step.icon
+   274→  return (
+   275→    <motion.div variants={staggerItem} className="relative flex flex-col items-center text-center">
+   276→      {/* Connector line (desktop) */}
+   277→      {!isLast && (
+   278→        <div className="absolute left-1/2 top-10 hidden h-[calc(100%-2.5rem)] w-px -translate-x-1/2 bg-gradient-to-b from-emerald-400 to-emerald-200 md:block dark:from-emerald-500 dark:to-emerald-800" />
+   279→      )}
+   280→      {/* Number badge */}
+   281→      <motion.div
+   282→        whileHover={{ scale: 1.1 }}
+   283→        className="relative z-10 flex size-20 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 text-white shadow-lg shadow-emerald-500/25 dark:shadow-emerald-500/15"
+   284→      >
+   285→        <Icon className="size-8" />
+   286→        <span className="absolute -top-2 -right-2 flex size-7 items-center justify-center rounded-full bg-amber-400 text-xs font-bold text-amber-900 shadow-sm">
+   287→          {step.number}
+   288→        </span>
+   289→      </motion.div>
+   290→      <div className="mt-6 flex flex-col gap-2">
+   291→        <Badge variant="secondary" className="w-fit mx-auto text-emerald-700 dark:text-emerald-300">
+   292→          {step.title}
+   293→        </Badge>
+   294→        <h3 className="mt-1 text-xl font-bold text-foreground">{step.heading}</h3>
+   295→        <p className="mt-1 max-w-xs text-sm leading-relaxed text-muted-foreground">
+   296→          {step.description}
+   297→        </p>
+   298→      </div>
+   299→    </motion.div>
+   300→  )
+   301→}
+   302→
+   303→function TestimonialCard({
+   304→  testimonial,
+   305→}: {
+   306→  testimonial: (typeof testimonials)[0]
+   307→}) {
+   308→  return (
+   309→    <motion.div variants={staggerItem} whileHover={{ scale: 1.01, y: -2 }}>
+   310→      <Card className="h-full border-border/50 bg-card/50 py-0 gap-0">
+   311→        <CardContent className="flex flex-col gap-4 p-6">
+   312→          {/* Stars */}
+   313→          <div className="flex gap-0.5">
+   314→            {Array.from({ length: testimonial.rating }).map((_, i) => (
+   315→              <Star
+   316→                key={i}
+   317→                className="size-4 fill-amber-400 text-amber-400"
+   318→              />
+   319→            ))}
+   320→          </div>
+   321→          {/* Quote */}
+   322→          <blockquote className="text-sm leading-relaxed text-foreground/90">
+   323→            &ldquo;{testimonial.quote}&rdquo;
+   324→          </blockquote>
+   325→          <Separator />
+   326→          {/* Author */}
+   327→          <div className="flex items-center gap-3">
+   328→            <Avatar className="size-10 border border-emerald-200 dark:border-emerald-800">
+   329→              <AvatarFallback className="bg-emerald-100 text-sm font-semibold text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300">
+   330→                {testimonial.initials}
+   331→              </AvatarFallback>
+   332→            </Avatar>
+   333→            <div className="flex flex-col">
+   334→              <span className="text-sm font-semibold text-foreground">
+   335→                {testimonial.name}
+   336→              </span>
+   337→              <span className="text-xs text-muted-foreground">
+   338→                {testimonial.role}
+   339→              </span>
+   340→            </div>
+   341→          </div>
+   342→        </CardContent>
+   343→      </Card>
+   344→    </motion.div>
+   345→  )
+   346→}
+   347→
+   348→// ─── Main Component ────────────────────────────────────────────────────
+   349→
+   350→const navLinks = [
+   351→  { label: 'Features', href: '#features' },
+   352→  { label: 'How It Works', href: '#how-it-works' },
+   353→  { label: 'Testimonials', href: '#testimonials' },
+   354→  { label: 'Pricing', href: '#pricing' },
+   355→  { label: 'Community', href: '#community' },
+   356→]
+   357→
+   358→export default function LandingView() {
+   359→  const { openAuthDialog, setView } = useNavigation()
+   360→  const [scrolled, setScrolled] = useState(false)
+   361→  const [mobileOpen, setMobileOpen] = useState(false)
+   362→
+   363→  useEffect(() => {
+   364→    const onScroll = () => setScrolled(window.scrollY > 20)
+   365→    window.addEventListener('scroll', onScroll, { passive: true })
+   366→    return () => window.removeEventListener('scroll', onScroll)
+   367→  }, [])
+   368→
+   369→  const scrollToSection = (href: string) => {
+   370→    if (href === '#pricing') {
+   371→      setView('pricing')
+   372→      return
+   373→    }
+   374→    const el = document.querySelector(href)
+   375→    el?.scrollIntoView({ behavior: 'smooth' })
+   376→    setMobileOpen(false)
+   377→  }
+   378→
+   379→  return (
+   380→    <div className="flex min-h-screen flex-col">
+   381→      {/* ═══════════════════════════════════════════════════════════════
+   382→          NAVBAR
+   383→      ═══════════════════════════════════════════════════════════════ */}
+   384→      <motion.nav
+   385→        initial={{ y: -100 }}
+   386→        animate={{ y: 0 }}
+   387→        transition={{ duration: 0.5, ease: [0.25, 0.4, 0.25, 1] }}
+   388→        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+   389→          scrolled
+   390→            ? 'border-b bg-background/80 shadow-sm backdrop-blur-xl'
+   391→            : 'bg-transparent'
+   392→        }`}
+   393→      >
+   394→        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
+   395→          {/* Logo */}
+   396→          <button
+   397→            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+   398→            className="flex items-center gap-2.5 transition-opacity hover:opacity-80"
+   399→          >
+   400→            <div className="flex size-8 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-sm shadow-emerald-600/25">
+   401→              <TrendingUp className="size-4" />
+   402→            </div>
+   403→            <span className="text-lg font-bold text-foreground">
+   404→              TradeMind <span className="gradient-text">AI</span>
+   405→            </span>
+   406→          </button>
+   407→
+   408→          {/* Desktop links */}
+   409→          <div className="hidden items-center gap-1 md:flex">
+   410→            {navLinks.map((link) => (
+   411→              <button
+   412→                key={link.label}
+   413→                onClick={() => scrollToSection(link.href)}
+   414→                className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+   415→              >
+   416→                {link.label}
+   417→              </button>
+   418→            ))}
+   419→          </div>
+   420→
+   421→          {/* Desktop actions */}
+   422→          <div className="hidden items-center gap-3 md:flex">
+   423→            <Button
+   424→              variant="ghost"
+   425→              size="sm"
+   426→              onClick={() => openAuthDialog('login')}
+   427→            >
+   428→              Log In
+   429→            </Button>
+   430→            <Button
+   431→              size="sm"
+   432→              className="bg-emerald-600 text-white shadow-sm shadow-emerald-600/25 hover:bg-emerald-700"
+   433→              onClick={() => openAuthDialog('signup')}
+   434→            >
+   435→              Get Started
+   436→            </Button>
+   437→          </div>
+   438→
+   439→          {/* Mobile menu */}
+   440→          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+   441→            <SheetTrigger asChild>
+   442→              <button
+   443→                className="flex size-10 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-accent md:hidden"
+   444→                aria-label="Open menu"
+   445→              >
+   446→                <Menu className="size-5" />
+   447→              </button>
+   448→            </SheetTrigger>
+   449→            <SheetContent side="right" className="w-72">
+   450→              <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+   451→              <div className="flex flex-col gap-1 pt-8">
+   452→                <div className="mb-4 flex items-center gap-2.5 px-2">
+   453→                  <div className="flex size-8 items-center justify-center rounded-lg bg-emerald-600 text-white">
+   454→                    <TrendingUp className="size-4" />
+   455→                  </div>
+   456→                  <span className="text-lg font-bold">
+   457→                    TradeMind <span className="gradient-text">AI</span>
+   458→                  </span>
+   459→                </div>
+   460→                <Separator className="mb-3" />
+   461→                {navLinks.map((link, i) => (
+   462→                  <motion.button
+   463→                    key={link.label}
+   464→                    initial={{ opacity: 0, x: 20 }}
+   465→                    animate={{ opacity: 1, x: 0 }}
+   466→                    transition={{ delay: 0.05 * i }}
+   467→                    onClick={() => scrollToSection(link.href)}
+   468→                    className="rounded-lg px-3 py-2.5 text-left text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+   469→                  >
+   470→                    {link.label}
+   471→                  </motion.button>
+   472→                ))}
+   473→                <Separator className="my-3" />
+   474→                <Button
+   475→                  variant="ghost"
+   476→                  className="justify-start"
+   477→                  onClick={() => { openAuthDialog('login'); setMobileOpen(false) }}
+   478→                >
+   479→                  Log In
+   480→                </Button>
+   481→                <Button
+   482→                  className="bg-emerald-600 text-white shadow-sm shadow-emerald-600/25 hover:bg-emerald-700"
+   483→                  onClick={() => { openAuthDialog('signup'); setMobileOpen(false) }}
+   484→                >
+   485→                  Get Started
+   486→                </Button>
+   487→              </div>
+   488→            </SheetContent>
+   489→          </Sheet>
+   490→        </div>
+   491→      </motion.nav>
+   492→
+   493→      {/* Spacer so hero isn't behind navbar */}
+   494→      <div className="h-16" />
+   495→
+   496→      <main className="flex-1">
+   497→        {/* ═══════════════════════════════════════════════════════════════
+   498→            HERO SECTION
+   499→        ═══════════════════════════════════════════════════════════════ */}
+   500→        <section className="animated-grid relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-20 sm:px-6 lg:px-8">
+   501→          {/* Radial gradient overlay */}
+   502→          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(16,185,129,0.12),transparent)] dark:bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(16,185,129,0.18),transparent)]" />
+   503→
+   504→          <div className="relative z-10 mx-auto max-w-4xl text-center">
+   505→            {/* Badge */}
+   506→            <motion.div
+   507→              initial={{ opacity: 0, y: -10 }}
+   508→              animate={{ opacity: 1, y: 0 }}
+   509→              transition={{ duration: 0.5, delay: 0.1 }}
+   510→            >
+   511→              <Badge
+   512→                variant="outline"
+   513→                className="mb-6 gap-1.5 border-emerald-300/50 bg-emerald-50 px-4 py-1.5 text-emerald-700 dark:border-emerald-700/50 dark:bg-emerald-950/50 dark:text-emerald-300"
+   514→              >
+   515→                <Sparkles className="size-3.5" />
+   516→                AI-Powered Trading Education
+   517→              </Badge>
+   518→            </motion.div>
+   519→
+   520→            {/* Heading */}
+   521→            <motion.h1
+   522→              initial={{ opacity: 0, y: 20 }}
+   523→              animate={{ opacity: 1, y: 0 }}
+   524→              transition={{ duration: 0.6, delay: 0.2, ease: [0.25, 0.4, 0.25, 1] }}
+   525→              className="text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl"
+   526→            >
+   527→              Master the Markets with{' '}
+   528→              <span className="gradient-text">AI-Powered Education</span>
+   529→            </motion.h1>
+   530→
+   531→            {/* Subheading */}
+   532→            <motion.p
+   533→              initial={{ opacity: 0, y: 20 }}
+   534→              animate={{ opacity: 1, y: 0 }}
+   535→              transition={{ duration: 0.6, delay: 0.35, ease: [0.25, 0.4, 0.25, 1] }}
+   536→              className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg md:text-xl"
+   537→            >
+   538→              Learn trading strategies, analyze charts with AI, track your
+   539→              progress, and join a community of successful traders.
+   540→            </motion.p>
+   541→
+   542→            {/* CTAs */}
+   543→            <motion.div
+   544→              initial={{ opacity: 0, y: 20 }}
+   545→              animate={{ opacity: 1, y: 0 }}
+   546→              transition={{ duration: 0.6, delay: 0.5, ease: [0.25, 0.4, 0.25, 1] }}
+   547→              className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4"
+   548→            >
+   549→              <Button
+   550→                size="lg"
+   551→                onClick={() => openAuthDialog('signup')}
+   552→                className="h-12 w-full gap-2 rounded-xl bg-emerald-600 px-8 text-base font-semibold text-white shadow-lg shadow-emerald-600/25 transition-all hover:bg-emerald-700 hover:shadow-emerald-600/30 sm:w-auto dark:bg-emerald-600 dark:hover:bg-emerald-500"
+   553→              >
+   554→                Get Started Free
+   555→                <ArrowRight className="size-4" />
+   556→              </Button>
+   557→              <Button
+   558→                variant="outline"
+   559→                size="lg"
+   560→                className="h-12 w-full gap-2 rounded-xl border-emerald-300/50 px-8 text-base font-semibold text-emerald-700 transition-all hover:bg-emerald-50 hover:text-emerald-800 sm:w-auto dark:border-emerald-700/50 dark:text-emerald-300 dark:hover:bg-emerald-950/50 dark:hover:text-emerald-200"
+   561→              >
+   562→                <Play className="size-4" />
+   563→                Watch Demo
+   564→              </Button>
+   565→            </motion.div>
+   566→
+   567→            {/* Trust indicators */}
+   568→            <motion.div
+   569→              initial={{ opacity: 0 }}
+   570→              animate={{ opacity: 1 }}
+   571→              transition={{ duration: 0.6, delay: 0.7 }}
+   572→              className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-muted-foreground"
+   573→            >
+   574→              <span className="flex items-center gap-1.5">
+   575→                <Shield className="size-3.5 text-emerald-500" />
+   576→                Bank-grade security
+   577→              </span>
+   578→              <span className="flex items-center gap-1.5">
+   579→                <Clock className="size-3.5 text-emerald-500" />
+   580→                14-day free trial
+   581→              </span>
+   582→              <span className="flex items-center gap-1.5">
+   583→                <Globe className="size-3.5 text-emerald-500" />
+   584→                Used in 120+ countries
+   585→              </span>
+   586→            </motion.div>
+   587→          </div>
+   588→
+   589→          {/* Floating stat cards */}
+   590→          <div className="pointer-events-none absolute inset-0 z-20 hidden lg:block">
+   591→            <FloatingStatCard
+   592→              value="10K+"
+   593→              label="Students"
+   594→              icon={Users}
+   595→              className="absolute left-[8%] top-[18%]"
+   596→              delay={0}
+   597→            />
+   598→            <FloatingStatCard
+   599→              value="500+"
+   600→              label="Lessons"
+   601→              icon={GraduationCap}
+   602→              className="absolute right-[6%] top-[15%]"
+   603→              delay={0.15}
+   604→            />
+   605→            <FloatingStatCard
+   606→              value="85%"
+   607→              label="Success Rate"
+   608→              icon={TrendingUp}
+   609→              className="absolute left-[6%] bottom-[22%]"
+   610→              delay={0.3}
+   611→            />
+   612→            <FloatingStatCard
+   613→              value="24/7"
+   614→              label="AI Mentor"
+   615→              icon={Brain}
+   616→              className="absolute right-[8%] bottom-[18%]"
+   617→              delay={0.45}
+   618→            />
+   619→          </div>
+   620→        </section>
+   621→
+   622→        {/* ═══════════════════════════════════════════════════════════════
+   623→            FEATURES SECTION
+   624→        ═══════════════════════════════════════════════════════════════ */}
+   625→        <section id="features" className="relative px-4 py-24 sm:px-6 lg:px-8">
+   626→          <div className="mx-auto max-w-6xl">
+   627→            {/* Section header */}
+   628→            <motion.div {...fadeInUp} className="mx-auto max-w-2xl text-center">
+   629→              <Badge
+   630→                variant="outline"
+   631→                className="mb-4 border-emerald-300/50 bg-emerald-50 text-emerald-700 dark:border-emerald-700/50 dark:bg-emerald-950/50 dark:text-emerald-300"
+   632→              >
+   633→                Features
+   634→              </Badge>
+   635→              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+   636→                Everything You Need to Become a{' '}
+   637→                <span className="gradient-text">Profitable Trader</span>
+   638→              </h2>
+   639→              <p className="mt-4 text-muted-foreground">
+   640→                A complete ecosystem of AI-powered tools designed to accelerate your
+   641→                trading education and maximize your potential.
+   642→              </p>
+   643→            </motion.div>
+   644→
+   645→            {/* Feature cards grid */}
+   646→            <motion.div
+   647→              {...staggerContainer}
+   648→              className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
+   649→            >
+   650→              {features.map((feature, i) => (
+   651→                <FeatureCard key={feature.title} feature={feature} index={i} />
+   652→              ))}
+   653→            </motion.div>
+   654→          </div>
+   655→        </section>
+   656→
+   657→        {/* ═══════════════════════════════════════════════════════════════
+   658→            HOW IT WORKS SECTION
+   659→        ═══════════════════════════════════════════════════════════════ */}
+   660→        <section id="how-it-works" className="relative bg-muted/30 px-4 py-24 sm:px-6 lg:px-8">
+   661→          {/* Subtle top/bottom separators */}
+   662→          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-300/40 to-transparent dark:via-emerald-700/30" />
+   663→          <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-emerald-300/40 to-transparent dark:via-emerald-700/30" />
+   664→
+   665→          <div className="mx-auto max-w-5xl">
+   666→            <motion.div {...fadeInUp} className="mx-auto max-w-2xl text-center">
+   667→              <Badge
+   668→                variant="outline"
+   669→                className="mb-4 border-emerald-300/50 bg-emerald-50 text-emerald-700 dark:border-emerald-700/50 dark:bg-emerald-950/50 dark:text-emerald-300"
+   670→              >
+   671→                How It Works
+   672→              </Badge>
+   673→              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+   674→                Three Steps to <span className="gradient-text">Trading Mastery</span>
+   675→              </h2>
+   676→              <p className="mt-4 text-muted-foreground">
+   677→                Our proven methodology takes you from complete beginner to
+   678→                confident, consistently profitable trader.
+   679→              </p>
+   680→            </motion.div>
+   681→
+   682→            <motion.div
+   683→              {...staggerContainer}
+   684→              className="mt-20 grid gap-12 md:grid-cols-3 md:gap-8"
+   685→            >
+   686→              {steps.map((step, i) => (
+   687→                <StepCard key={step.number} step={step} index={i} isLast={i === steps.length - 1} />
+   688→              ))}
+   689→            </motion.div>
+   690→          </div>
+   691→        </section>
+   692→
+   693→        {/* ═══════════════════════════════════════════════════════════════
+   694→            SOCIAL PROOF BAR
+   695→        ═══════════════════════════════════════════════════════════════ */}
+   696→        <section className="px-4 py-16 sm:px-6 lg:px-8">
+   697→          <motion.div {...scaleIn} className="mx-auto max-w-4xl">
+   698→            <div className="flex flex-col items-center gap-6 rounded-2xl border border-emerald-200/50 bg-gradient-to-r from-emerald-50 via-white to-emerald-50 px-6 py-10 shadow-sm dark:from-emerald-950/30 dark:via-emerald-950/20 dark:to-emerald-950/30 dark:border-emerald-800/30 sm:flex-row sm:justify-around sm:px-10">
+   699→              {[
+   700→                { value: '10,000+', label: 'Active Students' },
+   701→                { value: '500+', label: 'Video Lessons' },
+   702→                { value: '85%', label: 'Success Rate' },
+   703→                { value: '4.9/5', label: 'Average Rating' },
+   704→              ].map((stat) => (
+   705→                <div key={stat.label} className="flex flex-col items-center gap-1">
+   706→                  <span className="text-2xl font-bold text-foreground sm:text-3xl">
+   707→                    {stat.value}
+   708→                  </span>
+   709→                  <span className="text-xs text-muted-foreground sm:text-sm">
+   710→                    {stat.label}
+   711→                  </span>
+   712→                </div>
+   713→              ))}
+   714→            </div>
+   715→          </motion.div>
+   716→        </section>
+   717→
+   718→        {/* ═══════════════════════════════════════════════════════════════
+   719→            TESTIMONIALS SECTION
+   720→        ═══════════════════════════════════════════════════════════════ */}
+   721→        <section id="testimonials" className="bg-muted/30 px-4 py-24 sm:px-6 lg:px-8">
+   722→          <div className="mx-auto max-w-6xl">
+   723→            <motion.div {...fadeInUp} className="mx-auto max-w-2xl text-center">
+   724→              <Badge
+   725→                variant="outline"
+   726→                className="mb-4 border-emerald-300/50 bg-emerald-50 text-emerald-700 dark:border-emerald-700/50 dark:bg-emerald-950/50 dark:text-emerald-300"
+   727→              >
+   728→                Testimonials
+   729→              </Badge>
+   730→              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+   731→                Loved by <span className="gradient-text">Traders Worldwide</span>
+   732→              </h2>
+   733→              <p className="mt-4 text-muted-foreground">
+   734→                Join thousands of traders who have transformed their skills with
+   735→                TradeMind AI.
+   736→              </p>
+   737→            </motion.div>
+   738→
+   739→            <motion.div
+   740→              {...staggerContainer}
+   741→              className="mt-16 grid gap-6 md:grid-cols-2 lg:grid-cols-3"
+   742→            >
+   743→              {testimonials.map((t) => (
+   744→                <TestimonialCard key={t.name} testimonial={t} />
+   745→              ))}
+   746→            </motion.div>
+   747→          </div>
+   748→        </section>
+   749→
+   750→        {/* ═══════════════════════════════════════════════════════════════
+   751→            CTA SECTION
+   752→        ═══════════════════════════════════════════════════════════════ */}
+   753→        <section id="community" className="relative px-4 py-24 sm:px-6 lg:px-8">
+   754→          <motion.div {...scaleIn} className="mx-auto max-w-4xl">
+   755→            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-800 px-6 py-16 text-center shadow-2xl shadow-emerald-600/20 sm:px-12 sm:py-20 dark:from-emerald-700 dark:via-emerald-800 dark:to-emerald-950 dark:shadow-emerald-900/30">
+   756→              {/* Decorative circles */}
+   757→              <div className="pointer-events-none absolute -right-20 -top-20 size-64 rounded-full bg-white/5" />
+   758→              <div className="pointer-events-none absolute -bottom-16 -left-16 size-48 rounded-full bg-white/5" />
+   759→
+   760→              <div className="relative z-10">
+   761→                <motion.div
+   762→                  initial={{ opacity: 0, scale: 0.9 }}
+   763→                  whileInView={{ opacity: 1, scale: 1 }}
+   764→                  viewport={{ once: true }}
+   765→                  transition={{ duration: 0.5 }}
+   766→                >
+   767→                  <Sparkles className="mx-auto mb-6 size-10 text-emerald-200" />
+   768→                </motion.div>
+   769→
+   770→                <motion.h2
+   771→                  {...fadeInUp}
+   772→                  className="text-3xl font-bold tracking-tight text-white sm:text-4xl md:text-5xl"
+   773→                >
+   774→                  Ready to Start Your
+   775→                  <br />
+   776→                  Trading Journey?
+   777→                </motion.h2>
+   778→                <motion.p
+   779→                  {...fadeInUp}
+   780→                  className="mx-auto mt-4 max-w-xl text-base text-emerald-100/80 sm:text-lg"
+   781→                >
+   782→                  Join 10,000+ students who are already building their edge with
+   783→                  AI-powered trading education. Start free, no credit card required.
+   784→                </motion.p>
+   785→
+   786→                <motion.div
+   787→                  {...fadeInUp}
+   788→                  className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4"
+   789→                >
+   790→                  <Button
+   791→                    size="lg"
+   792→                    onClick={() => openAuthDialog('signup')}
+   793→                    className="h-12 w-full gap-2 rounded-xl bg-white px-8 text-base font-semibold text-emerald-700 shadow-lg transition-all hover:bg-emerald-50 sm:w-auto"
+   794→                  >
+   795→                    Start Free
+   796→                    <ArrowRight className="size-4" />
+   797→                  </Button>
+   798→                  <Button
+   799→                    variant="outline"
+   800→                    size="lg"
+   801→                    onClick={() => setView('pricing')}
+   802→                    className="h-12 w-full gap-2 rounded-xl border-white/30 bg-white/10 px-8 text-base font-semibold text-white backdrop-blur-sm transition-all hover:bg-white/20 sm:w-auto"
+   803→                  >
+   804→                    <BarChart3 className="size-4" />
+   805→                    View Pricing
+   806→                  </Button>
+   807→                </motion.div>
+   808→
+   809→                {/* Feature highlights */}
+   810→                <motion.div
+   811→                  {...fadeInUp}
+   812→                  className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm text-emerald-100/70"
+   813→                >
+   814→                  {['Free 14-day trial', 'No credit card needed', 'Cancel anytime'].map((text) => (
+   815→                    <span key={text} className="flex items-center gap-1.5">
+   816→                      <CheckCircle2 className="size-4 text-emerald-300" />
+   817→                      {text}
+   818→                    </span>
+   819→                  ))}
+   820→                </motion.div>
+   821→              </div>
+   822→            </div>
+   823→          </motion.div>
+   824→        </section>
+   825→      </main>
+   826→
+   827→      {/* ═══════════════════════════════════════════════════════════════
+   828→          FOOTER
+   829→      ═══════════════════════════════════════════════════════════════ */}
+   830→      <footer className="border-t bg-muted/20 px-4 pt-16 pb-8 sm:px-6 lg:px-8">
+   831→        <div className="mx-auto max-w-6xl">
+   832→          <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-6">
+   833→            {/* Brand column */}
+   834→            <div className="lg:col-span-2">
+   835→              <div className="flex items-center gap-2.5">
+   836→                <div className="flex size-9 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-sm shadow-emerald-600/25">
+   837→                  <TrendingUp className="size-5" />
+   838→                </div>
+   839→                <span className="text-xl font-bold text-foreground">
+   840→                  TradeMind <span className="gradient-text">AI</span>
+   841→                </span>
+   842→              </div>
+   843→              <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted-foreground">
+   844→                AI-powered trading education platform helping traders at every level
+   845→                build confidence, consistency, and profitability.
+   846→              </p>
+   847→              {/* Social icons */}
+   848→              <div className="mt-6 flex gap-3">
+   849→                {[
+   850→                  { icon: Twitter, label: 'Twitter' },
+   851→                  { icon: Github, label: 'GitHub' },
+   852→                  { icon: Linkedin, label: 'LinkedIn' },
+   853→                  { icon: Youtube, label: 'YouTube' },
+   854→                ].map(({ icon: SocialIcon, label }) => (
+   855→                  <button
+   856→                    key={label}
+   857→                    aria-label={label}
+   858→                    className="flex size-9 items-center justify-center rounded-lg border border-border/50 text-muted-foreground transition-colors hover:border-emerald-300/50 hover:bg-emerald-50 hover:text-emerald-600 dark:hover:border-emerald-700/50 dark:hover:bg-emerald-950/30 dark:hover:text-emerald-400"
+   859→                  >
+   860→                    <SocialIcon className="size-4" />
+   861→                  </button>
+   862→                ))}
+   863→              </div>
+   864→            </div>
+   865→
+   866→            {/* Link columns */}
+   867→            {Object.entries(footerLinks).map(([category, links]) => (
+   868→              <div key={category}>
+   869→                <h4 className="text-sm font-semibold text-foreground">{category}</h4>
+   870→                <ul className="mt-4 flex flex-col gap-2.5">
+   871→                  {links.map((link) => (
+   872→                    <li key={link.label}>
+   873→                      <button
+   874→                        onClick={link.action}
+   875→                        className="text-sm text-muted-foreground transition-colors hover:text-emerald-600 dark:hover:text-emerald-400"
+   876→                      >
+   877→                        {link.label}
+   878→                      </button>
+   879→                    </li>
+   880→                  ))}
+   881→                </ul>
+   882→              </div>
+   883→            ))}
+   884→          </div>
+   885→
+   886→          <Separator className="my-8 opacity-50" />
+   887→
+   888→          {/* Bottom bar */}
+   889→          <div className="flex flex-col items-center justify-between gap-4 text-xs text-muted-foreground sm:flex-row">
+   890→            <p>&copy; {new Date().getFullYear()} TradeMind AI. All rights reserved.</p>
+   891→            <div className="flex gap-4">
+   892→              <button className="transition-colors hover:text-emerald-600 dark:hover:text-emerald-400">
+   893→                Privacy Policy
+   894→              </button>
+   895→              <button className="transition-colors hover:text-emerald-600 dark:hover:text-emerald-400">
+   896→                Terms of Service
+   897→              </button>
+   898→              <button className="transition-colors hover:text-emerald-600 dark:hover:text-emerald-400">
+   899→                Cookie Settings
+   900→              </button>
+   901→            </div>
+   902→          </div>
+   903→        </div>
+   904→      </footer>
+   905→    </div>
+   906→  )
+   907→}

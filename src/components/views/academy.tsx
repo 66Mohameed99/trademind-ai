@@ -33,6 +33,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { Checkbox } from '@/components/ui/checkbox'
+import { toast } from 'sonner'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -374,10 +375,12 @@ function CourseDetailModal({
   course,
   open,
   onOpenChange,
+  onCourseUpdate,
 }: {
   course: Course | null
   open: boolean
   onOpenChange: (open: boolean) => void
+  onCourseUpdate: (course: Course) => void
 }) {
   if (!course) return null
 
@@ -460,6 +463,16 @@ function CourseDetailModal({
                 >
                   <Checkbox
                     checked={lesson.completed}
+                    onCheckedChange={() => {
+                      // toggle this lesson
+                      const updatedLessons = course.lessons.map((l) =>
+                        l.id === lesson.id ? { ...l, completed: !l.completed } : l
+                      )
+                      const completedCount = updatedLessons.filter(l => l.completed).length
+                      const newProgress = Math.round((completedCount / updatedLessons.length) * 100)
+                      const updatedCourse = { ...course, lessons: updatedLessons, progress: newProgress }
+                      onCourseUpdate(updatedCourse)
+                    }}
                     className="data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
                   />
                   <span
@@ -489,17 +502,17 @@ function CourseDetailModal({
         <div className="border-t px-6 py-4">
           <div className="flex gap-3">
             {course.progress === 100 ? (
-              <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white">
+              <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => { onOpenChange(false); toast.success('Great job!', { description: `${course.title} is completed!` }) }}>
                 <CheckCircle2 className="mr-2 size-4" />
                 Course Completed
               </Button>
             ) : course.progress !== null ? (
-              <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white">
+              <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => { const updated = { ...course, progress: 0 }; onCourseUpdate(updated); onOpenChange(false); toast.success('Continuing course!', { description: `Resuming ${course.title}` }) }}>
                 <Play className="mr-2 size-4" />
                 Continue Learning
               </Button>
             ) : (
-              <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white">
+              <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => { const updated = { ...course, progress: 0 }; onCourseUpdate(updated); onOpenChange(false); toast.success('Enrolled successfully!', { description: `You've enrolled in ${course.title}` }) }}>
                 <Play className="mr-2 size-4" />
                 Start Course
               </Button>
@@ -521,9 +534,10 @@ export default function AcademyView() {
   const [levelFilter, setLevelFilter] = useState('all')
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
+  const [courseList, setCourseList] = useState(courses)
 
   const filteredCourses = useMemo(() => {
-    return courses.filter((c) => {
+    return courseList.filter((c) => {
       const matchesSearch =
         search === '' ||
         c.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -532,7 +546,12 @@ export default function AcademyView() {
         levelFilter === 'all' || c.level.toLowerCase() === levelFilter
       return matchesSearch && matchesLevel
     })
-  }, [search, levelFilter])
+  }, [courseList, search, levelFilter])
+
+  const handleCourseUpdate = (updatedCourse: Course) => {
+    setCourseList(prev => prev.map(c => c.id === updatedCourse.id ? updatedCourse : c))
+    setSelectedCourse(updatedCourse)
+  }
 
   const openCourseDetail = (course: Course) => {
     setSelectedCourse(course)
@@ -809,6 +828,7 @@ export default function AcademyView() {
         course={selectedCourse}
         open={modalOpen}
         onOpenChange={setModalOpen}
+        onCourseUpdate={handleCourseUpdate}
       />
     </div>
   )

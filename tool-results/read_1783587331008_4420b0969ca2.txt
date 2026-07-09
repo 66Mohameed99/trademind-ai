@@ -1,0 +1,839 @@
+     1→'use client'
+     2→
+     3→import { useState, useCallback } from 'react'
+     4→import { motion, AnimatePresence } from 'framer-motion'
+     5→import {
+     6→  ImagePlus,
+     7→  Upload,
+     8→  TrendingUp,
+     9→  Target,
+    10→  Shield,
+    11→  Brain,
+    12→  FileImage,
+    13→  ArrowUpRight,
+    14→  ArrowDownRight,
+    15→  Activity,
+    16→  BarChart3,
+    17→  Zap,
+    18→} from 'lucide-react'
+    19→import { Button } from '@/components/ui/button'
+    20→import { Badge } from '@/components/ui/badge'
+    21→import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+    22→import { Skeleton } from '@/components/ui/skeleton'
+    23→import { Separator } from '@/components/ui/separator'
+    24→import { cn } from '@/lib/utils'
+    25→
+    26→// --- Types ---
+    27→
+    28→interface AnalysisResults {
+    29→  trend: {
+    30→    direction: 'Uptrend' | 'Downtrend' | 'Ranging'
+    31→    description: string
+    32→  }
+    33→  keyLevels: {
+    34→    support: number[]
+    35→    resistance: number[]
+    36→  }
+    37→  smc: {
+    38→    bos: string
+    39→    choch: string
+    40→    orderBlocks: string
+    41→    liquidity: string
+    42→    fvg: string
+    43→  }
+    44→  risk: {
+    45→    level: 'Low' | 'Moderate' | 'High'
+    46→    sl: string
+    47→    tp: string
+    48→    rr: string
+    49→    positionSize: string
+    50→  }
+    51→  summary: string
+    52→}
+    53→
+    54→// --- Mock Analysis Data ---
+    55→
+    56→const mockAnalysis: AnalysisResults = {
+    57→  trend: {
+    58→    direction: 'Uptrend',
+    59→    description:
+    60→      'Higher highs and higher lows detected on H4 timeframe. The most recent BOS at 1.0890 confirms bullish continuation. Price is currently trading above the 50 EMA and 200 EMA, adding confluence to the bullish bias.',
+    61→  },
+    62→  keyLevels: {
+    63→    support: [1.0820, 1.0750, 1.0680],
+    64→    resistance: [1.0950, 1.1020, 1.1100],
+    65→  },
+    66→  smc: {
+    67→    bos: 'Bullish BOS at 1.0890',
+    68→    choch: 'No CHOCH detected',
+    69→    orderBlocks: 'Bullish OB at 1.0780-1.0800',
+    70→    liquidity: 'Buy-side liquidity pool at 1.1020',
+    71→    fvg: 'Bullish FVG at 1.0850-1.0870',
+    72→  },
+    73→  risk: {
+    74→    level: 'Moderate',
+    75→    sl: '1.0750',
+    76→    tp: '1.1020',
+    77→    rr: '1:1.8',
+    78→    positionSize: '2% of account',
+    79→  },
+    80→  summary:
+    81→    'The chart shows a clear uptrend on the H4 timeframe with a recent BOS confirming continuation. Price is currently in a minor pullback phase, which aligns with a retest of the newly formed demand zone at the 1.0800-1.0820 area.\n\nA Bullish Order Block has been identified at 1.0780-1.0800, which also aligns with the 50% Fibonacci retracement of the last impulse move. This confluence zone offers an attractive entry with a well-defined stop loss below the order block at 1.0750.\n\nThe primary target sits at the buy-side liquidity pool near 1.1020, which coincides with a previous structural high and the 1.272 Fibonacci extension. The risk-to-reward ratio of 1:1.8 meets minimum trade quality standards. Traders should wait for a confirmation candle (rejection wick or engulfing) at the demand zone before committing to a position.',
+    82→}
+    83→
+    84→// --- SVG Candlestick Chart (mock) ---
+    85→
+    86→function MockCandlestickChart() {
+    87→  // Generate mock candle data
+    88→  const candles = [
+    89→    { o: 40, c: 55, h: 60, l: 35, green: true },
+    90→    { o: 55, c: 48, h: 60, l: 42, green: false },
+    91→    { o: 48, c: 65, h: 70, l: 45, green: true },
+    92→    { o: 65, c: 58, h: 68, l: 52, green: false },
+    93→    { o: 58, c: 72, h: 78, l: 55, green: true },
+    94→    { o: 72, c: 68, h: 76, l: 62, green: false },
+    95→    { o: 68, c: 82, h: 88, l: 65, green: true },
+    96→    { o: 82, c: 75, h: 85, l: 70, green: false },
+    97→    { o: 75, c: 90, h: 95, l: 72, green: true },
+    98→    { o: 90, c: 85, h: 94, l: 80, green: false },
+    99→    { o: 85, c: 100, h: 105, l: 82, green: true },
+   100→    { o: 100, c: 95, h: 108, l: 92, green: false },
+   101→    { o: 95, c: 110, h: 115, l: 92, green: true },
+   102→    { o: 110, c: 102, h: 115, l: 98, green: false },
+   103→    { o: 102, c: 118, h: 122, l: 98, green: true },
+   104→    { o: 118, c: 108, h: 120, l: 105, green: false },
+   105→    { o: 108, c: 125, h: 130, l: 105, green: true },
+   106→    { o: 125, c: 120, h: 128, l: 115, green: false },
+   107→    { o: 120, c: 135, h: 140, l: 118, green: true },
+   108→    { o: 135, c: 128, h: 138, l: 124, green: false },
+   109→  ]
+   110→
+   111→  const svgW = 600
+   112→  const svgH = 300
+   113→  const padding = { top: 20, right: 20, bottom: 30, left: 10 }
+   114→  const chartW = svgW - padding.left - padding.right
+   115→  const chartH = svgH - padding.top - padding.bottom
+   116→  const candleWidth = chartW / candles.length
+   117→  const bodyWidth = candleWidth * 0.6
+   118→
+   119→  const allPrices = candles.flatMap((c) => [c.h, c.l])
+   120→  const minP = Math.min(...allPrices)
+   121→  const maxP = Math.max(...allPrices)
+   122→  const range = maxP - minP || 1
+   123→
+   124→  const yScale = (p: number) =>
+   125→    padding.top + chartH - ((p - minP) / range) * chartH
+   126→  const xScale = (i: number) => padding.left + i * candleWidth + candleWidth / 2
+   127→
+   128→  // Horizontal grid lines
+   129→  const gridLines = 5
+   130→  const gridValues = Array.from({ length: gridLines }, (_, i) =>
+   131→    minP + (range * i) / (gridLines - 1)
+   132→  )
+   133→
+   134→  // Price axis labels (mock Forex prices)
+   135→  const priceLabels = ['1.0680', '1.0750', '1.0820', '1.0890', '1.0950']
+   136→
+   137→  return (
+   138→    <svg
+   139→      viewBox={`0 0 ${svgW} ${svgH}`}
+   140→      className="w-full h-full"
+   141→      preserveAspectRatio="xMidYMid meet"
+   142→    >
+   143→      {/* Background */}
+   144→      <rect width={svgW} height={svgH} fill="#0f172a" rx="8" />
+   145→
+   146→      {/* Grid lines */}
+   147→      {gridValues.map((val, i) => {
+   148→        const y = yScale(val)
+   149→        return (
+   150→          <g key={i}>
+   151→            <line
+   152→              x1={padding.left}
+   153→              y1={y}
+   154→              x2={svgW - padding.right}
+   155→              y2={y}
+   156→              stroke="#1e293b"
+   157→              strokeWidth="1"
+   158→            />
+   159→            <text
+   160→              x={svgW - padding.right + 4}
+   161→              y={y + 4}
+   162→              fill="#475569"
+   163→              fontSize="9"
+   164→              fontFamily="monospace"
+   165→            >
+   166→              {priceLabels[i] || ''}
+   167→            </text>
+   168→          </g>
+   169→        )
+   170→      })}
+   171→
+   172→      {/* Vertical grid lines (time) */}
+   173→      {candles.map((_, i) => {
+   174→        if (i % 5 !== 0) return null
+   175→        const x = xScale(i)
+   176→        return (
+   177→          <line
+   178→            key={`vg-${i}`}
+   179→            x1={x}
+   180→            y1={padding.top}
+   181→            x2={x}
+   182→            y2={svgH - padding.bottom}
+   183→            stroke="#1e293b"
+   184→            strokeWidth="1"
+   185→            strokeDasharray="4 4"
+   186→          />
+   187→        )
+   188→      })}
+   189→
+   190→      {/* Support / Resistance zones */}
+   191→      <rect
+   192→        x={padding.left}
+   193→        y={yScale(72) - 8}
+   194→        width={chartW}
+   195→        height={16}
+   196→        fill="rgba(16, 185, 129, 0.08)"
+   197→        rx="2"
+   198→      />
+   199→      <rect
+   200→        x={padding.left}
+   201→        y={yScale(118) - 8}
+   202→        width={chartW}
+   203→        height={16}
+   204→        fill="rgba(244, 63, 94, 0.08)"
+   205→        rx="2"
+   206→      />
+   207→
+   208→      {/* Candles */}
+   209→      {candles.map((c, i) => {
+   210→        const x = xScale(i)
+   211→        const color = c.green ? '#10b981' : '#ef4444'
+   212→        const bodyTop = yScale(Math.max(c.o, c.c))
+   213→        const bodyBottom = yScale(Math.min(c.o, c.c))
+   214→        const bodyHeight = Math.max(bodyBottom - bodyTop, 1)
+   215→
+   216→        return (
+   217→          <g key={i}>
+   218→            {/* Wick */}
+   219→            <line
+   220→              x1={x}
+   221→              y1={yScale(c.h)}
+   222→              x2={x}
+   223→              y2={yScale(c.l)}
+   224→              stroke={color}
+   225→              strokeWidth="1.5"
+   226→            />
+   227→            {/* Body */}
+   228→            <rect
+   229→              x={x - bodyWidth / 2}
+   230→              y={bodyTop}
+   231→              width={bodyWidth}
+   232→              height={bodyHeight}
+   233→              fill={color}
+   234→              rx="1"
+   235→            />
+   236→          </g>
+   237→        )
+   238→      })}
+   239→
+   240→      {/* BOS marker */}
+   241→      <line
+   242→        x1={xScale(10)}
+   243→        y1={yScale(95)}
+   244→        x2={xScale(10)}
+   245→        y2={padding.top}
+   246→        stroke="#10b981"
+   247→        strokeWidth="1"
+   248→        strokeDasharray="3 3"
+   249→        opacity="0.7"
+   250→      />
+   251→      <rect
+   252→        x={xScale(10) - 22}
+   253→        y={padding.top + 2}
+   254→        width="44"
+   255→        height="16"
+   256→        fill="#10b981"
+   257→        rx="3"
+   258→      />
+   259→      <text
+   260→        x={xScale(10)}
+   261→        y={padding.top + 13}
+   262→        fill="white"
+   263→        fontSize="8"
+   264→        fontWeight="bold"
+   265→        textAnchor="middle"
+   266→        fontFamily="sans-serif"
+   267→      >
+   268→        BOS
+   269→      </text>
+   270→
+   271→      {/* FVG zone */}
+   272→      <rect
+   273→        x={xScale(11) - candleWidth}
+   274→        y={yScale(110)}
+   275→        width={candleWidth * 2}
+   276→        height={yScale(95) - yScale(110)}
+   277→        fill="rgba(16, 185, 129, 0.12)"
+   278→        stroke="#10b981"
+   279→        strokeWidth="0.5"
+   280→        strokeDasharray="4 2"
+   281→        rx="2"
+   282→      />
+   283→      <text
+   284→        x={xScale(11.5)}
+   285→        y={yScale(103)}
+   286→        fill="#10b981"
+   287→        fontSize="8"
+   288→        textAnchor="middle"
+   289→        fontFamily="sans-serif"
+   290→        opacity="0.8"
+   291→      >
+   292→        FVG
+   293→      </text>
+   294→
+   295→      {/* OB zone */}
+   296→      <rect
+   297→        x={xScale(6)}
+   298→        y={yScale(82)}
+   299→        width={candleWidth * 3}
+   300→        height={yScale(68) - yScale(82)}
+   301→        fill="rgba(16, 185, 129, 0.1)"
+   302→        rx="2"
+   303→      />
+   304→      <text
+   305→        x={xScale(7.5)}
+   306→        y={yScale(75)}
+   307→        fill="#10b981"
+   308→        fontSize="7"
+   309→        textAnchor="middle"
+   310→        fontFamily="sans-serif"
+   311→        opacity="0.7"
+   312→      >
+   313→        OB
+   314→      </text>
+   315→    </svg>
+   316→  )
+   317→}
+   318→
+   319→// --- Card Animation Variants ---
+   320→
+   321→const cardContainerVariants = {
+   322→  hidden: { opacity: 0 },
+   323→  visible: {
+   324→    opacity: 1,
+   325→    transition: { staggerChildren: 0.1, delayChildren: 0.15 },
+   326→  },
+   327→}
+   328→
+   329→const cardItemVariants = {
+   330→  hidden: { opacity: 0, y: 24 },
+   331→  visible: {
+   332→    opacity: 1,
+   333→    y: 0,
+   334→    transition: { duration: 0.4, ease: 'easeOut' },
+   335→  },
+   336→}
+   337→
+   338→// --- Component ---
+   339→
+   340→export default function ChartAnalyzerView() {
+   341→  const [isDragging, setIsDragging] = useState(false)
+   342→  const [isAnalyzing, setIsAnalyzing] = useState(false)
+   343→  const [hasAnalysis, setHasAnalysis] = useState(false)
+   344→  const [hasUploaded, setHasUploaded] = useState(false)
+   345→  const [analysis, setAnalysis] = useState<AnalysisResults | null>(null)
+   346→
+   347→  const handleDragOver = useCallback((e: React.DragEvent) => {
+   348→    e.preventDefault()
+   349→    setIsDragging(true)
+   350→  }, [])
+   351→
+   352→  const handleDragLeave = useCallback(() => {
+   353→    setIsDragging(false)
+   354→  }, [])
+   355→
+   356→  const handleDrop = useCallback((e: React.DragEvent) => {
+   357→    e.preventDefault()
+   358→    setIsDragging(false)
+   359→    setHasUploaded(true)
+   360→  }, [])
+   361→
+   362→  const handleBrowse = useCallback(() => {
+   363→    setHasUploaded(true)
+   364→  }, [])
+   365→
+   366→  const handleAnalyze = useCallback(() => {
+   367→    setIsAnalyzing(true)
+   368→    setHasAnalysis(false)
+   369→    setAnalysis(null)
+   370→    setTimeout(() => {
+   371→      setAnalysis(mockAnalysis)
+   372→      setIsAnalyzing(false)
+   373→      setHasAnalysis(true)
+   374→    }, 2000)
+   375→  }, [])
+   376→
+   377→  const resetAll = useCallback(() => {
+   378→    setHasUploaded(false)
+   379→    setHasAnalysis(false)
+   380→    setIsAnalyzing(false)
+   381→    setAnalysis(null)
+   382→  }, [])
+   383→
+   384→  const riskBadgeColor: Record<string, string> = {
+   385→    Low: 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-800',
+   386→    Moderate: 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-400 dark:border-amber-800',
+   387→    High: 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-950/50 dark:text-rose-400 dark:border-rose-800',
+   388→  }
+   389→
+   390→  return (
+   391→    <div className="h-full overflow-y-auto">
+   392→      <div className="mx-auto max-w-7xl px-4 py-6 lg:px-6 space-y-6">
+   393→        {/* Page Header */}
+   394→        <motion.div
+   395→          initial={{ opacity: 0, y: -12 }}
+   396→          animate={{ opacity: 1, y: 0 }}
+   397→          transition={{ duration: 0.4 }}
+   398→        >
+   399→          <h1 className="text-2xl font-bold tracking-tight">Chart Analyzer</h1>
+   400→          <p className="text-sm text-muted-foreground mt-1">
+   401→            Upload a chart screenshot and let AI identify patterns, levels, and trade setups
+   402→          </p>
+   403→        </motion.div>
+   404→
+   405→        {/* Main Grid */}
+   406→        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+   407→          {/* Left Column - Upload + Analysis */}
+   408→          <div className="space-y-6">
+   409→            {/* Upload Zone */}
+   410→            {!hasUploaded ? (
+   411→              <motion.div
+   412→                initial={{ opacity: 0, scale: 0.98 }}
+   413→                animate={{ opacity: 1, scale: 1 }}
+   414→                transition={{ duration: 0.4, delay: 0.1 }}
+   415→              >
+   416→                <Card className="overflow-hidden">
+   417→                  <CardContent className="p-0">
+   418→                    <motion.div
+   419→                      onDragOver={handleDragOver}
+   420→                      onDragLeave={handleDragLeave}
+   421→                      onDrop={handleDrop}
+   422→                      animate={isDragging ? { scale: 1.01 } : { scale: 1 }}
+   423→                      className={cn(
+   424→                        'flex flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed px-6 py-16 transition-colors cursor-pointer',
+   425→                        isDragging
+   426→                          ? 'border-emerald-500 bg-emerald-50/50'
+   427→                          : 'border-muted-foreground/25 hover:border-emerald-400/50 hover:bg-muted/30'
+   428→                      )}
+   429→                      onClick={handleBrowse}
+   430→                    >
+   431→                      <motion.div
+   432→                        animate={isDragging ? { scale: 1.1, y: -4 } : { scale: 1, y: 0 }}
+   433→                        transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+   434→                        className="flex size-16 items-center justify-center rounded-2xl bg-emerald-100 dark:bg-emerald-950/50"
+   435→                      >
+   436→                        <ImagePlus className="size-8 text-emerald-600" />
+   437→                      </motion.div>
+   438→                      <div className="text-center">
+   439→                        <p className="text-sm font-medium">
+   440→                          {isDragging ? 'Drop your chart here' : 'Drop your chart screenshot here'}
+   441→                        </p>
+   442→                        <p className="text-xs text-muted-foreground mt-1">
+   443→                          or
+   444→                        </p>
+   445→                        <Button
+   446→                          variant="outline"
+   447→                          size="sm"
+   448→                          className="mt-2 border-emerald-300 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-700 dark:text-emerald-400 dark:hover:bg-emerald-950/30"
+   449→                          onClick={(e) => {
+   450→                            e.stopPropagation()
+   451→                            handleBrowse()
+   452→                          }}
+   453→                        >
+   454→                          <Upload className="size-3.5 mr-1.5" />
+   455→                          Browse Files
+   456→                        </Button>
+   457→                      </div>
+   458→                      <p className="text-[11px] text-muted-foreground">
+   459→                        Supported: PNG, JPG, WEBP • Max 10MB
+   460→                      </p>
+   461→                    </motion.div>
+   462→                  </CardContent>
+   463→                </Card>
+   464→              </motion.div>
+   465→            ) : (
+   466→              <motion.div
+   467→                initial={{ opacity: 0, y: 12 }}
+   468→                animate={{ opacity: 1, y: 0 }}
+   469→              >
+   470→                <Card className="overflow-hidden">
+   471→                  <CardContent className="p-0">
+   472→                    <div className="relative flex items-center justify-center rounded-t-xl bg-slate-900 p-4">
+   473→                      <MockCandlestickChart />
+   474→                      <div className="absolute top-3 right-3 flex gap-2">
+   475→                        <Button
+   476→                          variant="ghost"
+   477→                          size="icon"
+   478→                          className="size-8 bg-black/40 text-white hover:bg-black/60 backdrop-blur-sm"
+   479→                          onClick={resetAll}
+   480→                        >
+   481→                          <FileImage className="size-4" />
+   482→                        </Button>
+   483→                      </div>
+   484→                      <Badge className="absolute top-3 left-3 bg-emerald-500/90 text-white text-[10px]">
+   485→                        EUR/USD • H4
+   486→                      </Badge>
+   487→                    </div>
+   488→                    <div className="p-4 flex items-center justify-between">
+   489→                      <div className="flex items-center gap-2">
+   490→                        <FileImage className="size-4 text-emerald-600" />
+   491→                        <div>
+   492→                          <p className="text-sm font-medium">chart_h4_eurusd.png</p>
+   493→                          <p className="text-xs text-muted-foreground">Uploaded just now</p>
+   494→                        </div>
+   495→                      </div>
+   496→                      {!hasAnalysis && (
+   497→                        <Button
+   498→                          onClick={handleAnalyze}
+   499→                          disabled={isAnalyzing}
+   500→                          className="bg-emerald-600 text-white hover:bg-emerald-700"
+   501→                          size="sm"
+   502→                        >
+   503→                          {isAnalyzing ? (
+   504→                            <>
+   505→                              <motion.div
+   506→                                animate={{ rotate: 360 }}
+   507→                                transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+   508→                              >
+   509→                                <Zap className="size-3.5" />
+   510→                              </motion.div>
+   511→                              Analyzing...
+   512→                            </>
+   513→                          ) : (
+   514→                            <>
+   515→                              <Brain className="size-3.5 mr-1.5" />
+   516→                              Analyze Chart
+   517→                            </>
+   518→                          )}
+   519→                        </Button>
+   520→                      )}
+   521→                    </div>
+   522→                  </CardContent>
+   523→                </Card>
+   524→              </motion.div>
+   525→            )}
+   526→
+   527→            {/* Loading Skeleton */}
+   528→            <AnimatePresence>
+   529→              {isAnalyzing && (
+   530→                <motion.div
+   531→                  initial={{ opacity: 0 }}
+   532→                  animate={{ opacity: 1 }}
+   533→                  exit={{ opacity: 0 }}
+   534→                  className="space-y-4"
+   535→                >
+   536→                  {[1, 2, 3, 4].map((i) => (
+   537→                    <Card key={i}>
+   538→                      <CardContent className="p-6 space-y-3">
+   539→                        <Skeleton className="h-5 w-32" />
+   540→                        <Skeleton className="h-4 w-full" />
+   541→                        <Skeleton className="h-4 w-3/4" />
+   542→                      </CardContent>
+   543→                    </Card>
+   544→                  ))}
+   545→                </motion.div>
+   546→              )}
+   547→            </AnimatePresence>
+   548→
+   549→            {/* Analysis Results */}
+   550→            <AnimatePresence>
+   551→              {hasAnalysis && analysis && (
+   552→                <motion.div
+   553→                  variants={cardContainerVariants}
+   554→                  initial="hidden"
+   555→                  animate="visible"
+   556→                  className="space-y-4"
+   557→                >
+   558→                  {/* Trend Detection */}
+   559→                  <motion.div variants={cardItemVariants}>
+   560→                    <Card className="overflow-hidden">
+   561→                      <CardHeader className="pb-3">
+   562→                        <CardTitle className="flex items-center gap-2 text-base">
+   563→                          <TrendingUp className="size-4 text-emerald-600" />
+   564→                          Trend Detection
+   565→                        </CardTitle>
+   566→                      </CardHeader>
+   567→                      <CardContent className="pt-0">
+   568→                        <div className="flex items-center gap-2 mb-2">
+   569→                          <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-800">
+   570→                            <ArrowUpRight className="size-3 mr-1" />
+   571→                            {analysis.trend.direction}
+   572→                          </Badge>
+   573→                        </div>
+   574→                        <p className="text-sm text-muted-foreground leading-relaxed">
+   575→                          {analysis.trend.description}
+   576→                        </p>
+   577→                      </CardContent>
+   578→                    </Card>
+   579→                  </motion.div>
+   580→
+   581→                  {/* Key Levels */}
+   582→                  <motion.div variants={cardItemVariants}>
+   583→                    <Card className="overflow-hidden">
+   584→                      <CardHeader className="pb-3">
+   585→                        <CardTitle className="flex items-center gap-2 text-base">
+   586→                          <Target className="size-4 text-emerald-600" />
+   587→                          Key Levels
+   588→                        </CardTitle>
+   589→                      </CardHeader>
+   590→                      <CardContent className="pt-0">
+   591→                        <div className="grid grid-cols-2 gap-4">
+   592→                          {/* Support */}
+   593→                          <div className="space-y-2">
+   594→                            <p className="text-xs font-semibold uppercase tracking-wider text-emerald-600">
+   595→                              Support
+   596→                            </p>
+   597→                            {analysis.keyLevels.support.map((level, i) => (
+   598→                              <motion.div
+   599→                                key={level}
+   600→                                initial={{ opacity: 0, x: -8 }}
+   601→                                animate={{ opacity: 1, x: 0 }}
+   602→                                transition={{ delay: 0.3 + i * 0.08 }}
+   603→                                className="flex items-center gap-2 text-sm"
+   604→                              >
+   605→                                <ArrowUpRight className="size-3.5 text-emerald-500" />
+   606→                                <span className="font-mono text-foreground">{level.toFixed(4)}</span>
+   607→                                <span className="text-[10px] text-muted-foreground ml-auto">S{i + 1}</span>
+   608→                              </motion.div>
+   609→                            ))}
+   610→                          </div>
+   611→                          {/* Resistance */}
+   612→                          <div className="space-y-2">
+   613→                            <p className="text-xs font-semibold uppercase tracking-wider text-rose-600">
+   614→                              Resistance
+   615→                            </p>
+   616→                            {analysis.keyLevels.resistance.map((level, i) => (
+   617→                              <motion.div
+   618→                                key={level}
+   619→                                initial={{ opacity: 0, x: 8 }}
+   620→                                animate={{ opacity: 1, x: 0 }}
+   621→                                transition={{ delay: 0.3 + i * 0.08 }}
+   622→                                className="flex items-center gap-2 text-sm"
+   623→                              >
+   624→                                <ArrowDownRight className="size-3.5 text-rose-500" />
+   625→                                <span className="font-mono text-foreground">{level.toFixed(4)}</span>
+   626→                                <span className="text-[10px] text-muted-foreground ml-auto">R{i + 1}</span>
+   627→                              </motion.div>
+   628→                            ))}
+   629→                          </div>
+   630→                        </div>
+   631→                      </CardContent>
+   632→                    </Card>
+   633→                  </motion.div>
+   634→
+   635→                  {/* Smart Money Concepts */}
+   636→                  <motion.div variants={cardItemVariants}>
+   637→                    <Card className="overflow-hidden">
+   638→                      <CardHeader className="pb-3">
+   639→                        <CardTitle className="flex items-center gap-2 text-base">
+   640→                          <Activity className="size-4 text-emerald-600" />
+   641→                          Smart Money Concepts
+   642→                        </CardTitle>
+   643→                      </CardHeader>
+   644→                      <CardContent className="pt-0 space-y-3">
+   645→                        {/* BOS */}
+   646→                        <div className="flex items-center justify-between gap-4">
+   647→                          <span className="text-sm font-medium min-w-[90px]">BOS</span>
+   648→                          <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-800 text-[11px]">
+   649→                            {analysis.smc.bos}
+   650→                          </Badge>
+   651→                        </div>
+   652→                        <Separator />
+   653→                        {/* CHOCH */}
+   654→                        <div className="flex items-center justify-between gap-4">
+   655→                          <span className="text-sm font-medium min-w-[90px]">CHOCH</span>
+   656→                          <span className="text-xs text-muted-foreground">{analysis.smc.choch}</span>
+   657→                        </div>
+   658→                        <Separator />
+   659→                        {/* Order Blocks */}
+   660→                        <div className="flex items-center justify-between gap-4">
+   661→                          <span className="text-sm font-medium min-w-[90px]">Order Blocks</span>
+   662→                          <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-800 text-[11px]">
+   663→                            {analysis.smc.orderBlocks}
+   664→                          </Badge>
+   665→                        </div>
+   666→                        <Separator />
+   667→                        {/* Liquidity */}
+   668→                        <div className="flex items-center justify-between gap-4">
+   669→                          <span className="text-sm font-medium min-w-[90px]">Liquidity</span>
+   670→                          <span className="text-xs text-muted-foreground text-right">{analysis.smc.liquidity}</span>
+   671→                        </div>
+   672→                        <Separator />
+   673→                        {/* FVG */}
+   674→                        <div className="flex items-center justify-between gap-4">
+   675→                          <span className="text-sm font-medium min-w-[90px]">FVG</span>
+   676→                          <span className="text-xs text-muted-foreground text-right">{analysis.smc.fvg}</span>
+   677→                        </div>
+   678→                      </CardContent>
+   679→                    </Card>
+   680→                  </motion.div>
+   681→
+   682→                  {/* Risk Assessment */}
+   683→                  <motion.div variants={cardItemVariants}>
+   684→                    <Card className="overflow-hidden">
+   685→                      <CardHeader className="pb-3">
+   686→                        <CardTitle className="flex items-center gap-2 text-base">
+   687→                          <Shield className="size-4 text-emerald-600" />
+   688→                          Risk Assessment
+   689→                        </CardTitle>
+   690→                      </CardHeader>
+   691→                      <CardContent className="pt-0">
+   692→                        <div className="flex items-center gap-2 mb-4">
+   693→                          <span className="text-sm font-medium">Risk Level:</span>
+   694→                          <Badge className={cn('border', riskBadgeColor[analysis.risk.level])}>
+   695→                            {analysis.risk.level}
+   696→                          </Badge>
+   697→                        </div>
+   698→                        <div className="grid grid-cols-2 gap-4">
+   699→                          <div className="rounded-lg bg-muted/50 p-3">
+   700→                            <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1">
+   701→                              Stop Loss
+   702→                            </p>
+   703→                            <p className="text-sm font-mono font-semibold text-rose-600">
+   704→                              {analysis.risk.sl}
+   705→                            </p>
+   706→                          </div>
+   707→                          <div className="rounded-lg bg-muted/50 p-3">
+   708→                            <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1">
+   709→                              Take Profit
+   710→                            </p>
+   711→                            <p className="text-sm font-mono font-semibold text-emerald-600">
+   712→                              {analysis.risk.tp}
+   713→                            </p>
+   714→                          </div>
+   715→                          <div className="rounded-lg bg-muted/50 p-3">
+   716→                            <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1">
+   717→                              Risk / Reward
+   718→                            </p>
+   719→                            <p className="text-sm font-semibold">{analysis.risk.rr}</p>
+   720→                          </div>
+   721→                          <div className="rounded-lg bg-muted/50 p-3">
+   722→                            <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1">
+   723→                              Position Size
+   724→                            </p>
+   725→                            <p className="text-sm font-semibold">{analysis.risk.positionSize}</p>
+   726→                          </div>
+   727→                        </div>
+   728→                      </CardContent>
+   729→                    </Card>
+   730→                  </motion.div>
+   731→
+   732→                  {/* AI Summary */}
+   733→                  <motion.div variants={cardItemVariants}>
+   734→                    <Card className="overflow-hidden border-emerald-200/50 dark:border-emerald-800/30">
+   735→                      <CardHeader className="pb-3">
+   736→                        <CardTitle className="flex items-center gap-2 text-base">
+   737→                          <Brain className="size-4 text-emerald-600" />
+   738→                          AI Summary
+   739→                        </CardTitle>
+   740→                      </CardHeader>
+   741→                      <CardContent className="pt-0">
+   742→                        <div className="space-y-3">
+   743→                          {analysis.summary.split('\n\n').map((para, i) => (
+   744→                            <p
+   745→                              key={i}
+   746→                              className="text-sm text-muted-foreground leading-relaxed"
+   747→                            >
+   748→                              {para}
+   749→                            </p>
+   750→                          ))}
+   751→                        </div>
+   752→                      </CardContent>
+   753→                    </Card>
+   754→                  </motion.div>
+   755→                </motion.div>
+   756→              )}
+   757→            </AnimatePresence>
+   758→          </div>
+   759→
+   760→          {/* Right Column - Chart Preview */}
+   761→          <div className="space-y-4">
+   762→            <motion.div
+   763→              initial={{ opacity: 0, x: 16 }}
+   764→              animate={{ opacity: 1, x: 0 }}
+   765→              transition={{ duration: 0.5, delay: 0.2 }}
+   766→            >
+   767→              <Card className="overflow-hidden sticky top-6">
+   768→                <CardHeader className="pb-3">
+   769→                  <div className="flex items-center justify-between">
+   770→                    <CardTitle className="flex items-center gap-2 text-base">
+   771→                      <BarChart3 className="size-4 text-emerald-600" />
+   772→                      Chart Preview
+   773→                    </CardTitle>
+   774→                    {hasAnalysis && (
+   775→                      <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-800">
+   776→                        <Zap className="size-3 mr-1" />
+   777→                        Analyzed
+   778→                      </Badge>
+   779→                    )}
+   780→                  </div>
+   781→                </CardHeader>
+   782→                <CardContent className="pt-0 p-4">
+   783→                  <div className="rounded-xl overflow-hidden bg-slate-900 ring-1 ring-slate-800">
+   784→                    <MockCandlestickChart />
+   785→                  </div>
+   786→                  {/* Chart info footer */}
+   787→                  <div className="flex items-center justify-between mt-3 px-1">
+   788→                    <div className="flex items-center gap-3">
+   789→                      <div className="flex items-center gap-1.5">
+   790→                        <span className="size-2 rounded-full bg-emerald-500" />
+   791→                        <span className="text-[11px] text-muted-foreground">Bullish</span>
+   792→                      </div>
+   793→                      <div className="flex items-center gap-1.5">
+   794→                        <span className="size-2 rounded-full bg-rose-500" />
+   795→                        <span className="text-[11px] text-muted-foreground">Bearish</span>
+   796→                      </div>
+   797→                      <div className="flex items-center gap-1.5">
+   798→                        <span className="size-2 rounded-sm bg-emerald-500/20 border border-emerald-500/40" />
+   799→                        <span className="text-[11px] text-muted-foreground">Zone</span>
+   800→                      </div>
+   801→                    </div>
+   802→                    <span className="text-[11px] text-muted-foreground font-mono">
+   803→                      EUR/USD • H4
+   804→                    </span>
+   805→                  </div>
+   806→                </CardContent>
+   807→              </Card>
+   808→            </motion.div>
+   809→
+   810→            {/* Quick stats (shown after analysis) */}
+   811→            <AnimatePresence>
+   812→              {hasAnalysis && analysis && (
+   813→                <motion.div
+   814→                  initial={{ opacity: 0, y: 16 }}
+   815→                  animate={{ opacity: 1, y: 0 }}
+   816→                  transition={{ delay: 0.5 }}
+   817→                  className="grid grid-cols-2 gap-3"
+   818→                >
+   819→                  <Card className="py-4">
+   820→                    <CardContent className="flex flex-col items-center gap-1 p-4">
+   821→                      <span className="text-[11px] text-muted-foreground uppercase tracking-wider">Pattern Score</span>
+   822→                      <span className="text-2xl font-bold text-emerald-600">87%</span>
+   823→                    </CardContent>
+   824→                  </Card>
+   825→                  <Card className="py-4">
+   826→                    <CardContent className="flex flex-col items-center gap-1 p-4">
+   827→                      <span className="text-[11px] text-muted-foreground uppercase tracking-wider">Confluences</span>
+   828→                      <span className="text-2xl font-bold text-emerald-600">5</span>
+   829→                    </CardContent>
+   830→                  </Card>
+   831→                </motion.div>
+   832→              )}
+   833→            </AnimatePresence>
+   834→          </div>
+   835→        </div>
+   836→      </div>
+   837→    </div>
+   838→  )
+   839→}

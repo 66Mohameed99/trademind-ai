@@ -21,7 +21,9 @@ import {
   AlertTriangle,
   CheckCircle2,
   X,
+  Loader2,
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
@@ -386,6 +388,9 @@ function StatCard({
 // ─── AI Feedback Panel ───────────────────────────────────────────────────────
 
 function AIFeedbackPanel() {
+  const [expanded, setExpanded] = useState(false)
+  const [loading, setLoading] = useState(false)
+
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
@@ -462,10 +467,49 @@ function AIFeedbackPanel() {
           <Button
             variant="outline"
             className="w-full border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-950"
+            onClick={() => {
+              if (expanded) { setExpanded(false); return }
+              setLoading(true)
+              setTimeout(() => {
+                setLoading(false)
+                setExpanded(true)
+                toast.success('AI Analysis Complete', { description: 'Full trade analysis has been generated.' })
+              }, 1500)
+            }}
+            disabled={loading}
           >
-            <Sparkles className="mr-2 size-4" />
-            Get Full Analysis
+            {loading ? (
+              <><Loader2 className="mr-2 size-4 animate-spin" />Analyzing...</>
+            ) : expanded ? (
+              <><ChevronUp className="mr-2 size-4" />Show Less</>
+            ) : (
+              <><Sparkles className="mr-2 size-4" />Get Full Analysis</>
+            )}
           </Button>
+          {expanded && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              className="mt-4 space-y-3 text-sm text-muted-foreground"
+            >
+              <Separator />
+              <div className="space-y-2 pt-2">
+                <p className="font-medium text-foreground">Risk-Reward Analysis</p>
+                <p>Your average R:R of 1:2.3 is in the top 15% of traders on the platform. Your position sizing has been consistent, averaging 1.2% risk per trade.</p>
+              </div>
+              <div className="space-y-2">
+                <p className="font-medium text-foreground">Pattern Recognition</p>
+                <p>You perform best on H4 timeframe with order block entries (78% win rate). Your M15 scalping trades show lower consistency (52% win rate) — consider focusing on higher timeframes.</p>
+              </div>
+              <div className="space-y-2">
+                <p className="font-medium text-foreground">Weekly Goal Progress</p>
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-xs"><span>Target P&amp;L</span><span className="text-emerald-600 font-medium">$3,950 / $5,000</span></div>
+                  <Progress value={79} className="h-1.5 [&>[data-slot=progress-indicator]]:bg-emerald-500" />
+                </div>
+              </div>
+            </motion.div>
+          )}
         </div>
       </div>
     </motion.div>
@@ -686,11 +730,11 @@ function NewTradeDialog({
             >
               Cancel
             </Button>
-            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white">
+            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => { handleClose(false); toast.success('Trade logged!', { description: 'Your trade has been saved to the journal.' }) }}>
               <Plus className="mr-2 size-4" />
               Save Trade
             </Button>
-            <Button className="bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white">
+            <Button className="bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white" onClick={() => { handleClose(false); setTimeout(() => toast.success('AI Feedback Ready', { description: 'Your trade analysis is available in the AI panel.' }), 1000) }}>
               <Sparkles className="mr-2 size-4" />
               Save & Get AI Feedback
             </Button>

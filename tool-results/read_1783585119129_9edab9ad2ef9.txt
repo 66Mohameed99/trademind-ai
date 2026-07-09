@@ -1,0 +1,800 @@
+     1→     1→'use client'
+     2→     2→
+     3→     3→import * as React from 'react'
+     4→     4→import { motion } from 'framer-motion'
+     5→     5→import { useTheme } from 'next-themes'
+     6→     6→import {
+     7→     7→  User,
+     8→     8→  Mail,
+     9→     9→  Camera,
+    10→    10→  Save,
+    11→    11→  Globe,
+    12→    12→  Sun,
+    13→    13→  Moon,
+    14→    14→  Monitor,
+    15→    15→  Bell,
+    16→    16→  BellRing,
+    17→    17→  Megaphone,
+    18→    18→  Clock,
+    19→    19→  TrendingUp,
+    20→    20→  Shield,
+    21→    21→  ShieldCheck,
+    22→    22→  Smartphone,
+    23→    23→  Laptop,
+    24→    24→  LogOut,
+    25→    25→  Trash2,
+    26→    26→  CreditCard,
+    27→    27→  Calendar,
+    28→    28→  AlertTriangle,
+    29→    29→  Loader2,
+    30→    30→  Eye,
+    31→    31→  EyeOff,
+    32→    32→  Lock,
+    33→    33→  Fingerprint,
+    34→    34→  ChevronRight,
+    35→    35→  Check,
+    36→    36→} from 'lucide-react'
+    37→    37→import { useNavigation } from '@/store/navigation'
+    38→    38→import {
+    39→    39→  Card,
+    40→    40→  CardHeader,
+    41→    41→  CardTitle,
+    42→    42→  CardDescription,
+    43→    43→  CardContent,
+    44→    44→  CardFooter,
+    45→    45→} from '@/components/ui/card'
+    46→    46→import { Button } from '@/components/ui/button'
+    47→    47→import { Input } from '@/components/ui/input'
+    48→    48→import { Label } from '@/components/ui/label'
+    49→    49→import { Switch } from '@/components/ui/switch'
+    50→    50→import { Separator } from '@/components/ui/separator'
+    51→    51→import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+    52→    52→import {
+    53→    53→  Select,
+    54→    54→  SelectContent,
+    55→    55→  SelectItem,
+    56→    56→  SelectTrigger,
+    57→    57→  SelectValue,
+    58→    58→} from '@/components/ui/select'
+    59→    59→import { Slider } from '@/components/ui/slider'
+    60→    60→import { Badge } from '@/components/ui/badge'
+    61→    61→import { Textarea } from '@/components/ui/textarea'
+    62→    62→import {
+    63→    63→  AlertDialog,
+    64→    64→  AlertDialogAction,
+    65→    65→  AlertDialogCancel,
+    66→    66→  AlertDialogContent,
+    67→    67→  AlertDialogDescription,
+    68→    68→  AlertDialogFooter,
+    69→    69→  AlertDialogHeader,
+    70→    70→  AlertDialogTitle,
+    71→    71→  AlertDialogTrigger,
+    72→    72→} from '@/components/ui/alert-dialog'
+    73→    73→import { cn } from '@/lib/utils'
+    74→    74→
+    75→    75→const sectionVariants = {
+    76→    76→  hidden: { opacity: 0, y: 20 },
+    77→    77→  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: 'easeOut' } },
+    78→    78→}
+    79→    79→
+    80→    80→const itemVariants = {
+    81→    81→  hidden: { opacity: 0, y: 10 },
+    82→    82→  show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' } },
+    83→    83→}
+    84→    84→
+    85→    85→const staggerContainer = {
+    86→    86→  hidden: { opacity: 0 },
+    87→    87→  show: {
+    88→    88→    opacity: 1,
+    89→    89→    transition: { staggerChildren: 0.08, delayChildren: 0.05 },
+    90→    90→  },
+    91→    91→}
+    92→    92→
+    93→    93→export function SettingsView() {
+    94→    94→  const { setView } = useNavigation()
+    95→    95→  const { theme, setTheme } = useTheme()
+    96→    96→  const [mounted, setMounted] = React.useState(false)
+    97→    97→
+    98→    98→  React.useEffect(() => setMounted(true), [])
+    99→    99→
+   100→   100→  // Profile state
+   101→   101→  const [profileName, setProfileName] = React.useState('Alex Morgan')
+   102→   102→  const [profileEmail, setProfileEmail] = React.useState('alex@trademind.ai')
+   103→   103→  const [profileBio, setProfileBio] = React.useState(
+   104→   104→    'Forex & Crypto trader with 3 years of experience. Passionate about technical analysis and risk management.'
+   105→   105→  )
+   106→   106→  const [savingProfile, setSavingProfile] = React.useState(false)
+   107→   107→
+   108→   108→  // Preferences state
+   109→   109→  const [language, setLanguage] = React.useState('en')
+   110→   110→  const [emailNotif, setEmailNotif] = React.useState(true)
+   111→   111→  const [pushNotif, setPushNotif] = React.useState(true)
+   112→   112→  const [marketingNotif, setMarketingNotif] = React.useState(false)
+   113→   113→
+   114→   114→  // Trading preferences
+   115→   115→  const [timeframe, setTimeframe] = React.useState('H1')
+   116→   116→  const [defaultPair, setDefaultPair] = React.useState('EUR/USD')
+   117→   117→  const [riskPerTrade, setRiskPerTrade] = React.useState([2])
+   118→   118→  const [signalNotif, setSignalNotif] = React.useState(true)
+   119→   119→
+   120→   120→  // Security state
+   121→   121→  const [oldPassword, setOldPassword] = React.useState('')
+   122→   122→  const [newPassword, setNewPassword] = React.useState('')
+   123→   123→  const [confirmSecurityPassword, setConfirmSecurityPassword] = React.useState('')
+   124→   124→  const [showOldPassword, setShowOldPassword] = React.useState(false)
+   125→   125→  const [showNewPassword, setShowNewPassword] = React.useState(false)
+   126→   126→  const [showConfirmSecurityPassword, setShowConfirmSecurityPassword] = React.useState(false)
+   127→   127→  const [twoFactor, setTwoFactor] = React.useState(false)
+   128→   128→  const [changingPassword, setChangingPassword] = React.useState(false)
+   129→   129→
+   130→   130→  const handleSaveProfile = () => {
+   131→   131→    setSavingProfile(true)
+   132→   132→    setTimeout(() => setSavingProfile(false), 1200)
+   133→   133→  }
+   134→   134→
+   135→   135→  const handleChangePassword = (e: React.FormEvent) => {
+   136→   136→    e.preventDefault()
+   137→   137→    setChangingPassword(true)
+   138→   138→    setTimeout(() => {
+   139→   139→      setChangingPassword(false)
+   140→   140→      setOldPassword('')
+   141→   141→      setNewPassword('')
+   142→   142→      setConfirmSecurityPassword('')
+   143→   143→    }, 1200)
+   144→   144→  }
+   145→   145→
+   146→   146→  const themeOptions = [
+   147→   147→    { value: 'system', label: 'System', icon: Monitor },
+   148→   148→    { value: 'light', label: 'Light', icon: Sun },
+   149→   149→    { value: 'dark', label: 'Dark', icon: Moon },
+   150→   150→  ] as const
+   151→   151→
+   152→   152→  const mockSessions = [
+   153→   153→    {
+   154→   154→      id: 1,
+   155→   155→      device: 'MacBook Pro',
+   156→   156→      icon: Laptop,
+   157→   157→      location: 'New York, US',
+   158→   158→      lastActive: 'Active now',
+   159→   159→      current: true,
+   160→   160→    },
+   161→   161→    {
+   162→   162→      id: 2,
+   163→   163→      device: 'iPhone 15',
+   164→   164→      icon: Smartphone,
+   165→   165→      location: 'New York, US',
+   166→   166→      lastActive: '2 hours ago',
+   167→   167→      current: false,
+   168→   168→    },
+   169→   169→  ]
+   170→   170→
+   171→   171→  return (
+   172→   172→    <motion.div
+   173→   173→      className="max-w-3xl mx-auto space-y-6 p-4 sm:p-6 lg:p-8"
+   174→   174→      variants={staggerContainer}
+   175→   175→      initial="hidden"
+   176→   176→      animate="show"
+   177→   177→    >
+   178→   178→      {/* Page Header */}
+   179→   179→      <motion.div variants={itemVariants}>
+   180→   180→        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Settings</h1>
+   181→   181→        <p className="text-muted-foreground mt-1">
+   182→   182→          Manage your account, preferences, and trading configuration.
+   183→   183→        </p>
+   184→   184→      </motion.div>
+   185→   185→
+   186→   186→      {/* ─── Profile Section ─── */}
+   187→   187→      <motion.div variants={sectionVariants}>
+   188→   188→        <Card>
+   189→   189→          <CardHeader>
+   190→   190→            <CardTitle className="flex items-center gap-2 text-lg">
+   191→   191→              <User className="size-5 text-emerald-600 dark:text-emerald-400" />
+   192→   192→              Profile
+   193→   193→            </CardTitle>
+   194→   194→            <CardDescription>Update your personal information and avatar.</CardDescription>
+   195→   195→          </CardHeader>
+   196→   196→          <CardContent className="space-y-6">
+   197→   197→            {/* Avatar */}
+   198→   198→            <motion.div variants={itemVariants} className="flex items-center gap-4">
+   199→   199→              <div className="relative group">
+   200→   200→                <Avatar className="size-20 border-2 border-emerald-500/30">
+   201→   201→                  <AvatarImage src="" alt="Profile" />
+   202→   202→                  <AvatarFallback className="bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-xl font-bold">
+   203→   203→                    AM
+   204→   204→                  </AvatarFallback>
+   205→   205→                </Avatar>
+   206→   206→                <motion.div
+   207→   207→                  whileHover={{ scale: 1.05 }}
+   208→   208→                  whileTap={{ scale: 0.95 }}
+   209→   209→                >
+   210→   210→                  <Button
+   211→   211→                    size="sm"
+   212→   212→                    variant="outline"
+   213→   213→                    className="absolute -bottom-1 -right-1 h-7 rounded-full px-2 text-xs"
+   214→   214→                  >
+   215→   215→                    <Camera className="size-3" />
+   216→   216→                    Change
+   217→   217→                  </Button>
+   218→   218→                </motion.div>
+   219→   219→              </div>
+   220→   220→              <div className="flex-1 min-w-0">
+   221→   221→                <p className="font-semibold text-sm">{profileName}</p>
+   222→   222→                <p className="text-muted-foreground text-sm truncate">{profileEmail}</p>
+   223→   223→              </div>
+   224→   224→            </motion.div>
+   225→   225→
+   226→   226→            <Separator />
+   227→   227→
+   228→   228→            {/* Name */}
+   229→   229→            <motion.div variants={itemVariants} className="space-y-2">
+   230→   230→              <Label htmlFor="profile-name">Full Name</Label>
+   231→   231→              <Input
+   232→   232→                id="profile-name"
+   233→   233→                value={profileName}
+   234→   234→                onChange={(e) => setProfileName(e.target.value)}
+   235→   235→                placeholder="Your name"
+   236→   236→              />
+   237→   237→            </motion.div>
+   238→   238→
+   239→   239→            {/* Email */}
+   240→   240→            <motion.div variants={itemVariants} className="space-y-2">
+   241→   241→              <Label htmlFor="profile-email">Email</Label>
+   242→   242→              <div className="relative">
+   243→   243→                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+   244→   244→                <Input
+   245→   245→                  id="profile-email"
+   246→   246→                  type="email"
+   247→   247→                  value={profileEmail}
+   248→   248→                  onChange={(e) => setProfileEmail(e.target.value)}
+   249→   249→                  className="pl-9"
+   250→   250→                  placeholder="your@email.com"
+   251→   251→                />
+   252→   252→              </div>
+   253→   253→            </motion.div>
+   254→   254→
+   255→   255→            {/* Bio */}
+   256→   256→            <motion.div variants={itemVariants} className="space-y-2">
+   257→   257→              <Label htmlFor="profile-bio">Bio</Label>
+   258→   258→              <Textarea
+   259→   259→                id="profile-bio"
+   260→   260→                value={profileBio}
+   261→   261→                onChange={(e) => setProfileBio(e.target.value)}
+   262→   262→                placeholder="Tell us about yourself..."
+   263→   263→                className="min-h-20 resize-none"
+   264→   264→              />
+   265→   265→            </motion.div>
+   266→   266→          </CardContent>
+   267→   267→          <CardFooter className="justify-end">
+   268→   268→            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+   269→   269→              <Button
+   270→   270→                onClick={handleSaveProfile}
+   271→   271→                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+   272→   272→                disabled={savingProfile}
+   273→   273→              >
+   274→   274→                {savingProfile ? (
+   275→   275→                  <>
+   276→   276→                    <Loader2 className="size-4 animate-spin" />
+   277→   277→                    Saving...
+   278→   278→                  </>
+   279→   279→                ) : (
+   280→   280→                  <>
+   281→   281→                    <Save className="size-4" />
+   282→   282→                    Save Changes
+   283→   283→                  </>
+   284→   284→                )}
+   285→   285→              </Button>
+   286→   286→            </motion.div>
+   287→   287→          </CardFooter>
+   288→   288→        </Card>
+   289→   289→      </motion.div>
+   290→   290→
+   291→   291→      {/* ─── Preferences Section ─── */}
+   292→   292→      <motion.div variants={sectionVariants}>
+   293→   293→        <Card>
+   294→   294→          <CardHeader>
+   295→   295→            <CardTitle className="flex items-center gap-2 text-lg">
+   296→   296→              <Globe className="size-5 text-emerald-600 dark:text-emerald-400" />
+   297→   297→              Preferences
+   298→   298→            </CardTitle>
+   299→   299→            <CardDescription>Customize your app experience.</CardDescription>
+   300→   300→          </CardHeader>
+   301→   301→          <CardContent className="space-y-6">
+   302→   302→            {/* Language */}
+   303→   303→            <motion.div variants={itemVariants} className="flex items-center justify-between gap-4">
+   304→   304→              <div className="space-y-0.5">
+   305→   305→                <Label>Language</Label>
+   306→   306→                <p className="text-xs text-muted-foreground">Choose your display language</p>
+   307→   307→              </div>
+   308→   308→              <Select value={language} onValueChange={setLanguage}>
+   309→   309→                <SelectTrigger className="w-[140px]">
+   310→   310→                  <SelectValue />
+   311→   311→                </SelectTrigger>
+   312→   312→                <SelectContent>
+   313→   313→                  <SelectItem value="en">English</SelectItem>
+   314→   314→                  <SelectItem value="ar">العربية</SelectItem>
+   315→   315→                </SelectContent>
+   316→   316→              </Select>
+   317→   317→            </motion.div>
+   318→   318→
+   319→   319→            <Separator />
+   320→   320→
+   321→   321→            {/* Theme */}
+   322→   322→            <motion.div variants={itemVariants} className="space-y-3">
+   323→   323→              <div className="space-y-0.5">
+   324→   324→                <Label>Theme</Label>
+   325→   325→                <p className="text-xs text-muted-foreground">Select your preferred color scheme</p>
+   326→   326→              </div>
+   327→   327→              <div className="grid grid-cols-3 gap-3">
+   328→   328→                {mounted && themeOptions.map((opt) => {
+   329→   329→                  const Icon = opt.icon
+   330→   330→                  const isActive = theme === opt.value
+   331→   331→                  return (
+   332→   332→                    <motion.div key={opt.value} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+   333→   333→                      <button
+   334→   334→                        type="button"
+   335→   335→                        onClick={() => setTheme(opt.value)}
+   336→   336→                        className={cn(
+   337→   337→                          'flex flex-col items-center gap-2 rounded-lg border-2 p-3 transition-all w-full',
+   338→   338→                          isActive
+   339→   339→                            ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300'
+   340→   340→                            : 'border-transparent bg-muted/50 hover:bg-muted text-muted-foreground'
+   341→   341→                        )}
+   342→   342→                      >
+   343→   343→                        <Icon className="size-5" />
+   344→   344→                        <span className="text-xs font-medium">{opt.label}</span>
+   345→   345→                        {isActive && <Check className="size-3.5 text-emerald-600 dark:text-emerald-400" />}
+   346→   346→                      </button>
+   347→   347→                    </motion.div>
+   348→   348→                  )
+   349→   349→                })}
+   350→   350→              </div>
+   351→   351→            </motion.div>
+   352→   352→
+   353→   353→            <Separator />
+   354→   354→
+   355→   355→            {/* Notification Toggles */}
+   356→   356→            <motion.div variants={itemVariants} className="space-y-4">
+   357→   357→              <div className="space-y-0.5">
+   358→   358→                <Label className="flex items-center gap-2">
+   359→   359→                  <Bell className="size-4" />
+   360→   360→                  Notifications
+   361→   361→                </Label>
+   362→   362→                <p className="text-xs text-muted-foreground">Control how you receive notifications</p>
+   363→   363→              </div>
+   364→   364→
+   365→   365→              <div className="space-y-3">
+   366→   366→                <div className="flex items-center justify-between">
+   367→   367→                  <div className="flex items-center gap-2 text-sm">
+   368→   368→                    <Mail className="size-4 text-muted-foreground" />
+   369→   369→                    <span>Email Notifications</span>
+   370→   370→                  </div>
+   371→   371→                  <Switch checked={emailNotif} onCheckedChange={setEmailNotif} />
+   372→   372→                </div>
+   373→   373→
+   374→   374→                <div className="flex items-center justify-between">
+   375→   375→                  <div className="flex items-center gap-2 text-sm">
+   376→   376→                    <BellRing className="size-4 text-muted-foreground" />
+   377→   377→                    <span>Push Notifications</span>
+   378→   378→                  </div>
+   379→   379→                  <Switch checked={pushNotif} onCheckedChange={setPushNotif} />
+   380→   380→                </div>
+   381→   381→
+   382→   382→                <div className="flex items-center justify-between">
+   383→   383→                  <div className="flex items-center gap-2 text-sm">
+   384→   384→                    <Megaphone className="size-4 text-muted-foreground" />
+   385→   385→                    <span>Marketing Emails</span>
+   386→   386→                  </div>
+   387→   387→                  <Switch checked={marketingNotif} onCheckedChange={setMarketingNotif} />
+   388→   388→                </div>
+   389→   389→              </div>
+   390→   390→            </motion.div>
+   391→   391→          </CardContent>
+   392→   392→        </Card>
+   393→   393→      </motion.div>
+   394→   394→
+   395→   395→      {/* ─── Trading Preferences Section ─── */}
+   396→   396→      <motion.div variants={sectionVariants}>
+   397→   397→        <Card>
+   398→   398→          <CardHeader>
+   399→   399→            <CardTitle className="flex items-center gap-2 text-lg">
+   400→   400→              <TrendingUp className="size-5 text-emerald-600 dark:text-emerald-400" />
+   401→   401→              Trading Preferences
+   402→   402→            </CardTitle>
+   403→   403→            <CardDescription>Configure your default trading parameters.</CardDescription>
+   404→   404→          </CardHeader>
+   405→   405→          <CardContent className="space-y-6">
+   406→   406→            {/* Default Timeframe */}
+   407→   407→            <motion.div variants={itemVariants} className="flex items-center justify-between gap-4">
+   408→   408→              <div className="space-y-0.5">
+   409→   409→                <Label>Default Timeframe</Label>
+   410→   410→                <p className="text-xs text-muted-foreground">Chart timeframe for analysis</p>
+   411→   411→              </div>
+   412→   412→              <Select value={timeframe} onValueChange={setTimeframe}>
+   413→   413→                <SelectTrigger className="w-[120px]">
+   414→   414→                  <SelectValue />
+   415→   415→                </SelectTrigger>
+   416→   416→                <SelectContent>
+   417→   417→                  <SelectItem value="M5">M5</SelectItem>
+   418→   418→                  <SelectItem value="M15">M15</SelectItem>
+   419→   419→                  <SelectItem value="H1">H1</SelectItem>
+   420→   420→                  <SelectItem value="H4">H4</SelectItem>
+   421→   421→                  <SelectItem value="D1">D1</SelectItem>
+   422→   422→                </SelectContent>
+   423→   423→              </Select>
+   424→   424→            </motion.div>
+   425→   425→
+   426→   426→            <Separator />
+   427→   427→
+   428→   428→            {/* Default Pair */}
+   429→   429→            <motion.div variants={itemVariants} className="flex items-center justify-between gap-4">
+   430→   430→              <div className="space-y-0.5">
+   431→   431→                <Label>Default Pair</Label>
+   432→   432→                <p className="text-xs text-muted-foreground">Your go-to trading pair</p>
+   433→   433→              </div>
+   434→   434→              <Input
+   435→   435→                value={defaultPair}
+   436→   436→                onChange={(e) => setDefaultPair(e.target.value)}
+   437→   437→                className="w-[160px] text-center font-mono"
+   438→   438→                placeholder="EUR/USD"
+   439→   439→              />
+   440→   440→            </motion.div>
+   441→   441→
+   442→   442→            <Separator />
+   443→   443→
+   444→   444→            {/* Risk Per Trade */}
+   445→   445→            <motion.div variants={itemVariants} className="space-y-4">
+   446→   446→              <div className="flex items-center justify-between">
+   447→   447→                <div className="space-y-0.5">
+   448→   448→                  <Label>Risk per Trade</Label>
+   449→   449→                  <p className="text-xs text-muted-foreground">Maximum risk per position</p>
+   450→   450→                </div>
+   451→   451→                <Badge
+   452→   452→                  variant="outline"
+   453→   453→                  className="font-mono text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+   454→   454→                >
+   455→   455→                  {riskPerTrade[0]}%
+   456→   456→                </Badge>
+   457→   457→              </div>
+   458→   458→              <Slider
+   459→   459→                value={riskPerTrade}
+   460→   460→                onValueChange={setRiskPerTrade}
+   461→   461→                min={0.5}
+   462→   462→                max={5}
+   463→   463→                step={0.5}
+   464→   464→                className="[&_[data-slot=slider-range]]:bg-emerald-500 [&_[data-slot=slider-thumb]]:border-emerald-500"
+   465→   465→              />
+   466→   466→              <div className="flex justify-between text-xs text-muted-foreground">
+   467→   467→                <span>0.5%</span>
+   468→   468→                <span>5%</span>
+   469→   469→              </div>
+   470→   470→            </motion.div>
+   471→   471→
+   472→   472→            <Separator />
+   473→   473→
+   474→   474→            {/* Show Signals Notifications */}
+   475→   475→            <motion.div variants={itemVariants} className="flex items-center justify-between">
+   476→   476→              <div className="space-y-0.5">
+   477→   477→                <Label>Signal Notifications</Label>
+   478→   478→                <p className="text-xs text-muted-foreground">Get notified of AI trading signals</p>
+   479→   479→              </div>
+   480→   480→              <Switch checked={signalNotif} onCheckedChange={setSignalNotif} />
+   481→   481→            </motion.div>
+   482→   482→          </CardContent>
+   483→   483→        </Card>
+   484→   484→      </motion.div>
+   485→   485→
+   486→   486→      {/* ─── Subscription Section ─── */}
+   487→   487→      <motion.div variants={sectionVariants}>
+   488→   488→        <Card>
+   489→   489→          <CardHeader>
+   490→   490→            <CardTitle className="flex items-center gap-2 text-lg">
+   491→   491→              <CreditCard className="size-5 text-emerald-600 dark:text-emerald-400" />
+   492→   492→              Subscription
+   493→   493→            </CardTitle>
+   494→   494→            <CardDescription>Manage your plan and billing.</CardDescription>
+   495→   495→          </CardHeader>
+   496→   496→          <CardContent className="space-y-4">
+   497→   497→            <motion.div variants={itemVariants}>
+   498→   498→              <div className="flex items-center justify-between rounded-lg border border-emerald-500/20 bg-emerald-50/50 dark:bg-emerald-950/20 p-4">
+   499→   499→                <div className="space-y-1">
+   500→   500→                  <div className="flex items-center gap-2">
+   501→   501→                    <p className="font-semibold">Pro Plan</p>
+   502→   502→                    <Badge className="bg-emerald-600 text-white hover:bg-emerald-700">Active</Badge>
+   503→   503→                  </div>
+   504→   504→                  <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">
+   505→   505→                    $29<span className="text-sm font-normal text-muted-foreground">/month</span>
+   506→   506→                  </p>
+   507→   507→                </div>
+   508→   508→                <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+   509→   509→                  <Button variant="outline" onClick={() => setView('pricing')}>
+   510→   510→                    Manage Subscription
+   511→   511→                    <ChevronRight className="size-4" />
+   512→   512→                  </Button>
+   513→   513→                </motion.div>
+   514→   514→              </div>
+   515→   515→            </motion.div>
+   516→   516→
+   517→   517→            <motion.div variants={itemVariants} className="flex items-center gap-2 text-sm text-muted-foreground">
+   518→   518→              <Calendar className="size-4" />
+   519→   519→              <span>Next billing date: <span className="text-foreground font-medium">January 15, 2025</span></span>
+   520→   520→            </motion.div>
+   521→   521→          </CardContent>
+   522→   522→          <CardFooter className="justify-end">
+   523→   523→            <AlertDialog>
+   524→   524→              <AlertDialogTrigger asChild>
+   525→   525→                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+   526→   526→                  <Button variant="destructive" size="sm">
+   527→   527→                    Cancel Subscription
+   528→   528→                  </Button>
+   529→   529→                </motion.div>
+   530→   530→              </AlertDialogTrigger>
+   531→   531→              <AlertDialogContent>
+   532→   532→                <AlertDialogHeader>
+   533→   533→                  <AlertDialogTitle>Cancel your subscription?</AlertDialogTitle>
+   534→   534→                  <AlertDialogDescription>
+   535→   535→                    This will cancel your Pro Plan at the end of the billing period. You&apos;ll lose
+   536→   536→                    access to premium features including AI mentor, advanced charts, and signals.
+   537→   537→                  </AlertDialogDescription>
+   538→   538→                </AlertDialogHeader>
+   539→   539→                <AlertDialogFooter>
+   540→   540→                  <AlertDialogCancel>Keep Subscription</AlertDialogCancel>
+   541→   541→                  <AlertDialogAction className="bg-destructive hover:bg-destructive/90 text-white">
+   542→   542→                    Yes, Cancel
+   543→   543→                  </AlertDialogAction>
+   544→   544→                </AlertDialogFooter>
+   545→   545→              </AlertDialogContent>
+   546→   546→            </AlertDialog>
+   547→   547→          </CardFooter>
+   548→   548→        </Card>
+   549→   549→      </motion.div>
+   550→   550→
+   551→   551→      {/* ─── Security Section ─── */}
+   552→   552→      <motion.div variants={sectionVariants}>
+   553→   553→        <Card>
+   554→   554→          <CardHeader>
+   555→   555→            <CardTitle className="flex items-center gap-2 text-lg">
+   556→   556→              <Shield className="size-5 text-emerald-600 dark:text-emerald-400" />
+   557→   557→              Security
+   558→   558→            </CardTitle>
+   559→   559→            <CardDescription>Protect your account with strong security measures.</CardDescription>
+   560→   560→          </CardHeader>
+   561→   561→          <CardContent className="space-y-6">
+   562→   562→            {/* Change Password */}
+   563→   563→            <motion.div variants={itemVariants} className="space-y-4">
+   564→   564→              <div className="space-y-0.5">
+   565→   565→                <Label>Change Password</Label>
+   566→   566→                <p className="text-xs text-muted-foreground">Update your password regularly for security</p>
+   567→   567→              </div>
+   568→   568→              <form onSubmit={handleChangePassword} className="space-y-3">
+   569→   569→                <div className="space-y-1.5">
+   570→   570→                  <Label htmlFor="old-password" className="text-xs">Current Password</Label>
+   571→   571→                  <div className="relative">
+   572→   572→                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+   573→   573→                    <Input
+   574→   574→                      id="old-password"
+   575→   575→                      type={showOldPassword ? 'text' : 'password'}
+   576→   576→                      value={oldPassword}
+   577→   577→                      onChange={(e) => setOldPassword(e.target.value)}
+   578→   578→                      className="pl-9 pr-9"
+   579→   579→                      placeholder="Enter current password"
+   580→   580→                      required
+   581→   581→                    />
+   582→   582→                    <button
+   583→   583→                      type="button"
+   584→   584→                      onClick={() => setShowOldPassword(!showOldPassword)}
+   585→   585→                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+   586→   586→                      tabIndex={-1}
+   587→   587→                    >
+   588→   588→                      {showOldPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+   589→   589→                    </button>
+   590→   590→                  </div>
+   591→   591→                </div>
+   592→   592→                <div className="space-y-1.5">
+   593→   593→                  <Label htmlFor="new-password" className="text-xs">New Password</Label>
+   594→   594→                  <div className="relative">
+   595→   595→                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+   596→   596→                    <Input
+   597→   597→                      id="new-password"
+   598→   598→                      type={showNewPassword ? 'text' : 'password'}
+   599→   599→                      value={newPassword}
+   600→   600→                      onChange={(e) => setNewPassword(e.target.value)}
+   601→   601→                      className="pl-9 pr-9"
+   602→   602→                      placeholder="Enter new password"
+   603→   603→                      required
+   604→   604→                    />
+   605→   605→                    <button
+   606→   606→                      type="button"
+   607→   607→                      onClick={() => setShowNewPassword(!showNewPassword)}
+   608→   608→                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+   609→   609→                      tabIndex={-1}
+   610→   610→                    >
+   611→   611→                      {showNewPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+   612→   612→                    </button>
+   613→   613→                  </div>
+   614→   614→                </div>
+   615→   615→                <div className="space-y-1.5">
+   616→   616→                  <Label htmlFor="confirm-security-password" className="text-xs">Confirm New Password</Label>
+   617→   617→                  <div className="relative">
+   618→   618→                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+   619→   619→                    <Input
+   620→   620→                      id="confirm-security-password"
+   621→   621→                      type={showConfirmSecurityPassword ? 'text' : 'password'}
+   622→   622→                      value={confirmSecurityPassword}
+   623→   623→                      onChange={(e) => setConfirmSecurityPassword(e.target.value)}
+   624→   624→                      className="pl-9 pr-9"
+   625→   625→                      placeholder="Confirm new password"
+   626→   626→                      required
+   627→   627→                    />
+   628→   628→                    <button
+   629→   629→                      type="button"
+   630→   630→                      onClick={() => setShowConfirmSecurityPassword(!showConfirmSecurityPassword)}
+   631→   631→                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+   632→   632→                      tabIndex={-1}
+   633→   633→                    >
+   634→   634→                      {showConfirmSecurityPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+   635→   635→                    </button>
+   636→   636→                  </div>
+   637→   637→                </div>
+   638→   638→                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+   639→   639→                  <Button
+   640→   640→                    type="submit"
+   641→   641→                    size="sm"
+   642→   642→                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
+   643→   643→                    disabled={changingPassword}
+   644→   644→                  >
+   645→   645→                    {changingPassword ? (
+   646→   646→                      <>
+   647→   647→                        <Loader2 className="size-4 animate-spin" />
+   648→   648→                        Updating...
+   649→   649→                      </>
+   650→   650→                    ) : (
+   651→   651→                      'Update Password'
+   652→   652→                    )}
+   653→   653→                  </Button>
+   654→   654→                </motion.div>
+   655→   655→              </form>
+   656→   656→            </motion.div>
+   657→   657→
+   658→   658→            <Separator />
+   659→   659→
+   660→   660→            {/* Two-Factor Authentication */}
+   661→   661→            <motion.div variants={itemVariants} className="space-y-3">
+   662→   662→              <div className="flex items-center justify-between">
+   663→   663→                <div className="space-y-0.5">
+   664→   664→                  <Label className="flex items-center gap-2">
+   665→   665→                    <Fingerprint className="size-4" />
+   666→   666→                    Two-Factor Authentication
+   667→   667→                  </Label>
+   668→   668→                  <p className="text-xs text-muted-foreground max-w-sm">
+   669→   669→                    Add an extra layer of security by requiring a verification code in addition to your password.
+   670→   670→                  </p>
+   671→   671→                </div>
+   672→   672→                <Switch checked={twoFactor} onCheckedChange={setTwoFactor} />
+   673→   673→              </div>
+   674→   674→              {twoFactor && (
+   675→   675→                <motion.div
+   676→   676→                  initial={{ opacity: 0, height: 0 }}
+   677→   677→                  animate={{ opacity: 1, height: 'auto' }}
+   678→   678→                  className="rounded-lg border border-amber-500/30 bg-amber-50/50 dark:bg-amber-950/20 p-3 text-sm"
+   679→   679→                >
+   680→   680→                  <div className="flex gap-2">
+   681→   681→                    <ShieldCheck className="size-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+   682→   682→                    <div>
+   683→   683→                      <p className="font-medium text-amber-700 dark:text-amber-300">Setup Instructions</p>
+   684→   684→                      <ol className="mt-1 space-y-1 text-xs text-muted-foreground list-decimal list-inside">
+   685→   685→                        <li>Download an authenticator app (Google Authenticator, Authy)</li>
+   686→   686→                        <li>Scan the QR code shown after saving this setting</li>
+   687→   687→                        <li>Enter the 6-digit code to verify setup</li>
+   688→   688→                      </ol>
+   689→   689→                    </div>
+   690→   690→                  </div>
+   691→   691→                </motion.div>
+   692→   692→              )}
+   693→   693→            </motion.div>
+   694→   694→
+   695→   695→            <Separator />
+   696→   696→
+   697→   697→            {/* Active Sessions */}
+   698→   698→            <motion.div variants={itemVariants} className="space-y-3">
+   699→   699→              <div className="space-y-0.5">
+   700→   700→                <Label>Active Sessions</Label>
+   701→   701→                <p className="text-xs text-muted-foreground">Devices currently signed in to your account</p>
+   702→   702→              </div>
+   703→   703→              <div className="space-y-3">
+   704→   704→                {mockSessions.map((session) => {
+   705→   705→                  const SessionIcon = session.icon
+   706→   706→                  return (
+   707→   707→                    <motion.div
+   708→   708→                      key={session.id}
+   709→   709→                      variants={itemVariants}
+   710→   710→                      className="flex items-center justify-between rounded-lg border p-3"
+   711→   711→                    >
+   712→   712→                      <div className="flex items-center gap-3">
+   713→   713→                        <div className="flex size-9 items-center justify-center rounded-lg bg-muted">
+   714→   714→                          <SessionIcon className="size-4 text-muted-foreground" />
+   715→   715→                        </div>
+   716→   716→                        <div>
+   717→   717→                          <div className="flex items-center gap-2">
+   718→   718→                            <p className="text-sm font-medium">{session.device}</p>
+   719→   719→                            {session.current && (
+   720→   720→                              <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+   721→   721→                                This device
+   722→   722→                              </Badge>
+   723→   723→                            )}
+   724→   724→                          </div>
+   725→   725→                          <p className="text-xs text-muted-foreground">
+   726→   726→                            {session.location} &middot; {session.lastActive}
+   727→   727→                          </p>
+   728→   728→                        </div>
+   729→   729→                      </div>
+   730→   730→                      {!session.current && (
+   731→   731→                        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+   732→   732→                          <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30">
+   733→   733→                            <LogOut className="size-4" />
+   734→   734→                          </Button>
+   735→   735→                        </motion.div>
+   736→   736→                      )}
+   737→   737→                    </motion.div>
+   738→   738→                  )
+   739→   739→                })}
+   740→   740→              </div>
+   741→   741→            </motion.div>
+   742→   742→          </CardContent>
+   743→   743→        </Card>
+   744→   744→      </motion.div>
+   745→   745→
+   746→   746→      {/* ─── Danger Zone ─── */}
+   747→   747→      <motion.div variants={sectionVariants}>
+   748→   748→        <Card className="border-destructive/30">
+   749→   749→          <CardHeader>
+   750→   750→            <CardTitle className="flex items-center gap-2 text-lg text-destructive">
+   751→   751→              <AlertTriangle className="size-5" />
+   752→   752→              Danger Zone
+   753→   753→            </CardTitle>
+   754→   754→            <CardDescription>Irreversible and destructive actions.</CardDescription>
+   755→   755→          </CardHeader>
+   756→   756→          <CardContent className="space-y-4">
+   757→   757→            <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg border border-destructive/20 bg-destructive/5 p-4">
+   758→   758→              <div>
+   759→   759→                <p className="text-sm font-medium">Delete Account</p>
+   760→   760→                <p className="text-xs text-muted-foreground">
+   761→   761→                  Permanently delete your account and all associated data. This action cannot be undone.
+   762→   762→                </p>
+   763→   763→              </div>
+   764→   764→              <AlertDialog>
+   765→   765→                <AlertDialogTrigger asChild>
+   766→   766→                  <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+   767→   767→                    <Button variant="destructive" size="sm" className="shrink-0">
+   768→   768→                      <Trash2 className="size-4" />
+   769→   769→                      Delete Account
+   770→   770→                    </Button>
+   771→   771→                  </motion.div>
+   772→   772→                </AlertDialogTrigger>
+   773→   773→                <AlertDialogContent>
+   774→   774→                  <AlertDialogHeader>
+   775→   775→                    <AlertDialogTitle className="text-destructive">
+   776→   776→                      Are you absolutely sure?
+   777→   777→                    </AlertDialogTitle>
+   778→   778→                    <AlertDialogDescription>
+   779→   779→                      This action cannot be undone. This will permanently delete your account, all
+   780→   780→                      trading history, journal entries, and remove your data from our servers.
+   781→   781→                    </AlertDialogDescription>
+   782→   782→                  </AlertDialogHeader>
+   783→   783→                  <AlertDialogFooter>
+   784→   784→                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+   785→   785→                    <AlertDialogAction className="bg-destructive hover:bg-destructive/90 text-white">
+   786→   786→                      Yes, delete my account
+   787→   787→                    </AlertDialogAction>
+   788→   788→                  </AlertDialogFooter>
+   789→   789→                </AlertDialogContent>
+   790→   790→              </AlertDialog>
+   791→   791→            </motion.div>
+   792→   792→          </CardContent>
+   793→   793→        </Card>
+   794→   794→      </motion.div>
+   795→   795→
+   796→   796→      {/* Bottom Spacer */}
+   797→   797→      <div className="h-8" />
+   798→   798→    </motion.div>
+   799→   799→  )
+   800→   800→}

@@ -39,6 +39,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { useNavigation } from '@/store/navigation'
+import { toast } from 'sonner'
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────
 
@@ -168,6 +169,7 @@ export default function DashboardView() {
   const handleSaveJournal = () => {
     if (journalText.trim()) {
       setJournalSaved(true)
+      toast.success('Journal entry saved!', { description: 'Your quick journal has been recorded.' })
       setTimeout(() => setJournalSaved(false), 2000)
     }
   }
@@ -207,7 +209,7 @@ export default function DashboardView() {
                     <span className="sm:hidden">Analyze</span>
                   </Button>
                   <Button
-                    onClick={() => setView('academy')}
+                    onClick={() => setView('journal')}
                     variant="outline"
                     className="border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10 hover:text-emerald-500 dark:text-emerald-400"
                   >
@@ -474,6 +476,7 @@ export default function DashboardView() {
                             className="flex items-center justify-between px-6 py-2.5 border-b last:border-b-0 hover:bg-emerald-500/[0.02] transition-colors cursor-pointer"
                             whileHover={{ x: 2 }}
                             transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                            onClick={() => setView('chart-analyzer')}
                           >
                             <div>
                               <p className="text-sm font-semibold">{item.pair}</p>

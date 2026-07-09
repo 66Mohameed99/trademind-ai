@@ -1,0 +1,815 @@
+     1→'use client'
+     2→
+     3→import { useState, useMemo } from 'react'
+     4→import { motion, AnimatePresence } from 'framer-motion'
+     5→import {
+     6→  Search,
+     7→  Star,
+     8→  Clock,
+     9→  BookOpen,
+    10→  Lock,
+    11→  CheckCircle2,
+    12→  ChevronRight,
+    13→  TrendingUp,
+    14→  BarChart3,
+    15→  Shield,
+    16→  Zap,
+    17→  Trophy,
+    18→  X,
+    19→  Play,
+    20→} from 'lucide-react'
+    21→import { Input } from '@/components/ui/input'
+    22→import { Badge } from '@/components/ui/badge'
+    23→import { Button } from '@/components/ui/button'
+    24→import { Progress } from '@/components/ui/progress'
+    25→import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+    26→import {
+    27→  Dialog,
+    28→  DialogContent,
+    29→  DialogHeader,
+    30→  DialogTitle,
+    31→  DialogDescription,
+    32→} from '@/components/ui/dialog'
+    33→import { ScrollArea } from '@/components/ui/scroll-area'
+    34→import { Separator } from '@/components/ui/separator'
+    35→import { Checkbox } from '@/components/ui/checkbox'
+    36→
+    37→// ─── Types ───────────────────────────────────────────────────────────────────
+    38→
+    39→type CourseLevel = 'Beginner' | 'Intermediate' | 'Advanced' | 'Pro'
+    40→type StepStatus = 'completed' | 'current' | 'locked'
+    41→
+    42→interface Lesson {
+    43→  id: number
+    44→  title: string
+    45→  duration: string
+    46→  completed: boolean
+    47→}
+    48→
+    49→interface Course {
+    50→  id: number
+    51→  title: string
+    52→  description: string
+    53→  level: CourseLevel
+    54→  duration: string
+    55→  lessonsCount: number
+    56→  progress: number | null // null = not enrolled
+    57→  rating: number
+    58→  icon: React.ReactNode
+    59→  gradient: string
+    60→  lessons: Lesson[]
+    61→}
+    62→
+    63→// ─── Data ────────────────────────────────────────────────────────────────────
+    64→
+    65→const courses: Course[] = [
+    66→  {
+    67→    id: 1,
+    68→    title: 'Technical Analysis Masterclass',
+    69→    description:
+    70→      'Master chart patterns, indicators, and technical tools used by professional traders worldwide.',
+    71→    level: 'Beginner',
+    72→    duration: '12h',
+    73→    lessonsCount: 24,
+    74→    progress: 75,
+    75→    rating: 4.8,
+    76→    icon: <BarChart3 className="size-8 text-white" />,
+    77→    gradient: 'from-emerald-500 to-emerald-700',
+    78→    lessons: Array.from({ length: 24 }, (_, i) => ({
+    79→      id: i + 1,
+    80→      title: [
+    81→        'Introduction to Technical Analysis',
+    82→        'Understanding Candlestick Charts',
+    83→        'Support & Resistance Levels',
+    84→        'Trend Lines & Channels',
+    85→        'Moving Averages (SMA & EMA)',
+    86→        'RSI & Stochastic Oscillators',
+    87→        'MACD Indicator Deep Dive',
+    88→        'Bollinger Bands Strategy',
+    89→        'Fibonacci Retracement Basics',
+    90→        'Chart Patterns: Head & Shoulders',
+    91→        'Chart Patterns: Double Top/Bottom',
+    92→        'Triangle Patterns & Breakouts',
+    93→        'Volume Analysis',
+    94→        'Price Action vs Indicators',
+    95→        'Multi-Timeframe Analysis',
+    96→        'Trading with Confluence',
+    97→        'Building a Watchlist',
+    98→        'Scanning for Setups',
+    99→        'Backtesting Your Strategy',
+   100→        'Risk-Reward Ratios',
+   101→        'Entry & Exit Techniques',
+   102→        'Advanced Chart Patterns',
+   103→        'Putting It All Together',
+   104→        'Final Assessment & Review',
+   105→      ][i],
+   106→      duration: `${20 + Math.floor(Math.random() * 25)}min`,
+   107→      completed: i < 18,
+   108→    })),
+   109→  },
+   110→  {
+   111→    id: 2,
+   112→    title: 'Risk Management Fundamentals',
+   113→    description:
+   114→      'Learn the critical principles of risk management that separate profitable traders from the rest.',
+   115→    level: 'Beginner',
+   116→    duration: '8h',
+   117→    lessonsCount: 16,
+   118→    progress: 45,
+   119→    rating: 4.9,
+   120→    icon: <Shield className="size-8 text-white" />,
+   121→    gradient: 'from-emerald-500 to-teal-600',
+   122→    lessons: Array.from({ length: 16 }, (_, i) => ({
+   123→      id: i + 1,
+   124→      title: [
+   125→        'Why Risk Management Matters',
+   126→        'Position Sizing Basics',
+   127→        'Understanding Leverage',
+   128→        'Stop Loss Strategies',
+   129→        'Take Profit Targets',
+   130→        'Risk-Reward Ratio Mastery',
+   131→        'Drawdown Management',
+   132→        'Portfolio Diversification',
+   133→        'Correlation Analysis',
+   134→        'Maximum Daily Loss Limits',
+   135→        'Trailing Stop Techniques',
+   136→        'Scaling In & Out',
+   137→        'Hedging Strategies',
+   138→        'Risk Per Trade Calculation',
+   139→        'Building a Risk Plan',
+   140→        'Psychology of Risk',
+   141→      ][i],
+   142→      duration: `${15 + Math.floor(Math.random() * 30)}min`,
+   143→      completed: i < 7,
+   144→    })),
+   145→  },
+   146→  {
+   147→    id: 3,
+   148→    title: 'Price Action Trading',
+   149→    description:
+   150→      'Decode market movements through pure price action — no indicators needed for consistent profits.',
+   151→    level: 'Intermediate',
+   152→    duration: '16h',
+   153→    lessonsCount: 32,
+   154→    progress: 90,
+   155→    rating: 4.7,
+   156→    icon: <TrendingUp className="size-8 text-white" />,
+   157→    gradient: 'from-amber-500 to-orange-600',
+   158→    lessons: Array.from({ length: 32 }, (_, i) => ({
+   159→      id: i + 1,
+   160→      title: `Price Action Lesson ${i + 1}: ${
+   161→        [
+   162→          'Naked Chart Reading',
+   163→          'Supply & Demand Zones',
+   164→          'Order Blocks Identification',
+   165→          'Fair Value Gaps',
+   166→          'Liquidity Concepts',
+   167→          'Break of Structure (BOS)',
+   168→          'Change of Character (CHoCH)',
+   169→          'Market Structure Shifts',
+   170→        ][i % 8] || 'Advanced Application'
+   171→      }`,
+   172→      duration: `${20 + Math.floor(Math.random() * 20)}min`,
+   173→      completed: i < 29,
+   174→    })),
+   175→  },
+   176→  {
+   177→    id: 4,
+   178→    title: 'Smart Money Concepts',
+   179→    description:
+   180→      'Understand institutional order flow and smart money techniques to trade alongside the big players.',
+   181→    level: 'Advanced',
+   182→    duration: '14h',
+   183→    lessonsCount: 28,
+   184→    progress: null,
+   185→    rating: 4.6,
+   186→    icon: <Zap className="size-8 text-white" />,
+   187→    gradient: 'from-rose-500 to-pink-600',
+   188→    lessons: Array.from({ length: 28 }, (_, i) => ({
+   189→      id: i + 1,
+   190→      title: `SMC Lesson ${i + 1}`,
+   191→      duration: `${25 + Math.floor(Math.random() * 20)}min`,
+   192→      completed: false,
+   193→    })),
+   194→  },
+   195→  {
+   196→    id: 5,
+   197→    title: 'Forex Market Structure',
+   198→    description:
+   199→      'Navigate the forex market with confidence. Understand sessions, pairs, and global dynamics.',
+   200→    level: 'Beginner',
+   201→    duration: '10h',
+   202→    lessonsCount: 20,
+   203→    progress: 100,
+   204→    rating: 4.5,
+   205→    icon: <TrendingUp className="size-8 text-white" />,
+   206→    gradient: 'from-emerald-600 to-green-700',
+   207→    lessons: Array.from({ length: 20 }, (_, i) => ({
+   208→      id: i + 1,
+   209→      title: `Forex Fundamentals ${i + 1}`,
+   210→      duration: `${15 + Math.floor(Math.random() * 30)}min`,
+   211→      completed: true,
+   212→    })),
+   213→  },
+   214→  {
+   215→    id: 6,
+   216→    title: 'Candlestick Patterns Deep Dive',
+   217→    description:
+   218→      'From dojis to engulfing patterns — master every candlestick formation for precise entries.',
+   219→    level: 'Intermediate',
+   220→    duration: '9h',
+   221→    lessonsCount: 18,
+   222→    progress: null,
+   223→    rating: 4.8,
+   224→    icon: <BarChart3 className="size-8 text-white" />,
+   225→    gradient: 'from-amber-600 to-yellow-600',
+   226→    lessons: Array.from({ length: 18 }, (_, i) => ({
+   227→      id: i + 1,
+   228→      title: `Candlestick Pattern ${i + 1}`,
+   229→      duration: `${20 + Math.floor(Math.random() * 25)}min`,
+   230→      completed: false,
+   231→    })),
+   232→  },
+   233→  {
+   234→    id: 7,
+   235→    title: 'Trading Psychology',
+   236→    description:
+   237→      'Master your emotions, build discipline, and develop the mindset of a consistently profitable trader.',
+   238→    level: 'Beginner',
+   239→    duration: '6h',
+   240→    lessonsCount: 12,
+   241→    progress: 30,
+   242→    rating: 4.9,
+   243→    icon: <Trophy className="size-8 text-white" />,
+   244→    gradient: 'from-emerald-400 to-cyan-600',
+   245→    lessons: Array.from({ length: 12 }, (_, i) => ({
+   246→      id: i + 1,
+   247→      title: [
+   248→        'The Psychology of Trading',
+   249→        'Fear & Greed Cycle',
+   250→        'Developing Discipline',
+   251→        'Handling Losses Gracefully',
+   252→        'Building Confidence',
+   253→        'Avoiding Revenge Trading',
+   254→        'The Flow State in Trading',
+   255→        'Journaling for Growth',
+   256→        'Meditation & Focus',
+   257→        'Creating Trading Rituals',
+   258→        'Stress Management',
+   259→        'Building a Winning Mindset',
+   260→      ][i],
+   261→      duration: `${15 + Math.floor(Math.random() * 20)}min`,
+   262→      completed: i < 4,
+   263→    })),
+   264→  },
+   265→  {
+   266→    id: 8,
+   267→    title: 'Algorithmic Trading Intro',
+   268→    description:
+   269→      'Enter the world of algo trading. Learn to code, test, and deploy automated trading strategies.',
+   270→    level: 'Advanced',
+   271→    duration: '12h',
+   272→    lessonsCount: 24,
+   273→    progress: null,
+   274→    rating: 4.4,
+   275→    icon: <Zap className="size-8 text-white" />,
+   276→    gradient: 'from-rose-600 to-red-600',
+   277→    lessons: Array.from({ length: 24 }, (_, i) => ({
+   278→      id: i + 1,
+   279→      title: `Algo Trading Module ${i + 1}`,
+   280→      duration: `${25 + Math.floor(Math.random() * 30)}min`,
+   281→      completed: false,
+   282→    })),
+   283→  },
+   284→]
+   285→
+   286→const learningPathSteps: {
+   287→  label: string
+   288→  status: StepStatus
+   289→}[] = [
+   290→  { label: 'Trading Basics', status: 'completed' },
+   291→  { label: 'Technical Analysis', status: 'completed' },
+   292→  { label: 'Risk Management', status: 'current' },
+   293→  { label: 'Advanced Strategies', status: 'locked' },
+   294→  { label: 'Professional Trading', status: 'locked' },
+   295→]
+   296→
+   297→// ─── Helpers ─────────────────────────────────────────────────────────────────
+   298→
+   299→function getLevelColor(level: CourseLevel) {
+   300→  switch (level) {
+   301→    case 'Beginner':
+   302→      return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+   303→    case 'Intermediate':
+   304→      return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+   305→    case 'Advanced':
+   306→      return 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
+   307→    case 'Pro':
+   308→      return 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+   309→  }
+   310→}
+   311→
+   312→function getTopBarColor(level: CourseLevel) {
+   313→  switch (level) {
+   314→    case 'Beginner':
+   315→      return 'bg-emerald-500'
+   316→    case 'Intermediate':
+   317→      return 'bg-amber-500'
+   318→    case 'Advanced':
+   319→      return 'bg-rose-500'
+   320→    case 'Pro':
+   321→      return 'bg-purple-500'
+   322→  }
+   323→}
+   324→
+   325→function Stars({ rating }: { rating: number }) {
+   326→  return (
+   327→    <div className="flex items-center gap-0.5">
+   328→      {Array.from({ length: 5 }, (_, i) => (
+   329→        <Star
+   330→          key={i}
+   331→          className={`size-3.5 ${
+   332→            i < Math.floor(rating)
+   333→              ? 'fill-amber-400 text-amber-400'
+   334→              : i < rating
+   335→                ? 'fill-amber-400/50 text-amber-400'
+   336→                : 'text-muted-foreground/30'
+   337→          }`}
+   338→        />
+   339→      ))}
+   340→      <span className="ml-1 text-xs text-muted-foreground">{rating}</span>
+   341→    </div>
+   342→  )
+   343→}
+   344→
+   345→// ─── Animation Variants ──────────────────────────────────────────────────────
+   346→
+   347→const containerVariants = {
+   348→  hidden: { opacity: 0 },
+   349→  visible: {
+   350→    opacity: 1,
+   351→    transition: { staggerChildren: 0.06 },
+   352→  },
+   353→}
+   354→
+   355→const itemVariants = {
+   356→  hidden: { opacity: 0, y: 20 },
+   357→  visible: {
+   358→    opacity: 1,
+   359→    y: 0,
+   360→    transition: { type: 'spring', stiffness: 300, damping: 24 },
+   361→  },
+   362→}
+   363→
+   364→const cardHover = {
+   365→  y: -6,
+   366→  boxShadow:
+   367→    '0 20px 40px -12px rgba(16, 185, 129, 0.15)',
+   368→  transition: { type: 'spring', stiffness: 400, damping: 20 },
+   369→}
+   370→
+   371→// ─── Course Detail Modal ─────────────────────────────────────────────────────
+   372→
+   373→function CourseDetailModal({
+   374→  course,
+   375→  open,
+   376→  onOpenChange,
+   377→}: {
+   378→  course: Course | null
+   379→  open: boolean
+   380→  onOpenChange: (open: boolean) => void
+   381→}) {
+   382→  if (!course) return null
+   383→
+   384→  const completedCount = course.lessons.filter((l) => l.completed).length
+   385→
+   386→  return (
+   387→    <Dialog open={open} onOpenChange={onOpenChange}>
+   388→      <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-hidden flex flex-col p-0">
+   389→        {/* Gradient Header */}
+   390→        <motion.div
+   391→          initial={{ opacity: 0, y: -20 }}
+   392→          animate={{ opacity: 1, y: 0 }}
+   393→          className={`relative bg-gradient-to-r ${course.gradient} px-6 py-8 text-white`}
+   394→        >
+   395→          <div className="flex items-start justify-between">
+   396→            <div className="flex items-start gap-4">
+   397→              <div className="rounded-xl bg-white/20 p-3 backdrop-blur-sm">
+   398→                {course.icon}
+   399→              </div>
+   400→              <div>
+   401→                <DialogTitle className="text-xl font-bold text-white">
+   402→                  {course.title}
+   403→                </DialogTitle>
+   404→                <DialogDescription className="mt-1 text-white/80">
+   405→                  {course.description}
+   406→                </DialogDescription>
+   407→              </div>
+   408→            </div>
+   409→          </div>
+   410→          <div className="mt-4 flex flex-wrap items-center gap-3">
+   411→            <Badge className={`${getLevelColor(course.level)} border-0`}>
+   412→              {course.level}
+   413→            </Badge>
+   414→            <span className="flex items-center gap-1 text-sm text-white/80">
+   415→              <Clock className="size-3.5" /> {course.duration}
+   416→            </span>
+   417→            <span className="flex items-center gap-1 text-sm text-white/80">
+   418→              <BookOpen className="size-3.5" /> {course.lessonsCount} lessons
+   419→            </span>
+   420→            <Stars rating={course.rating} />
+   421→          </div>
+   422→          {course.progress !== null && (
+   423→            <div className="mt-4">
+   424→              <div className="flex items-center justify-between text-sm text-white/80">
+   425→                <span>
+   426→                  {completedCount} of {course.lessonsCount} lessons completed
+   427→                </span>
+   428→                <span className="font-semibold text-white">{course.progress}%</span>
+   429→              </div>
+   430→              <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-white/20">
+   431→                <motion.div
+   432→                  initial={{ width: 0 }}
+   433→                  animate={{ width: `${course.progress}%` }}
+   434→                  transition={{ duration: 0.8, ease: 'easeOut' }}
+   435→                  className="h-full rounded-full bg-white"
+   436→                />
+   437→              </div>
+   438→            </div>
+   439→          )}
+   440→        </motion.div>
+   441→
+   442→        {/* Lessons */}
+   443→        <div className="flex-1 overflow-hidden">
+   444→          <div className="flex items-center justify-between px-6 py-3">
+   445→            <h3 className="text-sm font-semibold text-foreground">Course Content</h3>
+   446→            <span className="text-xs text-muted-foreground">
+   447→              {completedCount}/{course.lessonsCount} completed
+   448→            </span>
+   449→          </div>
+   450→          <Separator />
+   451→          <ScrollArea className="h-[320px]">
+   452→            <div className="px-6 py-2">
+   453→              {course.lessons.map((lesson, index) => (
+   454→                <motion.div
+   455→                  key={lesson.id}
+   456→                  initial={{ opacity: 0, x: -10 }}
+   457→                  animate={{ opacity: 1, x: 0 }}
+   458→                  transition={{ delay: index * 0.03, duration: 0.3 }}
+   459→                  className="group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-muted/50"
+   460→                >
+   461→                  <Checkbox
+   462→                    checked={lesson.completed}
+   463→                    className="data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
+   464→                  />
+   465→                  <span
+   466→                    className={`flex-1 text-sm ${
+   467→                      lesson.completed
+   468→                        ? 'text-muted-foreground line-through'
+   469→                        : 'text-foreground'
+   470→                    }`}
+   471→                  >
+   472→                    {lesson.title}
+   473→                  </span>
+   474→                  <span className="text-xs text-muted-foreground">
+   475→                    {lesson.duration}
+   476→                  </span>
+   477→                  {lesson.completed ? (
+   478→                    <CheckCircle2 className="size-4 text-emerald-500" />
+   479→                  ) : (
+   480→                    <Play className="size-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+   481→                  )}
+   482→                </motion.div>
+   483→              ))}
+   484→            </div>
+   485→          </ScrollArea>
+   486→        </div>
+   487→
+   488→        {/* Footer */}
+   489→        <div className="border-t px-6 py-4">
+   490→          <div className="flex gap-3">
+   491→            {course.progress === 100 ? (
+   492→              <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white">
+   493→                <CheckCircle2 className="mr-2 size-4" />
+   494→                Course Completed
+   495→              </Button>
+   496→            ) : course.progress !== null ? (
+   497→              <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white">
+   498→                <Play className="mr-2 size-4" />
+   499→                Continue Learning
+   500→              </Button>
+   501→            ) : (
+   502→              <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white">
+   503→                <Play className="mr-2 size-4" />
+   504→                Start Course
+   505→              </Button>
+   506→            )}
+   507→            <Button variant="outline" onClick={() => onOpenChange(false)}>
+   508→              Close
+   509→            </Button>
+   510→          </div>
+   511→        </div>
+   512→      </DialogContent>
+   513→    </Dialog>
+   514→  )
+   515→}
+   516→
+   517→// ─── Main Component ──────────────────────────────────────────────────────────
+   518→
+   519→export default function AcademyView() {
+   520→  const [search, setSearch] = useState('')
+   521→  const [levelFilter, setLevelFilter] = useState('all')
+   522→  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
+   523→  const [modalOpen, setModalOpen] = useState(false)
+   524→
+   525→  const filteredCourses = useMemo(() => {
+   526→    return courses.filter((c) => {
+   527→      const matchesSearch =
+   528→        search === '' ||
+   529→        c.title.toLowerCase().includes(search.toLowerCase()) ||
+   530→        c.description.toLowerCase().includes(search.toLowerCase())
+   531→      const matchesLevel =
+   532→        levelFilter === 'all' || c.level.toLowerCase() === levelFilter
+   533→      return matchesSearch && matchesLevel
+   534→    })
+   535→  }, [search, levelFilter])
+   536→
+   537→  const openCourseDetail = (course: Course) => {
+   538→    setSelectedCourse(course)
+   539→    setModalOpen(true)
+   540→  }
+   541→
+   542→  return (
+   543→    <div className="min-h-screen bg-background">
+   544→      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+   545→        {/* ── Header ────────────────────────────────────────────── */}
+   546→        <motion.div
+   547→          initial={{ opacity: 0, y: -20 }}
+   548→          animate={{ opacity: 1, y: 0 }}
+   549→          transition={{ duration: 0.5 }}
+   550→          className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+   551→        >
+   552→          <div className="flex items-center gap-3">
+   553→            <div>
+   554→              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+   555→                Trading Academy
+   556→              </h1>
+   557→              <p className="text-sm text-muted-foreground">
+   558→                Master the markets with structured learning paths
+   559→              </p>
+   560→            </div>
+   561→            <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-0 px-3 py-1 text-sm">
+   562→              500+ Lessons
+   563→            </Badge>
+   564→          </div>
+   565→          <div className="relative w-full sm:w-72">
+   566→            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+   567→            <Input
+   568→              placeholder="Search courses..."
+   569→              value={search}
+   570→              onChange={(e) => setSearch(e.target.value)}
+   571→              className="pl-9"
+   572→            />
+   573→            {search && (
+   574→              <button
+   575→                onClick={() => setSearch('')}
+   576→                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+   577→              >
+   578→                <X className="size-4" />
+   579→              </button>
+   580→            )}
+   581→          </div>
+   582→        </motion.div>
+   583→
+   584→        {/* ── Filter Tabs ───────────────────────────────────────── */}
+   585→        <motion.div
+   586→          initial={{ opacity: 0, y: 10 }}
+   587→          animate={{ opacity: 1, y: 0 }}
+   588→          transition={{ duration: 0.4, delay: 0.1 }}
+   589→          className="mt-6"
+   590→        >
+   591→          <Tabs value={levelFilter} onValueChange={setLevelFilter}>
+   592→            <TabsList className="bg-muted/60">
+   593→              <TabsTrigger value="all">All</TabsTrigger>
+   594→              <TabsTrigger value="beginner">Beginner</TabsTrigger>
+   595→              <TabsTrigger value="intermediate">Intermediate</TabsTrigger>
+   596→              <TabsTrigger value="advanced">Advanced</TabsTrigger>
+   597→              <TabsTrigger value="pro">Pro</TabsTrigger>
+   598→            </TabsList>
+   599→          </Tabs>
+   600→        </motion.div>
+   601→
+   602→        {/* ── Learning Path ─────────────────────────────────────── */}
+   603→        <motion.div
+   604→          initial={{ opacity: 0, y: 20 }}
+   605→          animate={{ opacity: 1, y: 0 }}
+   606→          transition={{ duration: 0.5, delay: 0.15 }}
+   607→          className="mt-8"
+   608→        >
+   609→          <h2 className="mb-4 text-lg font-semibold">Your Learning Path</h2>
+   610→          <div className="relative overflow-x-auto pb-2">
+   611→            <div className="flex min-w-[600px] items-center gap-0">
+   612→              {learningPathSteps.map((step, index) => {
+   613→                const isLast = index === learningPathSteps.length - 1
+   614→                return (
+   615→                  <div key={step.label} className="flex items-center">
+   616→                    {/* Step Node */}
+   617→                    <div className="flex flex-col items-center gap-2">
+   618→                      <motion.div
+   619→                        whileHover={{ scale: 1.05 }}
+   620→                        className={`relative flex size-14 items-center justify-center rounded-full border-2 ${
+   621→                          step.status === 'completed'
+   622→                            ? 'border-emerald-500 bg-emerald-500'
+   623→                            : step.status === 'current'
+   624→                              ? 'border-emerald-500 bg-background'
+   625→                              : 'border-muted-foreground/25 bg-muted/50'
+   626→                        }`}
+   627→                      >
+   628→                        {step.status === 'completed' ? (
+   629→                          <CheckCircle2 className="size-6 text-white" />
+   630→                        ) : step.status === 'current' ? (
+   631→                          <>
+   632→                            <motion.div
+   633→                              animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
+   634→                              transition={{
+   635→                                duration: 2,
+   636→                                repeat: Infinity,
+   637→                                ease: 'easeInOut',
+   638→                              }}
+   639→                              className="absolute inset-0 rounded-full bg-emerald-500/20"
+   640→                            />
+   641→                            <span className="text-lg font-bold text-emerald-500">
+   642→                              {index + 1}
+   643→                            </span>
+   644→                          </>
+   645→                        ) : (
+   646→                          <Lock className="size-5 text-muted-foreground/50" />
+   647→                        )}
+   648→                      </motion.div>
+   649→                      <span
+   650→                        className={`text-xs font-medium whitespace-nowrap ${
+   651→                          step.status === 'locked'
+   652→                            ? 'text-muted-foreground/50'
+   653→                            : step.status === 'current'
+   654→                              ? 'text-emerald-600 dark:text-emerald-400'
+   655→                              : 'text-foreground'
+   656→                        }`}
+   657→                      >
+   658→                        {step.label}
+   659→                      </span>
+   660→                    </div>
+   661→                    {/* Connector Line */}
+   662→                    {!isLast && (
+   663→                      <div className="mx-1 h-0.5 flex-1 min-w-[60px]">
+   664→                        <div
+   665→                          className={`h-full rounded-full ${
+   666→                            step.status === 'completed'
+   667→                              ? 'bg-emerald-500'
+   668→                              : 'bg-muted-foreground/15'
+   669→                          }`}
+   670→                        />
+   671→                      </div>
+   672→                    )}
+   673→                  </div>
+   674→                )
+   675→              })}
+   676→            </div>
+   677→          </div>
+   678→        </motion.div>
+   679→
+   680→        {/* ── Course Grid ───────────────────────────────────────── */}
+   681→        <motion.div
+   682→          variants={containerVariants}
+   683→          initial="hidden"
+   684→          animate="visible"
+   685→          className="mt-10"
+   686→        >
+   687→          <h2 className="mb-4 text-lg font-semibold">
+   688→            {filteredCourses.length} Courses
+   689→          </h2>
+   690→          {filteredCourses.length === 0 ? (
+   691→            <motion.div
+   692→              initial={{ opacity: 0 }}
+   693→              animate={{ opacity: 1 }}
+   694→              className="flex flex-col items-center justify-center py-20 text-center"
+   695→            >
+   696→              <Search className="size-12 text-muted-foreground/30" />
+   697→              <p className="mt-4 text-lg font-medium text-muted-foreground">
+   698→                No courses found
+   699→              </p>
+   700→              <p className="text-sm text-muted-foreground/70">
+   701→                Try adjusting your search or filter criteria
+   702→              </p>
+   703→            </motion.div>
+   704→          ) : (
+   705→            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+   706→              <AnimatePresence mode="popLayout">
+   707→                {filteredCourses.map((course) => (
+   708→                  <motion.div
+   709→                    key={course.id}
+   710→                    variants={itemVariants}
+   711→                    layout
+   712→                    whileHover={cardHover}
+   713→                    whileTap={{ scale: 0.98 }}
+   714→                    className="group cursor-pointer overflow-hidden rounded-xl border bg-card shadow-sm transition-colors"
+   715→                    onClick={() => openCourseDetail(course)}
+   716→                  >
+   717→                    {/* Top Bar */}
+   718→                    <div
+   719→                      className={`h-1.5 w-full ${getTopBarColor(course.level)}`}
+   720→                    />
+   721→
+   722→                    {/* Image Placeholder */}
+   723→                    <div
+   724→                      className={`relative flex h-36 items-center justify-center bg-gradient-to-br ${course.gradient}`}
+   725→                    >
+   726→                      <div className="rounded-2xl bg-white/15 p-4 backdrop-blur-sm transition-transform group-hover:scale-110">
+   727→                        {course.icon}
+   728→                      </div>
+   729→                      <Badge
+   730→                        className={`absolute right-3 top-3 border-0 ${getLevelColor(course.level)}`}
+   731→                      >
+   732→                        {course.level}
+   733→                      </Badge>
+   734→                      {course.progress === 100 && (
+   735→                        <motion.div
+   736→                          initial={{ scale: 0 }}
+   737→                          animate={{ scale: 1 }}
+   738→                          className="absolute left-3 top-3 flex items-center gap-1 rounded-full bg-white/20 px-2 py-0.5 text-xs font-medium text-white backdrop-blur-sm"
+   739→                        >
+   740→                          <CheckCircle2 className="size-3" /> Completed
+   741→                        </motion.div>
+   742→                      )}
+   743→                    </div>
+   744→
+   745→                    {/* Content */}
+   746→                    <div className="p-4">
+   747→                      <h3 className="font-semibold leading-tight text-foreground group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+   748→                        {course.title}
+   749→                      </h3>
+   750→                      <p className="mt-1.5 line-clamp-2 text-sm text-muted-foreground">
+   751→                        {course.description}
+   752→                      </p>
+   753→
+   754→                      {/* Meta */}
+   755→                      <div className="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
+   756→                        <span className="flex items-center gap-1">
+   757→                          <Clock className="size-3" />
+   758→                          {course.duration}
+   759→                        </span>
+   760→                        <span className="flex items-center gap-1">
+   761→                          <BookOpen className="size-3" />
+   762→                          {course.lessonsCount} lessons
+   763→                        </span>
+   764→                        <Stars rating={course.rating} />
+   765→                      </div>
+   766→
+   767→                      {/* Progress or Enroll */}
+   768→                      <div className="mt-4">
+   769→                        {course.progress !== null ? (
+   770→                          <div>
+   771→                            <div className="mb-1.5 flex items-center justify-between text-xs">
+   772→                              <span className="text-muted-foreground">
+   773→                                Progress
+   774→                              </span>
+   775→                              <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+   776→                                {course.progress}%
+   777→                              </span>
+   778→                            </div>
+   779→                            <Progress
+   780→                              value={course.progress}
+   781→                              className="h-2 [&>[data-slot=progress-indicator]]:bg-emerald-500"
+   782→                            />
+   783→                          </div>
+   784→                        ) : (
+   785→                          <Button
+   786→                            size="sm"
+   787→                            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+   788→                            onClick={(e) => {
+   789→                              e.stopPropagation()
+   790→                              openCourseDetail(course)
+   791→                            }}
+   792→                          >
+   793→                            Enroll Now
+   794→                            <ChevronRight className="ml-1 size-4" />
+   795→                          </Button>
+   796→                        )}
+   797→                      </div>
+   798→                    </div>
+   799→                  </motion.div>
+   800→                ))}
+   801→              </AnimatePresence>
+   802→            </div>
+   803→          )}
+   804→        </motion.div>
+   805→      </main>
+   806→
+   807→      {/* Course Detail Modal */}
+   808→      <CourseDetailModal
+   809→        course={selectedCourse}
+   810→        open={modalOpen}
+   811→        onOpenChange={setModalOpen}
+   812→      />
+   813→    </div>
+   814→  )
+   815→}
