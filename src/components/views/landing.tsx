@@ -495,127 +495,143 @@ export default function LandingView() {
 
       <main className="flex-1">
         {/* ═══════════════════════════════════════════════════════════════
-            HERO SECTION
+            HERO SECTION — Full-screen Video
         ═══════════════════════════════════════════════════════════════ */}
-        <section className="animated-grid relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-20 sm:px-6 lg:px-8">
-          {/* Radial gradient overlay */}
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(16,185,129,0.12),transparent)] dark:bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(16,185,129,0.18),transparent)]" />
+        <section className="relative min-h-screen w-full overflow-hidden">
+          {/* Video Background — full section coverage */}
+          <video
+            className="absolute inset-0 h-full w-full object-cover"
+            src="https://labs.google/fx/tools/flow/shared/video/4fbb50ee-090f-4a97-8784-811e6b644a6b"
+            autoPlay
+            loop
+            muted
+            playsInline
+          />
 
-          <div className="relative z-10 mx-auto max-w-4xl text-center">
-            {/* Badge */}
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-            >
-              <Badge
-                variant="outline"
-                className="mb-6 gap-1.5 border-emerald-300/50 bg-emerald-50 px-4 py-1.5 text-emerald-700 dark:border-emerald-700/50 dark:bg-emerald-950/50 dark:text-emerald-300"
+          {/* Gradient overlays for text readability */}
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_40%,rgba(16,185,129,0.08),transparent)]" />
+
+          {/* Content over video */}
+          <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-4 py-20 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-4xl text-center">
+              {/* Badge */}
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
               >
-                <Sparkles className="size-3.5" />
-                AI-Powered Trading Education
-              </Badge>
-            </motion.div>
+                <Badge
+                  variant="outline"
+                  className="mb-6 gap-1.5 border-emerald-400/40 bg-emerald-500/10 px-4 py-1.5 text-emerald-300 backdrop-blur-sm"
+                >
+                  <Sparkles className="size-3.5" />
+                  AI-Powered Trading Education
+                </Badge>
+              </motion.div>
 
-            {/* Heading */}
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2, ease: [0.25, 0.4, 0.25, 1] }}
-              className="text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl"
-            >
-              Master the Markets with{' '}
-              <span className="gradient-text">AI-Powered Education</span>
-            </motion.h1>
-
-            {/* Subheading */}
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.35, ease: [0.25, 0.4, 0.25, 1] }}
-              className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg md:text-xl"
-            >
-              Learn trading strategies, analyze charts with AI, track your
-              progress, and join a community of successful traders.
-            </motion.p>
-
-            {/* CTAs */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.5, ease: [0.25, 0.4, 0.25, 1] }}
-              className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4"
-            >
-              <Button
-                size="lg"
-                onClick={() => openAuthDialog('signup')}
-                className="h-12 w-full gap-2 rounded-xl bg-emerald-600 px-8 text-base font-semibold text-white shadow-lg shadow-emerald-600/25 transition-all hover:bg-emerald-700 hover:shadow-emerald-600/30 sm:w-auto dark:bg-emerald-600 dark:hover:bg-emerald-500"
+              {/* Heading */}
+              <motion.h1
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.2, ease: [0.25, 0.4, 0.25, 1] }}
+                className="text-4xl font-extrabold tracking-tight text-white drop-shadow-lg sm:text-5xl md:text-6xl lg:text-7xl"
               >
-                Get Started Free
-                <ArrowRight className="size-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                className="h-12 w-full gap-2 rounded-xl border-emerald-300/50 px-8 text-base font-semibold text-emerald-700 transition-all hover:bg-emerald-50 hover:text-emerald-800 sm:w-auto dark:border-emerald-700/50 dark:text-emerald-300 dark:hover:bg-emerald-950/50 dark:hover:text-emerald-200"
+                Master the Markets with{' '}
+                <span className="bg-gradient-to-r from-emerald-300 to-emerald-500 bg-clip-text text-transparent">
+                  AI-Powered Education
+                </span>
+              </motion.h1>
+
+              {/* Subheading */}
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.35, ease: [0.25, 0.4, 0.25, 1] }}
+                className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-white/75 drop-shadow sm:text-lg md:text-xl"
               >
-                <Play className="size-4" />
-                Watch Demo
-              </Button>
-            </motion.div>
+                Learn trading strategies, analyze charts with AI, track your
+                progress, and join a community of successful traders.
+              </motion.p>
 
-            {/* Trust indicators */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.6, delay: 0.7 }}
-              className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-muted-foreground"
-            >
-              <span className="flex items-center gap-1.5">
-                <Shield className="size-3.5 text-emerald-500" />
-                Bank-grade security
-              </span>
-              <span className="flex items-center gap-1.5">
-                <Clock className="size-3.5 text-emerald-500" />
-                14-day free trial
-              </span>
-              <span className="flex items-center gap-1.5">
-                <Globe className="size-3.5 text-emerald-500" />
-                Used in 120+ countries
-              </span>
-            </motion.div>
-          </div>
+              {/* CTAs */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.5, ease: [0.25, 0.4, 0.25, 1] }}
+                className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4"
+              >
+                <Button
+                  size="lg"
+                  onClick={() => openAuthDialog('signup')}
+                  className="h-12 w-full gap-2 rounded-xl bg-emerald-600 px-8 text-base font-semibold text-white shadow-lg shadow-emerald-600/25 transition-all hover:bg-emerald-700 hover:shadow-emerald-600/40 sm:w-auto"
+                >
+                  Get Started Free
+                  <ArrowRight className="size-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="h-12 w-full gap-2 rounded-xl border-white/20 bg-white/10 px-8 text-base font-semibold text-white backdrop-blur-sm transition-all hover:bg-white/20 hover:text-white sm:w-auto"
+                >
+                  <Play className="size-4" />
+                  Watch Demo
+                </Button>
+              </motion.div>
 
-          {/* Floating stat cards */}
-          <div className="pointer-events-none absolute inset-0 z-20 hidden lg:block">
-            <FloatingStatCard
-              value="10K+"
-              label="Students"
-              icon={Users}
-              className="absolute left-[8%] top-[18%]"
-              delay={0}
-            />
-            <FloatingStatCard
-              value="500+"
-              label="Lessons"
-              icon={GraduationCap}
-              className="absolute right-[6%] top-[15%]"
-              delay={0.15}
-            />
-            <FloatingStatCard
-              value="85%"
-              label="Success Rate"
-              icon={TrendingUp}
-              className="absolute left-[6%] bottom-[22%]"
-              delay={0.3}
-            />
-            <FloatingStatCard
-              value="24/7"
-              label="AI Mentor"
-              icon={Brain}
-              className="absolute right-[8%] bottom-[18%]"
-              delay={0.45}
-            />
+              {/* Trust indicators */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.6, delay: 0.7 }}
+                className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-white/60"
+              >
+                <span className="flex items-center gap-1.5">
+                  <Shield className="size-3.5 text-emerald-400" />
+                  Bank-grade security
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <Clock className="size-3.5 text-emerald-400" />
+                  14-day free trial
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <Globe className="size-3.5 text-emerald-400" />
+                  Used in 120+ countries
+                </span>
+              </motion.div>
+            </div>
+
+            {/* Floating stat cards */}
+            <div className="pointer-events-none absolute inset-0 z-20 hidden lg:block">
+              <FloatingStatCard
+                value="10K+"
+                label="Students"
+                icon={Users}
+                className="absolute left-[8%] top-[18%]"
+                delay={0}
+              />
+              <FloatingStatCard
+                value="500+"
+                label="Lessons"
+                icon={GraduationCap}
+                className="absolute right-[6%] top-[15%]"
+                delay={0.15}
+              />
+              <FloatingStatCard
+                value="85%"
+                label="Success Rate"
+                icon={TrendingUp}
+                className="absolute left-[6%] bottom-[22%]"
+                delay={0.3}
+              />
+              <FloatingStatCard
+                value="24/7"
+                label="AI Mentor"
+                icon={Brain}
+                className="absolute right-[8%] bottom-[18%]"
+                delay={0.45}
+              />
+            </div>
           </div>
         </section>
 
